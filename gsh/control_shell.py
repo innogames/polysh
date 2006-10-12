@@ -1,5 +1,6 @@
 import cmd
 import sys
+import termios
 
 from gsh.console import set_stdin_blocking
 
@@ -75,6 +76,13 @@ class control_shell(cmd.Cmd):
     def do_unset_print_first(self, command):
         """Print all lines for each command output"""
         self.options.print_first = False
+
+    def do_send_sigint(self, command):
+        """Send a Ctrl-C to all remote shells"""
+        from gsh import remote_dispatcher
+        for i in remote_dispatcher.all_instances():
+            c = termios.tcgetattr(i.fd)[6][termios.VINTR]
+            i.dispatch_write(c)
 
     def postcmd(self, stop, line):
         return self.stop
