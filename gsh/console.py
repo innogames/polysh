@@ -5,6 +5,8 @@ import struct
 import sys
 import termios
 
+from gsh.terminal_size import terminal_size
+
 # We remember the length of the prompt in order
 # to clear it with as many ' ' characters
 prompt_length = 0
@@ -49,15 +51,11 @@ def watch_window_size():
     remote shells"""
     def sigwinch(unused_signum, unused_frame):
         from gsh import remote_dispatcher
-        try:
-            winsz = fcntl.ioctl(0, termios.TIOCGWINSZ, '1234')
-        except IOError:
-            return
-        h, w = struct.unpack('hh', winsz)
+        h, w = terminal_size()
         # python bug http://python.org/sf/1112949 on amd64
         # from ajaxterm.py
         bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
-        packed_size = struct.pack('HHHH', h, w, 0, 0)
+        packed_size = struct.pack('HHHH', w, h, 0, 0)
         for i in remote_dispatcher.all_instances():
             fcntl.ioctl(i.fd, bug, packed_size)
     sigwinch(None, None)
