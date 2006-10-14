@@ -84,6 +84,13 @@ class control_shell(cmd.Cmd):
             c = termios.tcgetattr(i.fd)[6][termios.VINTR]
             i.dispatch_write(c)
 
+    def do_send_eof(self, command):
+        """Send a Ctrl-D to all remote shells"""
+        from gsh import remote_dispatcher
+        for i in remote_dispatcher.all_instances():
+            c = termios.tcgetattr(i.fd)[6][termios.VEOF]
+            i.dispatch_write(c)
+
     def postcmd(self, stop, line):
         return self.stop
 
