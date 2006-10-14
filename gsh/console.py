@@ -1,6 +1,9 @@
 import fcntl
 import os
+import signal
+import struct
 import sys
+import termios
 
 # We remember the length of the prompt in order
 # to clear it with as many ' ' characters
@@ -40,3 +43,22 @@ def show_prompt():
     # We flush because there is no '\n' but a '\r'
     sys.stdout.flush()
     set_stdin_blocking(False)
+
+def watch_window_size():
+    """Detect when the window size changes, and propagate the new size to the
+    remote shells"""
+    def sigwinch(unused_signum, unused_frame):
+        from gsh import remote_dispatcher
+        try:
+            winsz = fcntl.ioctl(0, termios.TIOCGWINSZ, '1234')
+        except IOError:
+            return
+        h, w = struct.unpack('hh', winsz)
+        # python bug http://python.org/sf/1112949 on amd64
+        # from ajaxterm.py
+        bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
+        packed_size = struct.pack('HHHH', h, w, 0, 0)
+        for i in remote_dispatcher.all_instances():
+            fcntl.ioctl(i.fd, bug, packed_size)
+    sigwinch(None, None)
+    signal.signal(signal.SIGWINCH, sigwinch)

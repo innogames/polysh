@@ -9,7 +9,7 @@ import signal
 import sys
 
 from gsh import remote_dispatcher
-from gsh.console import set_stdin_blocking, show_prompt
+from gsh.console import set_stdin_blocking, show_prompt, watch_window_size
 from gsh import control_shell
 from gsh.stdin_reader import stdin_reader
 
@@ -76,4 +76,5 @@ def main():
     for host in args:
         remote_dispatcher.remote_dispatcher(options, host)
 
+    watch_window_size()
     main_loop()
