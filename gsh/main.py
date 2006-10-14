@@ -23,11 +23,13 @@ def parse_cmdline():
     parser = optparse.OptionParser(usage)
     try:
         parser.add_option('--log-dir', type='str', dest='log_dir',
-                          help='directory to log each machine conversation [none]')
+                          help='directory to log each machine conversation' +
+                                                                      ' [none]')
     except optparse.OptionError:
-        # Starting with python-2.4 'str' is recognized as an alias to 'string', so we
-        # use this to check the python version
-        print >> sys.stderr, 'Your python version is too old (%s)' % (sys.version.split()[0])
+        # Starting with python-2.4 'str' is recognized as an alias to 'string',
+        # so we use this to check the python version
+        print >> sys.stderr, 'Your python version is too old (%s)' % \
+                                                        (sys.version.split()[0])
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
     parser.add_option('--ssh', type='str', dest='ssh', default='ssh',
