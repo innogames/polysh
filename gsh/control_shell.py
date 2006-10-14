@@ -14,6 +14,12 @@ def make_singleton(options):
 def launch():
     return singleton.launch()
 
+def send_termios_char(char):
+    from gsh import remote_dispatcher
+    for i in remote_dispatcher.all_instances():
+        c = termios.tcgetattr(i.fd)[6][char]
+        i.dispatch_write(c)
+
 class control_shell(cmd.Cmd):
     """The little command line brought when a SIGINT is received"""
     def __init__(self, options):
@@ -79,24 +85,15 @@ class control_shell(cmd.Cmd):
 
     def do_send_sigint(self, command):
         """Send a Ctrl-C to all remote shells"""
-        from gsh import remote_dispatcher
-        for i in remote_dispatcher.all_instances():
-            c = termios.tcgetattr(i.fd)[6][termios.VINTR]
-            i.dispatch_write(c)
+        send_termios_char(termios.VINTR)
 
     def do_send_eof(self, command):
         """Send a Ctrl-D to all remote shells"""
-        from gsh import remote_dispatcher
-        for i in remote_dispatcher.all_instances():
-            c = termios.tcgetattr(i.fd)[6][termios.VEOF]
-            i.dispatch_write(c)
+        send_termios_char(termios.VEOF)
 
     def do_send_sigtstp(self, command):
         """Send a Ctrl-Z to all remote shells"""
-        from gsh import remote_dispatcher
-        for i in remote_dispatcher.all_instances():
-            c = termios.tcgetattr(i.fd)[6][termios.VSUSP]
-            i.dispatch_write(c)
+        send_termios_char(termios.VSUSP)
 
     def postcmd(self, stop, line):
         return self.stop
