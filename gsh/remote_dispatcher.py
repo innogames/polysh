@@ -80,6 +80,10 @@ class remote_dispatcher(buffered_dispatcher):
         self.termination = None
         self.set_prompt()
 
+    def change_state(self, state):
+        self.log('state => %s\n' % (STATE_NAMES[state]), debug=True)
+        self.state = state
+
     def disconnect(self):
         self.read_buffer = ''
         self.write_buffer = ''
@@ -93,7 +97,7 @@ class remote_dispatcher(buffered_dispatcher):
             term2 = str(random.random())[2:] + ']'
             self.termination = term1 + term2
             self.dispatch_write('echo "%s""%s"\n' % (term1, term2))
-            self.state = STATE_EXPECTING_NEXT_LINE
+            self.change_state(STATE_EXPECTING_NEXT_LINE)
 
     def set_prompt(self):
         # No right prompt
@@ -135,18 +139,18 @@ class remote_dispatcher(buffered_dispatcher):
         while lf_pos >= 0:
             line = self.read_buffer[:lf_pos]
             if self.prompt in line:
-                self.state = STATE_IDLE
+                self.change_state(STATE_IDLE)
             elif self.termination and self.termination in line:
-                self.state = STATE_TERMINATED
+                self.change_state(STATE_TERMINATED)
                 self.disconnect()
             elif self.state == STATE_EXPECTING_NEXT_LINE:
-                self.state = STATE_EXPECTING_LINE
+                self.change_state(STATE_EXPECTING_LINE)
             elif self.state != STATE_NOT_STARTED:
                 self.log(line + '\n')
                 if not self.options.print_first or \
                    self.state == STATE_EXPECTING_LINE:
                     console_output(self.name + ': ' + line + '\n')
-                    self.state = STATE_RUNNING
+                    self.change_state(STATE_RUNNING)
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
