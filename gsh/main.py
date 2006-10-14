@@ -21,8 +21,15 @@ def kill_all():
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...' % (sys.argv[0])
     parser = optparse.OptionParser(usage)
-    parser.add_option('--log-dir', type='str', dest='log_dir',
-                      help='directory to log each machine conversation [none]')
+    try:
+        parser.add_option('--log-dir', type='str', dest='log_dir',
+                          help='directory to log each machine conversation [none]')
+    except optparse.OptionError:
+        # Starting with python-2.4 'str' is recognized as an alias to 'string', so we
+        # use this to check the python version
+        print >> sys.stderr, 'Your python version is too old (%s)' % (sys.version.split()[0])
+        print >> sys.stderr, 'You need at least Python 2.4'
+        sys.exit(1)
     parser.add_option('--ssh', type='str', dest='ssh', default='ssh',
                       help='ssh command to use [ssh]')
     parser.add_option('--print-first', action='store_true', dest='print_first',
