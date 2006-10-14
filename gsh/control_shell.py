@@ -27,6 +27,9 @@ class control_shell(cmd.Cmd):
         self.options = options
 
     def launch(self):
+        if not sys.stdin.isatty():
+            # A Ctrl-C was issued in a non-interactive gsh => exit
+            sys.exit(1)
         self.stop = False
         set_stdin_blocking(True)
         intro = sys.argv[0] + ' command line'
