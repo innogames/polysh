@@ -130,8 +130,6 @@ class remote_dispatcher(buffered_dispatcher):
                            sys.stderr)
             self.disconnect()
             return
-        new_data = new_data.replace('\r', '')
-        self.read_buffer = self.read_buffer.replace('\r', '')
         self.log('==> ' + new_data, debug=True)
         lf_pos = self.read_buffer.find('\n')
         limit = buffered_dispatcher.MAX_BUFFER_SIZE / 10
