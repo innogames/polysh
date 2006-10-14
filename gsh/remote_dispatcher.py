@@ -158,7 +158,8 @@ class remote_dispatcher(buffered_dispatcher):
     def log(self, buf, debug=False):
         if self.log_file is None:
             if debug and self.options.debug:
-                console_output('[dbg] %s: %s' % (self.name, buf))
+                state = STATE_NAMES[self.state]
+                console_output('[dbg] %s[%s]: %s' % (self.name, state, buf))
         else:
             if (not debug) == (not self.options.debug):
                 os.write(self.log_file, buf)
