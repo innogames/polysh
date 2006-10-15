@@ -9,7 +9,7 @@ import signal
 import sys
 
 from gsh import remote_dispatcher
-from gsh.console import set_stdin_blocking, show_prompt, watch_window_size
+from gsh.console import show_prompt, watch_window_size
 from gsh import control_shell
 from gsh.stdin_reader import stdin_reader
 
