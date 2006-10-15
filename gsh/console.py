@@ -57,6 +57,7 @@ def watch_window_size():
         bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
         packed_size = struct.pack('HHHH', w, h, 0, 0)
         for i in remote_dispatcher.all_instances():
-            fcntl.ioctl(i.fd, bug, packed_size)
+            if i.enabled:
+                fcntl.ioctl(i.fd, bug, packed_size)
     sigwinch(None, None)
     signal.signal(signal.SIGWINCH, sigwinch)

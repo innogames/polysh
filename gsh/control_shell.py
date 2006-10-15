@@ -20,6 +20,30 @@ def send_termios_char(char):
         c = termios.tcgetattr(i.fd)[6][char]
         i.dispatch_write(c)
 
+def toggle_shells(command, enable):
+    from gsh import remote_dispatcher
+    for name in command.split():
+        for i in remote_dispatcher.all_instances():
+            if name == i.name:
+                if not i.active:
+                    print name, 'is not active'
+                elif i.enabled == enable:
+                    print 'nothing to do for', name
+                else:
+                    i.enabled = enable
+                break
+        else:
+            print name, 'not found'
+
+def complete_toggle_shells(text, line, enable):
+    from gsh import remote_dispatcher
+    given = line.split()[1:]
+    return [i.name for i in remote_dispatcher.all_instances() if \
+                i.active and \
+                i.name.startswith(text) and \
+                i.enabled != enable and \
+                i.name not in given]
+
 class control_shell(cmd.Cmd):
     """The little command line brought when a SIGINT is received"""
     def __init__(self, options):
@@ -97,6 +121,18 @@ class control_shell(cmd.Cmd):
     def do_send_sigtstp(self, command):
         """Send a Ctrl-Z to all remote shells"""
         send_termios_char(termios.VSUSP)
+
+    def complete_enable(self, text, line, begidx, endidx):
+        return complete_toggle_shells(text, line, True)
+
+    def do_enable(self, command):
+        toggle_shells(command, True)
+
+    def complete_disable(self, text, line, begidx, endidx):
+        return complete_toggle_shells(text, line, False)
+
+    def do_disable(self, command):
+        toggle_shells(command, False)
 
     def postcmd(self, stop, line):
         return self.stop

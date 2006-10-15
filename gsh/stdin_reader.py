@@ -38,7 +38,7 @@ class stdin_reader(buffered_dispatcher):
             for r in remote_dispatcher.all_instances():
                 r.dispatch_write(line)
                 r.log('<== ' + line)
-                if r.state != remote_dispatcher.STATE_NOT_STARTED:
+                if r.enabled and r.state != remote_dispatcher.STATE_NOT_STARTED:
                     r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
             self.read_buffer = self.read_buffer[lf_pos + 1:]
             lf_pos = self.read_buffer.find('\n')

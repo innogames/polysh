@@ -29,7 +29,7 @@ def count_completed_processes():
     completed_processes = 0
     total = 0
     for i in all_instances():
-        if i.active:
+        if i.enabled:
             total += 1
             if i.state == STATE_IDLE:
                 completed_processes += 1
@@ -37,7 +37,7 @@ def count_completed_processes():
 
 def all_terminated():
     for i in all_instances():
-        if i.active and i.state != STATE_TERMINATED:
+        if i.enabled and i.state != STATE_TERMINATED:
             return False
     return True
 
@@ -66,7 +66,8 @@ class remote_dispatcher(buffered_dispatcher):
         # Parent
         buffered_dispatcher.__init__(self, fd, name)
 
-        self.active = True
+        self.active = True # deactived shells are dead forever
+        self.enabled = True # shells can be enabled and disabled
         self.options = options
         if options.log_dir:
             # Open the log file
@@ -88,6 +89,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.read_buffer = ''
         self.write_buffer = ''
         self.active = False
+        self.enabled = False
         if self.options.abort_error:
                 raise asyncore.ExitNow
 
@@ -179,10 +181,11 @@ class remote_dispatcher(buffered_dispatcher):
         return [self.name, 'fd:%d' % (self.fd),
                 'r:%d' % (len(self.read_buffer)),
                 'w:%d' % (len(self.write_buffer)),
-                'active:%s' % (str(self.active)), state]
+                'active:%s' % (str(self.active)),
+                'enabled:%s' % (str(self.enabled)), state]
 
     def dispatch_write(self, buf):
-        if self.active:
+        if self.active and self.enabled:
             self.log('<== ' + buf, debug=True)
             try:
                 buffered_dispatcher.dispatch_write(self, buf)
