@@ -23,26 +23,38 @@ def send_termios_char(char):
 def toggle_shells(command, enable):
     from gsh import remote_dispatcher
     for name in command.split():
-        for i in remote_dispatcher.all_instances():
-            if name == i.name:
-                if not i.active:
-                    print name, 'is not active'
-                elif i.enabled == enable:
-                    print 'nothing to do for', name
-                else:
+        if name == '*':
+            for i in remote_dispatcher.all_instances():
+                if i.active:
                     i.enabled = enable
-                break
         else:
-            print name, 'not found'
+            for i in remote_dispatcher.all_instances():
+                if name == i.name:
+                    if not i.active:
+                        print name, 'is not active'
+                    elif i.enabled == enable:
+                        print 'nothing to do for', name
+                    else:
+                        i.enabled = enable
+                    break
+            else:
+                print name, 'not found'
 
 def complete_toggle_shells(text, line, enable):
     from gsh import remote_dispatcher
     given = line.split()[1:]
-    return [i.name for i in remote_dispatcher.all_instances() if \
+    if '*' in given:
+        # No more completion as 'all' shells have been selected
+        return []
+    res = [i.name for i in remote_dispatcher.all_instances() if \
                 i.active and \
                 i.name.startswith(text) and \
                 i.enabled != enable and \
                 i.name not in given]
+    if not text:
+        # Show '*' only if the argument to complete is still empty
+        res += ['*']
+    return res
 
 class control_shell(cmd.Cmd):
     """The little command line brought when a SIGINT is received"""
@@ -126,14 +138,14 @@ class control_shell(cmd.Cmd):
         return complete_toggle_shells(text, line, True)
 
     def do_enable(self, command):
-        """Enable sending commands to the specified shells"""
+        """Enable sending commands to the specified shells, * for all shells"""
         toggle_shells(command, True)
 
     def complete_disable(self, text, line, begidx, endidx):
         return complete_toggle_shells(text, line, False)
 
     def do_disable(self, command):
-        """Disable sending commands to the specified shells"""
+        """Disable sending commands to the specified shells, * for all shells"""
         toggle_shells(command, False)
 
     def postcmd(self, stop, line):
