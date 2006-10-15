@@ -22,8 +22,8 @@ STATE_NAMES = ['not_started', 'idle', 'expecting_next_line',
 
 def all_instances():
     for i in asyncore.socket_map.itervalues():
-            if isinstance(i, remote_dispatcher):
-                yield i
+        if isinstance(i, remote_dispatcher):
+            yield i
 
 def count_completed_processes():
     completed_processes = 0
@@ -91,7 +91,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.active = False
         self.enabled = False
         if self.options.abort_error:
-                raise asyncore.ExitNow
+            raise asyncore.ExitNow
 
     def dispatch_termination(self):
         if not self.termination:
