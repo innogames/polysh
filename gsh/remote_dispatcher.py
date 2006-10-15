@@ -133,7 +133,12 @@ class remote_dispatcher(buffered_dispatcher):
             self.disconnect()
             return
         self.log('==> ' + new_data, debug=True)
-        lf_pos = self.read_buffer.find('\n')
+        lf_pos = new_data.find('\n')
+        if lf_pos >= 0:
+            # Optimization: we knew there were no '\n' in the previous read
+            # buffer, so we searched only in the new_data and we offset the
+            # found index by the length of the previous buffer
+            lf_pos += len(self.read_buffer) - len(new_data)
         limit = buffered_dispatcher.MAX_BUFFER_SIZE / 10
         if lf_pos < 0 and len(self.read_buffer) > limit:
             lf_pos = limit
