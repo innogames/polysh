@@ -126,12 +126,14 @@ class control_shell(cmd.Cmd):
         return complete_toggle_shells(text, line, True)
 
     def do_enable(self, command):
+        """Enable sending commands to the specified shells"""
         toggle_shells(command, True)
 
     def complete_disable(self, text, line, begidx, endidx):
         return complete_toggle_shells(text, line, False)
 
     def do_disable(self, command):
+        """Disable sending commands to the specified shells"""
         toggle_shells(command, False)
 
     def postcmd(self, stop, line):
