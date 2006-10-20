@@ -63,7 +63,7 @@ class control_shell(cmd.Cmd):
         self.options = options
 
     def launch(self):
-        if not sys.stdin.isatty():
+        if not self.options.interactive:
             # A Ctrl-C was issued in a non-interactive gsh => exit
             sys.exit(1)
         self.stop = False

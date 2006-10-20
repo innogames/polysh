@@ -80,6 +80,12 @@ class remote_dispatcher(buffered_dispatcher):
         self.state = STATE_NOT_STARTED
         self.termination = None
         self.set_prompt()
+        if options.command:
+            self.dispatch_write(options.command + '\n')
+            self.dispatch_termination()
+            self.options.interactive = False
+        else:
+            self.options.interactive = sys.stdin.isatty()
 
     def launch_ssh(self, options, name):
         if options.ssh_shell_cmd:
@@ -154,7 +160,7 @@ class remote_dispatcher(buffered_dispatcher):
         while lf_pos >= 0:
             line = self.read_buffer[:lf_pos]
             if self.prompt in line:
-                if sys.stdin.isatty():
+                if self.options.interactive:
                     self.change_state(STATE_IDLE)
                 else:
                     self.change_state(STATE_EXPECTING_NEXT_LINE)

@@ -32,6 +32,9 @@ def parse_cmdline():
                                                         (sys.version.split()[0])
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
+    parser.add_option('--command', type='str', dest='command', default=None,
+                      help='command to execute on the remote shells',
+                      metavar='CMD')
     parser.add_option('--ssh-exec', type='str', dest='ssh_exec', default=None,
                       help='path to the ssh command [ssh]', metavar='FILE')
     parser.add_option('--ssh-shell-cmd', type='str', dest='ssh_shell_cmd',
@@ -73,7 +76,8 @@ def main():
     locale.setlocale(locale.LC_ALL, '')
     options, args = parse_cmdline()
     control_shell.make_singleton(options)
-    stdin_reader(options)
+    if not options.command:
+        stdin_reader(options)
 
     if options.log_dir:
         try:
