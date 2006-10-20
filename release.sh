@@ -12,6 +12,7 @@ hg archive "$TEMPDIR/$PACKAGE-$VERSION"
 DIR="$PWD"
 cd "$TEMPDIR"
 rm "$PACKAGE-$VERSION/release.sh"
+rm "$PACKAGE-$VERSION"/.hg*
 tar czf "$DIR/dist/$PACKAGE-$VERSION.tar.gz" "$PACKAGE-$VERSION"
 tar cjf "$DIR/dist/$PACKAGE-$VERSION.tar.bz2" "$PACKAGE-$VERSION"
 cd "$PACKAGE-$VERSION"
