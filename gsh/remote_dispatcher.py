@@ -61,7 +61,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.pid, fd = pty.fork()
         if self.pid == 0:
             # Child
-            os.execlp(options.ssh, options.ssh, name)
+            self.launch_ssh(options, name)
             sys.exit(1)
         # Parent
         buffered_dispatcher.__init__(self, fd, name)
@@ -80,6 +80,15 @@ class remote_dispatcher(buffered_dispatcher):
         self.state = STATE_NOT_STARTED
         self.termination = None
         self.set_prompt()
+
+    def launch_ssh(self, options, name):
+        if options.ssh_shell_cmd:
+            shell = os.environ.get('SHELL', '/bin/sh')
+            exec_args = (shell, '-c', '%s %s' % (options.ssh_shell_cmd, name))
+        else:
+            exe = options.ssh_exec or 'ssh'
+            exec_args = (exe, name)
+        os.execlp(exec_args[0], *exec_args)
 
     def change_state(self, state):
         self.log('state => %s\n' % (STATE_NAMES[state]), debug=True)

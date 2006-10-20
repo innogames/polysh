@@ -32,8 +32,11 @@ def parse_cmdline():
                                                         (sys.version.split()[0])
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
-    parser.add_option('--ssh', type='str', dest='ssh', default='ssh',
-                      help='ssh command to use [ssh]')
+    parser.add_option('--ssh-exec', type='str', dest='ssh_exec', default=None,
+                      help='path to the ssh command [ssh]', metavar='FILE')
+    parser.add_option('--ssh-shell-cmd', type='str', dest='ssh_shell_cmd',
+                      default=None, help='shell command used to launch ssh',
+                      metavar='CMD')
     parser.add_option('--print-first', action='store_true', dest='print_first',
                       help='print first line [by default all lines]')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
@@ -44,6 +47,10 @@ def parse_cmdline():
     options, args = parser.parse_args()
     if not args:
         parser.error('no hosts given')
+
+    if options.ssh_exec and options.ssh_shell:
+        parser.error('--ssh-exec and --ssh-shell-cmd are mutually exclusive')
+
     return options, args
 
 def main_loop():
