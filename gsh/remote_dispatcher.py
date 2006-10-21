@@ -20,6 +20,7 @@ import asyncore
 import os
 import pty
 import random
+import signal
 import sys
 
 from gsh.buffered_dispatcher import buffered_dispatcher
@@ -125,6 +126,11 @@ class remote_dispatcher(buffered_dispatcher):
         self.enabled = False
         if self.options.abort_error:
             raise asyncore.ExitNow
+
+    def reconnect(self):
+        os.kill(self.pid, signal.SIGKILL)
+        self.close()
+        remote_dispatcher(self.options, self.name)
 
     def dispatch_termination(self):
         if not self.termination:

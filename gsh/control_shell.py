@@ -55,7 +55,6 @@ def complete_shells(text, line, predicate):
     from gsh import remote_dispatcher
     given = line.split()[1:]
     res = [i.name for i in remote_dispatcher.all_instances() if \
-                i.active and \
                 i.name.startswith(text) and \
                 predicate(i) and \
                 i.name not in given]
@@ -162,7 +161,7 @@ class control_shell(cmd.Cmd):
         send_termios_char(termios.VSUSP)
 
     def complete_enable(self, text, line, begidx, endidx):
-        return complete_shells(text, line, lambda shell: not shell.enabled)
+        return complete_shells(text, line, lambda i: i.active and not i.enabled)
 
     def do_enable(self, command):
         """
@@ -172,7 +171,7 @@ class control_shell(cmd.Cmd):
         toggle_shells(command, True)
 
     def complete_disable(self, text, line, begidx, endidx):
-        return complete_shells(text, line, lambda shell: shell.enabled)
+        return complete_shells(text, line, lambda i: i.active and i.enabled)
 
     def do_disable(self, command):
         """
@@ -180,6 +179,26 @@ class control_shell(cmd.Cmd):
         * ? and [] work as expected
         """
         toggle_shells(command, False)
+
+    def complete_reconnect(self, text, line, begidx, endidx):
+        return complete_shells(text, line, lambda i: not i.active)
+
+    def do_reconnect(self, command):
+        """
+        Try to reconnect to the specified remote shells that have been
+        disconnected
+        """
+        from gsh import remote_dispatcher
+        for pattern in command.split():
+            found = False
+            for i in remote_dispatcher.all_instances():
+                if fnmatch(i.name, pattern):
+                    found = True
+                    if not i.active:
+                        i.reconnect()
+            if not found:
+                print pattern, 'not found'
+        
 
     def postcmd(self, stop, line):
         return self.stop
