@@ -41,13 +41,18 @@ def send_termios_char(char):
 
 def toggle_shells(command, enable):
     from gsh import remote_dispatcher
+    for i in selected_shells(command):
+        if i.active:
+            i.enabled = enable
+
+def selected_shells(command):
+    from gsh import remote_dispatcher
     for pattern in command.split():
         found = False
         for i in remote_dispatcher.all_instances():
             if fnmatch(i.name, pattern):
                 found = True
-                if i.active:
-                    i.enabled = enable
+                yield i
         if not found:
             print pattern, 'not found'
 
@@ -189,16 +194,9 @@ class control_shell(cmd.Cmd):
         disconnected
         """
         from gsh import remote_dispatcher
-        for pattern in command.split():
-            found = False
-            for i in remote_dispatcher.all_instances():
-                if fnmatch(i.name, pattern):
-                    found = True
-                    if not i.active:
-                        i.reconnect()
-            if not found:
-                print pattern, 'not found'
-        
+        for i in selected_shells(command):
+            if not i.active:
+                i.reconnect()        
 
     def postcmd(self, stop, line):
         return self.stop
