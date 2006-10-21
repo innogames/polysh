@@ -85,11 +85,15 @@ class control_shell(cmd.Cmd):
 
     # We do this just to have 'help' in the 'Documented commands'
     def do_help(self, command):
-        """List available commands"""
+        """
+        List available commands
+        """
         return cmd.Cmd.do_help(self, command)
 
     def do_list(self, command):
-        """List all remote shells and their states"""
+        """
+        List all remote shells and their states
+        """
         from gsh import remote_dispatcher
         nr_active = nr_dead = 0
         instances = []
@@ -104,53 +108,75 @@ class control_shell(cmd.Cmd):
                ('\n'.join(instances), nr_active, nr_dead, nr_active + nr_dead)
 
     def do_continue(self, command):
-        """Go back to gsh"""
+        """
+        Go back to gsh
+        """
         self.stop = True
 
     def do_EOF(self, command):
-        """Go back to gsh"""
+        """
+        Go back to gsh
+        """
         return self.do_continue(command)
 
     def do_quit(self, command):
-        """Quit gsh"""
+        """
+        Quit gsh
+        """
         sys.exit(0)
 
     def do_get_print_first(self, command):
-        """Check whether we only print the first line for each command output"""
+        """
+        Check whether we only print the first line for each command output
+        """
         print 'print_first = ' + str(not not self.options.print_first)
 
     def do_set_print_first(self, command):
-        """Print only the first line for each command output"""
+        """
+        Print only the first line for each command output
+        """
         self.options.print_first = True
 
     def do_unset_print_first(self, command):
-        """Print all lines for each command output"""
+        """
+        Print all lines for each command output
+        """
         self.options.print_first = False
 
     def do_send_sigint(self, command):
-        """Send a Ctrl-C to all remote shells"""
+        """
+        Send a Ctrl-C to all remote shells
+        """
         send_termios_char(termios.VINTR)
 
     def do_send_eof(self, command):
-        """Send a Ctrl-D to all remote shells"""
+        """
+        Send a Ctrl-D to all remote shells
+        """
         send_termios_char(termios.VEOF)
 
     def do_send_sigtstp(self, command):
-        """Send a Ctrl-Z to all remote shells"""
+        """
+        Send a Ctrl-Z to all remote shells
+        """
         send_termios_char(termios.VSUSP)
 
     def complete_enable(self, text, line, begidx, endidx):
         return complete_toggle_shells(text, line, True)
 
     def do_enable(self, command):
-        """Enable sending commands to the specified shells, * for all shells"""
+        """
+        Enable sending commands to the specified shells, * for all shells
+        """
         toggle_shells(command, True)
 
     def complete_disable(self, text, line, begidx, endidx):
         return complete_toggle_shells(text, line, False)
 
     def do_disable(self, command):
-        """Disable sending commands to the specified shells, * for all shells"""
+        """
+        Disable sending commands to the specified shells, * for all shells
+        """
         toggle_shells(command, False)
 
     def postcmd(self, stop, line):
