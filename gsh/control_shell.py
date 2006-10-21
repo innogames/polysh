@@ -166,7 +166,8 @@ class control_shell(cmd.Cmd):
 
     def do_enable(self, command):
         """
-        Enable sending commands to the specified shells, * for all shells
+        Enable sending commands to the specified shells
+        * ? and [] work as expected
         """
         toggle_shells(command, True)
 
@@ -175,7 +176,8 @@ class control_shell(cmd.Cmd):
 
     def do_disable(self, command):
         """
-        Disable sending commands to the specified shells, * for all shells
+        Disable sending commands to the specified shells
+        * ? and [] work as expected
         """
         toggle_shells(command, False)
 
