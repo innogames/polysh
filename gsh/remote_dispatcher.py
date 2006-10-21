@@ -55,9 +55,13 @@ def count_completed_processes():
     return completed_processes, total
 
 def all_terminated():
+    """For each remote shell we determine if its terminated by checking if
+    it is in the right state or if it requested termination but will never
+    received the acknowledgement"""
     for i in all_instances():
-        if i.enabled and i.state != STATE_TERMINATED:
-            return False
+        if i.state != STATE_TERMINATED:
+            if i.enabled or not i.termination:
+                return False
     return True
 
 def format_info(info_list):
