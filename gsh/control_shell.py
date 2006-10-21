@@ -77,10 +77,9 @@ class control_shell(cmd.Cmd):
             sys.exit(1)
         self.stop = False
         set_stdin_blocking(True)
-        intro = sys.argv[0] + ' command line'
         while True:
             try:
-                cmd.Cmd.cmdloop(self, intro)
+                cmd.Cmd.cmdloop(self, 'Control shell')
             except KeyboardInterrupt:
                 pass
             else:
