@@ -19,6 +19,7 @@
 import cmd
 import sys
 import termios
+from fnmatch import fnmatch
 
 from gsh.console import set_stdin_blocking
 
@@ -40,38 +41,24 @@ def send_termios_char(char):
 
 def toggle_shells(command, enable):
     from gsh import remote_dispatcher
-    for name in command.split():
-        if name == '*':
-            for i in remote_dispatcher.all_instances():
+    for pattern in command.split():
+        found = False
+        for i in remote_dispatcher.all_instances():
+            if fnmatch(i.name, pattern):
+                found = True
                 if i.active:
                     i.enabled = enable
-        else:
-            for i in remote_dispatcher.all_instances():
-                if name == i.name:
-                    if not i.active:
-                        print name, 'is not active'
-                    elif i.enabled == enable:
-                        print 'nothing to do for', name
-                    else:
-                        i.enabled = enable
-                    break
-            else:
-                print name, 'not found'
+        if not found:
+            print pattern, 'not found'
 
 def complete_toggle_shells(text, line, enable):
     from gsh import remote_dispatcher
     given = line.split()[1:]
-    if '*' in given:
-        # No more completion as 'all' shells have been selected
-        return []
     res = [i.name for i in remote_dispatcher.all_instances() if \
                 i.active and \
                 i.name.startswith(text) and \
                 i.enabled != enable and \
                 i.name not in given]
-    if not text:
-        # Show '*' only if the argument to complete is still empty
-        res += ['*']
     return res
 
 class control_shell(cmd.Cmd):
