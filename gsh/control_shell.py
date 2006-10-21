@@ -196,7 +196,7 @@ class control_shell(cmd.Cmd):
         from gsh import remote_dispatcher
         for i in selected_shells(command):
             if not i.active:
-                i.reconnect()        
+                i.reconnect()
 
     def postcmd(self, stop, line):
         return self.stop
