@@ -51,13 +51,13 @@ def toggle_shells(command, enable):
         if not found:
             print pattern, 'not found'
 
-def complete_toggle_shells(text, line, enable):
+def complete_shells(text, line, predicate):
     from gsh import remote_dispatcher
     given = line.split()[1:]
     res = [i.name for i in remote_dispatcher.all_instances() if \
                 i.active and \
                 i.name.startswith(text) and \
-                i.enabled != enable and \
+                predicate(i) and \
                 i.name not in given]
     return res
 
@@ -162,7 +162,7 @@ class control_shell(cmd.Cmd):
         send_termios_char(termios.VSUSP)
 
     def complete_enable(self, text, line, begidx, endidx):
-        return complete_toggle_shells(text, line, True)
+        return complete_shells(text, line, lambda shell: not shell.enabled)
 
     def do_enable(self, command):
         """
@@ -172,7 +172,7 @@ class control_shell(cmd.Cmd):
         toggle_shells(command, True)
 
     def complete_disable(self, text, line, begidx, endidx):
-        return complete_toggle_shells(text, line, False)
+        return complete_shells(text, line, lambda shell: shell.enabled)
 
     def do_disable(self, command):
         """
