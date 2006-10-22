@@ -79,7 +79,7 @@ class control_shell(cmd.Cmd):
         set_stdin_blocking(True)
         while True:
             try:
-                cmd.Cmd.cmdloop(self, 'Control shell')
+                cmd.Cmd.cmdloop(self, '\n')
             except KeyboardInterrupt:
                 pass
             else:
