@@ -17,6 +17,7 @@
 # Copyright (c) 2006 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import asyncore
+import errno
 import sys
 import traceback
 
@@ -63,11 +64,21 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def handle_read(self):
         """Some data can be read"""
-        new_data = self.recv(4096)
-        self.read_buffer += new_data
         if len(self.read_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
             raise buffered_dispatcher.BufferTooLarge
-        return new_data
+        new_data = ''
+        while True:
+            try:
+                piece = self.recv(4096)
+            except OSError, e:
+                if e.errno == errno.EAGAIN:
+                    piece = None
+                else:
+                    raise
+            if not piece:
+                self.read_buffer += new_data
+                return new_data
+            new_data += piece
 
     def writable(self):
         """Do we have something to write?"""
@@ -80,6 +91,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def dispatch_write(self, buf):
         """Augment the buffer with stuff to write when possible"""
-        self.write_buffer += buf
         if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
             raise buffered_dispatcher.BufferTooLarge
+        self.write_buffer += buf
