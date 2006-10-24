@@ -20,7 +20,6 @@ import asyncore
 import sys
 import traceback
 
-from gsh import control_shell
 from gsh.console import set_stdin_blocking
 
 class buffered_dispatcher(asyncore.file_dispatcher):
@@ -47,8 +46,8 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         try:
             raise t
         except KeyboardInterrupt:
-            control_shell.singleton.launch()
-            return False
+            # The main loop will launch the control shell
+            raise
         except OSError:
             return True
         except:
