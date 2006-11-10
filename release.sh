@@ -18,5 +18,4 @@ tar cjf "$DIR/dist/$PACKAGE-$VERSION.tar.bz2" "$PACKAGE-$VERSION"
 cd "$PACKAGE-$VERSION"
 ./setup.py bdist_rpm
 mv "dist/$PACKAGE-$VERSION-1."{noarch,src}.rpm "$DIR/dist"
-cd "$DIR"
 rm -fr "$TEMPDIR"
