@@ -75,7 +75,7 @@ def format_info(info_list):
             orig_str = str(info[str_id])
             indent = max_lengths[str_id] - len(orig_str)
             info[str_id] = orig_str + indent * ' '
-        info_list[info_id] = " ".join(info)
+        info_list[info_id] = ' '.join(info)
 
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
