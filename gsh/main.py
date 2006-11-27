@@ -27,9 +27,9 @@ import signal
 import sys
 
 from gsh import remote_dispatcher
-from gsh.console import show_prompt, watch_window_size
+from gsh.console import show_status, watch_window_size
 from gsh import control_shell
-from gsh.stdin_reader import stdin_reader
+from gsh.stdin import the_stdin_thread
 
 def kill_all():
     """When gsh quits, we kill all the remote shells we started"""
@@ -78,12 +78,17 @@ def main_loop():
     while True:
         try:
             while True:
+                completed, total = remote_dispatcher.count_completed_processes()
+                if not the_stdin_thread.ready_event.isSet():
+                    show_status(completed, total)
+                if completed and completed == total:
+                    the_stdin_thread.ready_event.set()
                 if remote_dispatcher.all_terminated():
                     raise asyncore.ExitNow
-                show_prompt()
                 asyncore.loop(count=1)
         except KeyboardInterrupt:
             control_shell.launch()
+            
         except asyncore.ExitNow:
             sys.exit(0)
         else:
@@ -94,14 +99,14 @@ def main():
     locale.setlocale(locale.LC_ALL, '')
     options, args = parse_cmdline()
     control_shell.make_singleton(options)
-    if not options.command:
-        stdin_reader(options)
 
     if options.log_dir:
         try:
             os.mkdir(options.log_dir)
         except OSError:
             pass # The dir already exists
+
+    the_stdin_thread.activate(not options.command)
 
     atexit.register(kill_all)
     for host in args:

@@ -17,11 +17,12 @@
 # Copyright (c) 2006 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import cmd
+import os
 import sys
 import termios
 from fnmatch import fnmatch
 
-from gsh.console import set_stdin_blocking
+from gsh.stdin import the_stdin_thread
 
 # The controlling shell, accessible with Ctrl-C
 singleton = None
@@ -65,6 +66,15 @@ def complete_shells(text, line, predicate):
                 i.name not in given]
     return res
 
+def interrupt_stdin_thread():
+    if the_stdin_thread.ready_event.isSet():
+        dupped_stdin = os.dup(0)
+        null_fd = os.open('/dev/null', os.O_RDONLY)
+        the_stdin_thread.interrupted_event.clear()
+        os.dup2(null_fd, 0)
+        the_stdin_thread.interrupted_event.wait()
+        os.dup2(dupped_stdin, 0)
+
 class control_shell(cmd.Cmd):
     """The little command line brought when a SIGINT is received"""
     def __init__(self, options):
@@ -76,7 +86,7 @@ class control_shell(cmd.Cmd):
             # A Ctrl-C was issued in a non-interactive gsh => exit
             sys.exit(1)
         self.stop = False
-        set_stdin_blocking(True)
+        interrupt_stdin_thread()
         while True:
             try:
                 cmd.Cmd.cmdloop(self, '\n')
@@ -84,7 +94,6 @@ class control_shell(cmd.Cmd):
                 pass
             else:
                 return
-        set_stdin_blocking(False)
 
     # We do this just to have 'help' in the 'Documented commands'
     def do_help(self, command):
