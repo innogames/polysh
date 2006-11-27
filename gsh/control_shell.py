@@ -70,9 +70,13 @@ def interrupt_stdin_thread():
     if the_stdin_thread.ready_event.isSet():
         dupped_stdin = os.dup(0)
         null_fd = os.open('/dev/null', os.O_RDONLY)
+        assert not the_stdin_thread.wants_control_shell
+        the_stdin_thread.wants_control_shell = True
         os.dup2(null_fd, 0)
         the_stdin_thread.interrupted_event.wait()
+        the_stdin_thread.wants_control_shell = False
         os.dup2(dupped_stdin, 0)
+        
 
 class control_shell(cmd.Cmd):
     """The little command line brought when a SIGINT is received"""

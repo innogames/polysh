@@ -50,7 +50,8 @@ class pipe_notification_reader(asyncore.file_dispatcher):
 
     def handle_read(self):
         # Drain the pipe, which must not be very large
-        self.recv(4096)
+        if 'q' in self.recv(4096):
+            raise asyncore.ExitNow
         try:
             self.recv(4096)
         except OSError, e:
@@ -79,6 +80,7 @@ class stdin_thread(Thread):
             the_stdin_thread.interrupted_event = Event()
             the_stdin_thread.commands = command_buffer()
             the_stdin_thread.pipe_read, the_stdin_thread.pipe_write = os.pipe()
+            the_stdin_thread.wants_control_shell = False
             the_stdin_thread.setDaemon(True)
             the_stdin_thread.start()
             pipe_notification_reader()
@@ -93,8 +95,12 @@ class stdin_thread(Thread):
             try:
                 cmd = raw_input('> ')
             except EOFError:
-                self.ready_event.clear()
-                self.interrupted_event.set()
+                if self.wants_control_shell:
+                    self.ready_event.clear()
+                    self.interrupted_event.set()
+                else:
+                    os.write(self.pipe_write, 'q')
+                    return
             else:
                 self.ready_event.clear()
                 self.commands.add_cmd(cmd)
