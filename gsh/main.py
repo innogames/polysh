@@ -88,7 +88,6 @@ def main_loop():
                 asyncore.loop(count=1)
         except KeyboardInterrupt:
             control_shell.launch()
-            
         except asyncore.ExitNow:
             sys.exit(0)
         else:
