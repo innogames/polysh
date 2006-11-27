@@ -70,7 +70,6 @@ def interrupt_stdin_thread():
     if the_stdin_thread.ready_event.isSet():
         dupped_stdin = os.dup(0)
         null_fd = os.open('/dev/null', os.O_RDONLY)
-        the_stdin_thread.interrupted_event.clear()
         os.dup2(null_fd, 0)
         the_stdin_thread.interrupted_event.wait()
         os.dup2(dupped_stdin, 0)

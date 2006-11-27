@@ -88,6 +88,7 @@ class stdin_thread(Thread):
     def run(self):
         while True:
             self.ready_event.wait()
+            self.interrupted_event.clear()
             print
             try:
                 cmd = raw_input('> ')
