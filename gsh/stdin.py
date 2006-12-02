@@ -36,7 +36,7 @@ def restore_streams_flags_at_exit():
 class stdin_dispatcher(asyncore.file_dispatcher):
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, 0)
-        self.is_readable = False
+        self.is_readable = True
 
     def readable(self):
         return self.is_readable
@@ -53,11 +53,16 @@ class stdin_dispatcher(asyncore.file_dispatcher):
                 data = self.recv(4096)
             except OSError, e:
                 if e.errno == errno.EAGAIN:
-                    return
+                    break
                 else:
                     raise
             else:
-                the_stdin_thread.input_buffer.add(data)
+                if data:
+                    the_stdin_thread.input_buffer.add(data)
+                    process_input_buffer()
+                else:
+                    self.is_readable = False
+                    break
 
 class input_buffer(object):
     def __init__(self):
@@ -70,7 +75,7 @@ class input_buffer(object):
             self.buf += data
         finally:
             self.lock.release()
-            os.write(the_stdin_thread.pipe_write, 'd')
+            
 
     def get(self):
         self.lock.acquire()
@@ -81,6 +86,16 @@ class input_buffer(object):
                 return data
         finally:
             self.lock.release()
+
+def process_input_buffer():
+    data = the_stdin_thread.input_buffer.get()
+    if not data:
+        return
+    for r in remote_dispatcher.all_instances():
+        r.dispatch_write(data)
+        r.log('<== ' + data)
+        if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
+            r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
 
 # Pipe character protocol:
 # s: entering in raw_input, the main loop should not read stdin
@@ -98,14 +113,7 @@ class pipe_notification_reader(asyncore.file_dispatcher):
         elif c == 'q':
             remote_dispatcher.dispatch_termination_to_all()
         elif c == 'd':
-            data = the_stdin_thread.input_buffer.get()
-            if not data:
-                return
-            for r in remote_dispatcher.all_instances():
-                r.dispatch_write(data)
-                r.log('<== ' + data)
-                if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
-                    r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
+            process_input_buffer()
         else:
             raise Exception, 'Unknown code: %s' % (c)
 
@@ -162,6 +170,7 @@ class stdin_thread(Thread):
             else:
                 self.ready_event.clear()
                 self.input_buffer.add(cmd + '\n')
+                os.write(self.pipe_write, 'd')
 
 the_stdin_thread = stdin_thread()
 the_stdin_dispatcher = stdin_dispatcher()
