@@ -158,10 +158,10 @@ class remote_dispatcher(buffered_dispatcher):
 
     def dispatch_termination(self):
         if not self.termination:
-            term1 = '[gsh termination ' + str(random.random())[2:]
-            term2 = str(random.random())[2:] + ']'
-            self.termination = term1 + term2
-            self.dispatch_write('echo "%s""%s"\n' % (term1, term2))
+            self.term1 = '[gsh termination ' + str(random.random())[2:]
+            self.term2 = str(random.random())[2:] + ']'
+            self.termination = self.term1 + self.term2
+            self.dispatch_write('echo "%s""%s"\n' % (self.term1, self.term2))
             if self.state != STATE_NOT_STARTED:
                 self.change_state(STATE_EXPECTING_NEXT_LINE)
 
@@ -215,6 +215,8 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.termination and self.termination in line:
                 self.change_state(STATE_TERMINATED)
                 self.disconnect()
+            elif self.termination and self.term1 in line and self.term2 in line:
+                pass
             elif self.state == STATE_EXPECTING_NEXT_LINE:
                 self.change_state(STATE_EXPECTING_LINE)
             elif self.state != STATE_NOT_STARTED:
