@@ -18,6 +18,8 @@
 
 import cmd
 import os
+from readline import get_current_history_length, get_history_item
+from readline import add_history, clear_history
 import sys
 import termios
 from fnmatch import fnmatch
@@ -75,12 +77,23 @@ def interrupt_stdin_thread():
         the_stdin_thread.wants_control_shell = False
         os.dup2(dupped_stdin, 0)
 
+def switch_readline_history(new_histo):
+    """Alternate between the command line history from the remote shells (gsh)
+    and the control shell"""
+    xhisto = xrange(1, get_current_history_length() + 1)
+    prev_histo = map(get_history_item, xhisto)
+    clear_history()
+    for line in new_histo:
+        add_history(line)
+    return prev_histo
+
 class control_shell(cmd.Cmd):
     """The little command line brought when a SIGINT is received"""
     def __init__(self, options):
         cmd.Cmd.__init__(self)
         self.options = options
         self.prompt = '[ctrl]> '
+        self.history = []
 
     def launch(self):
         if not self.options.interactive:
@@ -89,6 +102,7 @@ class control_shell(cmd.Cmd):
         self.stop = False
         interrupt_stdin_thread()
         set_blocking_stdin(True)
+        gsh_histo = switch_readline_history(self.history)
         try:
             while True:
                 try:
@@ -98,6 +112,7 @@ class control_shell(cmd.Cmd):
                 else:
                     break
         finally:
+            self.history = switch_readline_history(gsh_histo)
             set_blocking_stdin(False)
 
     # We do this just to have 'help' in the 'Documented commands'
