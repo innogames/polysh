@@ -157,6 +157,10 @@ class stdin_thread(Thread):
                     os.write(self.pipe_write, 's')
                     nr = remote_dispatcher.count_completed_processes()[0]
                     cmd = raw_input('gsh (%d)> ' % (nr))
+                    if self.wants_control_shell:
+                        # This seems to be needed if Ctrl-C is hit when some
+                        # text is in the line buffer
+                        raise EOFError
                 finally:
                     set_blocking_stdin(False)
                     os.write(self.pipe_write, 'e')
