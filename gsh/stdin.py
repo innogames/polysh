@@ -99,12 +99,13 @@ class pipe_notification_reader(asyncore.file_dispatcher):
             remote_dispatcher.dispatch_termination_to_all()
         elif c == 'd':
             data = the_stdin_thread.input_buffer.get()
-            if data:
-                for r in remote_dispatcher.all_instances():
-                    r.dispatch_write(data)
-                    r.log('<== ' + data)
-                    if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
-                        r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
+            if not data:
+                return
+            for r in remote_dispatcher.all_instances():
+                r.dispatch_write(data)
+                r.log('<== ' + data)
+                if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
+                    r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
         else:
             raise Exception, 'Unknown code: %s' % (c)
 
