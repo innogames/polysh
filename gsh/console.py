@@ -25,6 +25,24 @@ import termios
 
 from gsh.terminal_size import terminal_size
 
+stdin_is_blocking_counter = 0
+
+def set_blocking_stdin(blocking):
+    """stdin and stdout may be dup(2)ed streams. So when we print to
+    stdout, we have to ensure stdin is in non-blocking mode"""
+    global stdin_is_blocking_counter
+    flags = fcntl.fcntl(0, fcntl.F_GETFL, 0)
+    if blocking:
+        stdin_is_blocking_counter += 1
+        if stdin_is_blocking_counter == 1:
+            flags = flags & ~os.O_NONBLOCK
+    else:
+        stdin_is_blocking_counter -= 1
+        if stdin_is_blocking_counter == 0:
+            flags = flags | os.O_NONBLOCK
+    fcntl.fcntl(0, fcntl.F_SETFL, flags)
+
+
 # We remember the status in order
 # to clear it with as many ' ' characters
 last_status = None
@@ -36,31 +54,43 @@ def console_output(msg, output=sys.stdout):
         status_length = len(last_status)
     else:
         status_length = 0
-    print >> output, '\r', status_length * ' ', '\r', msg,
+    set_blocking_stdin(True)
+    try:
+        print >> output, '\r', status_length * ' ', '\r', msg,
+    finally:
+        set_blocking_stdin(False)
     last_status = None
 
 def show_status(completed, total):
     """The status is '[available shells/alive shells]'"""
-    status = '\r[available: %d total: %d]\r' % (completed, total)
+    status = '\r[%d/%d]> ' % (completed, total)
     global last_status
     if last_status != status:
         console_output(status)
         last_status = status
-        # We flush because there is no '\n' but a '\r'
-        sys.stdout.flush()
+        set_blocking_stdin(True)
+        try:
+            # We flush because there is no '\n' but a '\r'
+            sys.stdout.flush()
+        finally:
+            set_blocking_stdin(False)
 
 def watch_window_size():
     """Detect when the window size changes, and propagate the new size to the
     remote shells"""
     def sigwinch(unused_signum, unused_frame):
         from gsh import remote_dispatcher
-        h, w = terminal_size()
-        # python bug http://python.org/sf/1112949 on amd64
-        # from ajaxterm.py
-        bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
-        packed_size = struct.pack('HHHH', w, h, 0, 0)
-        for i in remote_dispatcher.all_instances():
-            if i.enabled:
-                fcntl.ioctl(i.fd, bug, packed_size)
+        set_blocking_stdin(True)
+        try:
+            h, w = terminal_size()
+            # python bug http://python.org/sf/1112949 on amd64
+            # from ajaxterm.py
+            bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
+            packed_size = struct.pack('HHHH', w, h, 0, 0)
+            for i in remote_dispatcher.all_instances():
+                if i.enabled:
+                    fcntl.ioctl(i.fd, bug, packed_size)
+        finally:
+            set_blocking_stdin(False)
     sigwinch(None, None)
     signal.signal(signal.SIGWINCH, sigwinch)

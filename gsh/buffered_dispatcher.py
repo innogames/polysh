@@ -21,6 +21,8 @@ import errno
 import sys
 import traceback
 
+from gsh.console import set_blocking_stdin
+
 class buffered_dispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
     read buffer to permit line oriented manipulations"""
@@ -50,8 +52,12 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         except OSError:
             return True
         except:
-            print t, v
-            traceback.print_tb(tb)
+            set_blocking_stdin(True)
+            try:
+                print t, v
+                traceback.print_tb(tb)
+            finally:
+                set_blocking_stdin(False)
             return True
 
     def handle_expt(self):

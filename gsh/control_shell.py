@@ -22,7 +22,9 @@ import sys
 import termios
 from fnmatch import fnmatch
 
+from gsh.console import set_blocking_stdin
 from gsh.stdin import the_stdin_thread
+from gsh import remote_dispatcher
 
 # The controlling shell, accessible with Ctrl-C
 singleton = None
@@ -35,19 +37,16 @@ def launch():
     return singleton.launch()
 
 def send_termios_char(char):
-    from gsh import remote_dispatcher
     for i in remote_dispatcher.all_instances():
         c = termios.tcgetattr(i.fd)[6][char]
         i.dispatch_write(c)
 
 def toggle_shells(command, enable):
-    from gsh import remote_dispatcher
     for i in selected_shells(command):
         if i.active:
             i.enabled = enable
 
 def selected_shells(command):
-    from gsh import remote_dispatcher
     for pattern in command.split():
         found = False
         for i in remote_dispatcher.all_instances():
@@ -58,7 +57,6 @@ def selected_shells(command):
             print pattern, 'not found'
 
 def complete_shells(text, line, predicate):
-    from gsh import remote_dispatcher
     given = line.split()[1:]
     res = [i.name for i in remote_dispatcher.all_instances() if \
                 i.name.startswith(text) and \
@@ -83,6 +81,7 @@ class control_shell(cmd.Cmd):
     def __init__(self, options):
         cmd.Cmd.__init__(self)
         self.options = options
+        self.prompt = '[ctrl]> '
 
     def launch(self):
         if not self.options.interactive:
@@ -90,13 +89,17 @@ class control_shell(cmd.Cmd):
             sys.exit(1)
         self.stop = False
         interrupt_stdin_thread()
-        while True:
-            try:
-                cmd.Cmd.cmdloop(self, '\n')
-            except KeyboardInterrupt:
-                pass
-            else:
-                return
+        set_blocking_stdin(True)
+        try:
+            while True:
+                try:
+                    cmd.Cmd.cmdloop(self, '\n')
+                except KeyboardInterrupt:
+                    pass
+                else:
+                    break
+        finally:
+            set_blocking_stdin(False)
 
     # We do this just to have 'help' in the 'Documented commands'
     def do_help(self, command):
@@ -109,7 +112,6 @@ class control_shell(cmd.Cmd):
         """
         List all remote shells and their states
         """
-        from gsh import remote_dispatcher
         nr_active = nr_dead = 0
         instances = []
         for i in remote_dispatcher.all_instances():
@@ -204,7 +206,6 @@ class control_shell(cmd.Cmd):
         Try to reconnect to the specified remote shells that have been
         disconnected
         """
-        from gsh import remote_dispatcher
         for i in selected_shells(command):
             if not i.active:
                 i.reconnect()

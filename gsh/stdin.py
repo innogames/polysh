@@ -17,57 +17,107 @@
 # Copyright (c) 2006 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import asyncore
+import atexit
 import errno
+import fcntl
 import os
 import readline # Just to say we want to use it with raw_input
 from threading import Thread, Event, Lock
 
 from gsh import remote_dispatcher
+from gsh.console import set_blocking_stdin, console_output
 
-class command_buffer(object):
+def restore_streams_flags_at_exit():
+    get_flags = lambda fd: (fd, fcntl.fcntl(fd, fcntl.F_GETFL, 0))
+    flags = map(get_flags, range(3))
+    set_flags = lambda (fd, flags): fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+    atexit.register(map, set_flags, flags)
+
+class stdin_dispatcher(asyncore.file_dispatcher):
+    def __init__(self):
+        asyncore.file_dispatcher.__init__(self, 0)
+        self.is_readable = False
+
+    def readable(self):
+        return self.is_readable
+
+    def writable(self):
+        return False
+
+    def handle_close(self):
+        remote_dispatcher.dispatch_termination_to_all()
+
+    def handle_read(self):
+        while True:
+            try:
+                data = self.recv(4096)
+            except OSError, e:
+                if e.errno == errno.EAGAIN:
+                    return
+                else:
+                    raise
+            else:
+                the_stdin_thread.input_buffer.add(data)
+
+class input_buffer(object):
     def __init__(self):
         self.lock = Lock()
-        self.commands = []
+        self.buf = ''
 
-    def add_cmd(self, cmd):
+    def add(self, data):
         self.lock.acquire()
         try:
-            self.commands.append(cmd)
+            self.buf += data
+        finally:
+            self.lock.release()
+            os.write(the_stdin_thread.pipe_write, 'd')
+
+    def get(self):
+        self.lock.acquire()
+        try:
+            data = self.buf
+            if data:
+                self.buf = ''
+                return data
         finally:
             self.lock.release()
 
-    def get_cmd(self):
-        self.lock.acquire()
-        try:
-            if self.commands:
-                return self.commands.pop()
-        finally:
-            self.lock.release()
+# Pipe character protocol:
+# s: entering in raw_input, the main loop should not read stdin
+# e: leaving raw_input, the main loop can read stdin
+# q: Ctrl-D was pressed, exiting
+# d: there is new data to send
 
 class pipe_notification_reader(asyncore.file_dispatcher):
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, the_stdin_thread.pipe_read)
 
-    def handle_read(self):
-        # Drain the pipe, which must not be very large
-        if 'q' in self.recv(4096):
-            raise asyncore.ExitNow
-        try:
-            self.recv(4096)
-        except OSError, e:
-            ok = e.errno == errno.EAGAIN
-        assert ok
+    def _do(self, c):
+        if c in ('s', 'e'):
+            the_stdin_dispatcher.is_readable = c == 'e'
+        elif c == 'q':
+            remote_dispatcher.dispatch_termination_to_all()
+        elif c == 'd':
+            data = the_stdin_thread.input_buffer.get()
+            if data:
+                for r in remote_dispatcher.all_instances():
+                    r.dispatch_write(data)
+                    r.log('<== ' + data)
+                    if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
+                        r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
+        else:
+            raise Exception, 'Unknown code: %s' % (c)
 
+    def handle_read(self):
         while True:
-            cmd = the_stdin_thread.commands.get_cmd()
-            if not cmd:
-                break
-            cmd += '\n'
-            for r in remote_dispatcher.all_instances():
-                r.dispatch_write(cmd)
-                r.log('<== ' + cmd)
-                if r.enabled and r.state != remote_dispatcher.STATE_NOT_STARTED:
-                    r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
+            try:
+                c = self.recv(1)
+            except OSError, e:
+                ok = e.errno == errno.EAGAIN
+                assert ok
+                return
+            else:
+                self._do(c)
 
 class stdin_thread(Thread):
     def __init__(self):
@@ -78,7 +128,7 @@ class stdin_thread(Thread):
         the_stdin_thread.ready_event = Event()
         if interactive:
             the_stdin_thread.interrupted_event = Event()
-            the_stdin_thread.commands = command_buffer()
+            the_stdin_thread.input_buffer = input_buffer()
             the_stdin_thread.pipe_read, the_stdin_thread.pipe_write = os.pipe()
             the_stdin_thread.wants_control_shell = False
             the_stdin_thread.setDaemon(True)
@@ -91,9 +141,16 @@ class stdin_thread(Thread):
         while True:
             self.ready_event.wait()
             self.interrupted_event.clear()
-            print
+            console_output('\r')
+            set_blocking_stdin(True)
             try:
-                cmd = raw_input('> ')
+                try:
+                    os.write(self.pipe_write, 's')
+                    nr = remote_dispatcher.count_completed_processes()[0]
+                    cmd = raw_input('gsh (%d)> ' % (nr))
+                finally:
+                    set_blocking_stdin(False)
+                    os.write(self.pipe_write, 'e')
             except EOFError:
                 if self.wants_control_shell:
                     self.ready_event.clear()
@@ -103,7 +160,7 @@ class stdin_thread(Thread):
                     return
             else:
                 self.ready_event.clear()
-                self.commands.add_cmd(cmd)
-                os.write(self.pipe_write, '1')
+                self.input_buffer.add(cmd + '\n')
 
 the_stdin_thread = stdin_thread()
+the_stdin_dispatcher = stdin_dispatcher()
