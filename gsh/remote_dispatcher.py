@@ -22,6 +22,7 @@ import pty
 import random
 import signal
 import sys
+import time
 
 from gsh.buffered_dispatcher import buffered_dispatcher
 from gsh.console import console_output
@@ -53,6 +54,21 @@ def count_completed_processes():
             if i.state == STATE_IDLE:
                 completed_processes += 1
     return completed_processes, total
+
+def handle_unfinished_lines():
+    for r in all_instances():
+        if r.read_buffer:
+            break
+    else:
+        # No unfinished lines
+        return
+
+    begin = time.time()
+    asyncore.loop(count=1,timeout=0.2)
+    duration = time.time() - begin
+    if duration >= 0.15:
+        for r in all_instances():
+            r.print_unfinished_line()
 
 def dispatch_termination_to_all():
     for r in all_instances():
@@ -211,6 +227,15 @@ class remote_dispatcher(buffered_dispatcher):
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
             lf_pos = self.read_buffer.find('\n')
+
+    def print_unfinished_line(self):
+        if self.state in (STATE_EXPECTING_LINE, STATE_RUNNING):
+            if not self.options.print_first or \
+               self.state == STATE_EXPECTING_LINE:
+                    line = self.read_buffer + '\n'
+                    self.read_buffer = ''
+                    self.log(line)
+                    console_output(self.name + ': ' + line)
 
     def writable(self):
         return self.active and buffered_dispatcher.writable(self)

@@ -85,7 +85,8 @@ def main_loop():
                     show_status(completed, total)
                 if remote_dispatcher.all_terminated():
                     raise asyncore.ExitNow
-                asyncore.loop(count=1)
+                asyncore.loop(count=1, timeout=None)
+                remote_dispatcher.handle_unfinished_lines()
         except KeyboardInterrupt:
             control_shell.launch()
         except asyncore.ExitNow:
