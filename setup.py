@@ -3,8 +3,11 @@
 import os
 from setuptools import setup, find_packages
 
+news_file = file('NEWS')
+version = news_file.readline().strip()
+
 setup(name='gsh',
-      version='0.1',
+      version=version,
       description='Group Shell',
       long_description=
 '''gsh is used to launch several remote shells on many machines at the same
