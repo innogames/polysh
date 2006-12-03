@@ -128,6 +128,13 @@ class pipe_notification_reader(asyncore.file_dispatcher):
             else:
                 self._do(c)
 
+history_words = set()
+
+def complete(text, state):
+    matches = [w for w in history_words if w.startswith(text)]
+    if state <= len(matches):
+        return matches[state]
+
 class stdin_thread(Thread):
     def __init__(self):
         Thread.__init__(self, name='stdin thread')
@@ -156,11 +163,16 @@ class stdin_thread(Thread):
                 try:
                     os.write(self.pipe_write, 's')
                     nr = remote_dispatcher.count_completed_processes()[0]
+                    readline.set_completer(complete)
+                    readline.parse_and_bind('tab: complete')
+                    readline.set_completer_delims(' \t\n')
                     cmd = raw_input('gsh (%d)> ' % (nr))
                     if self.wants_control_shell:
                         # This seems to be needed if Ctrl-C is hit when some
                         # text is in the line buffer
                         raise EOFError
+                    if len(history_words) < 10000:
+                        history_words.update(cmd.split())
                 finally:
                     set_blocking_stdin(False)
                     os.write(self.pipe_write, 'e')
