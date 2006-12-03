@@ -80,8 +80,10 @@ def main_loop():
             while True:
                 completed, total = remote_dispatcher.count_completed_processes()
                 if completed == total:
+                    # Time to use raw_input() in the stdin thread
                     the_stdin_thread.ready_event.set()
                 if not the_stdin_thread.ready_event.isSet():
+                    # Otherwise, just print the status
                     show_status(completed, total)
                 if remote_dispatcher.all_terminated():
                     raise asyncore.ExitNow

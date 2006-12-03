@@ -43,8 +43,7 @@ def set_blocking_stdin(blocking):
     fcntl.fcntl(0, fcntl.F_SETFL, flags)
 
 
-# We remember the status in order
-# to clear it with as many ' ' characters
+# We remember the last printed status in order to clear it with ' ' characters
 last_status = None
 
 def console_output(msg, output=sys.stdout):
@@ -62,7 +61,7 @@ def console_output(msg, output=sys.stdout):
     last_status = None
 
 def show_status(completed, total):
-    """The status is '[available shells/alive shells]'"""
+    """The status is '[available shells/alive shells]>'"""
     status = '\r[%d/%d]> ' % (completed, total)
     global last_status
     if last_status != status:

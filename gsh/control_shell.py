@@ -32,23 +32,28 @@ from gsh import remote_dispatcher
 singleton = None
 
 def make_singleton(options):
+    """Prepate the control shell at initialization time"""
     global singleton
     singleton = control_shell(options)
 
 def launch():
+    """Ctrl-C was pressed"""
     return singleton.launch()
 
 def send_termios_char(char):
+    """Used to send a special character to all processes"""
     for i in remote_dispatcher.all_instances():
         c = termios.tcgetattr(i.fd)[6][char]
         i.dispatch_write(c)
 
 def toggle_shells(command, enable):
+    """Enable or disable the specified shells"""
     for i in selected_shells(command):
         if i.active:
             i.enabled = enable
 
 def selected_shells(command):
+    """Iterator over the shells with names matching the patterns"""
     for pattern in command.split():
         found = False
         for i in remote_dispatcher.all_instances():
@@ -59,6 +64,7 @@ def selected_shells(command):
             print pattern, 'not found'
 
 def complete_shells(text, line, predicate):
+    """Return the shell names to include in the completion"""
     given = line.split()[1:]
     res = [i.name for i in remote_dispatcher.all_instances() if \
                 i.name.startswith(text) and \
@@ -67,21 +73,22 @@ def complete_shells(text, line, predicate):
     return res
 
 def interrupt_stdin_thread():
+    """The stdin thread may be in raw_input(), get out of it"""
     if the_stdin_thread.ready_event.isSet():
-        dupped_stdin = os.dup(0)
-        null_fd = os.open('/dev/null', os.O_RDONLY)
+        dupped_stdin = os.dup(0) # Backup the stdin fd
+        null_fd = os.open('/dev/null', os.O_RDONLY) # The temporary new stdin
         assert not the_stdin_thread.wants_control_shell
-        the_stdin_thread.wants_control_shell = True
-        os.dup2(null_fd, 0)
-        the_stdin_thread.interrupted_event.wait()
+        the_stdin_thread.wants_control_shell = True # Not user triggered
+        os.dup2(null_fd, 0) # This will make raw_input() return
+        the_stdin_thread.interrupted_event.wait() # Wait for this return
         the_stdin_thread.wants_control_shell = False
-        os.dup2(dupped_stdin, 0)
+        os.dup2(dupped_stdin, 0) # Restore stdin
 
 def switch_readline_history(new_histo):
     """Alternate between the command line history from the remote shells (gsh)
     and the control shell"""
-    xhisto = xrange(1, get_current_history_length() + 1)
-    prev_histo = map(get_history_item, xhisto)
+    xhisto_idx = xrange(1, get_current_history_length() + 1)
+    prev_histo = map(get_history_item, xhisto_idx)
     clear_history()
     for line in new_histo:
         add_history(line)

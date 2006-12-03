@@ -67,6 +67,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                 piece = self.recv(4096)
             except OSError, e:
                 if e.errno == errno.EAGAIN:
+                    # End of the available data
                     piece = None
                 else:
                     raise

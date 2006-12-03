@@ -41,11 +41,13 @@ STATE_NAMES = ['not_started', 'idle', 'expecting_next_line',
                 'expecting_line', 'running', 'terminated']
 
 def all_instances():
+    """Iterator over all the remote_dispatcher instances"""
     for i in asyncore.socket_map.itervalues():
         if isinstance(i, remote_dispatcher):
             yield i
 
 def count_completed_processes():
+    """Return a tuple with the number of ready processes and the total number"""
     completed_processes = 0
     total = 0
     for i in all_instances():
@@ -56,6 +58,8 @@ def count_completed_processes():
     return completed_processes, total
 
 def handle_unfinished_lines():
+    """Typically we print only lines with a '\n', but if some buffers keep an
+    unfinished line for some time we'll add an artificial '\n'"""
     for r in all_instances():
         if r.read_buffer:
             break
@@ -71,13 +75,14 @@ def handle_unfinished_lines():
             r.print_unfinished_line()
 
 def dispatch_termination_to_all():
+    """Start the termination procedure in all remote shells"""
     for r in all_instances():
         r.dispatch_termination()
 
 def all_terminated():
     """For each remote shell we determine if its terminated by checking if
     it is in the right state or if it requested termination but will never
-    received the acknowledgement"""
+    receive the acknowledgement"""
     for i in all_instances():
         if i.state != STATE_TERMINATED:
             if i.enabled or not i.termination:
@@ -85,6 +90,8 @@ def all_terminated():
     return True
 
 def format_info(info_list):
+    """Turn a 2-dimension list of strings into a 1-dimension list of strings
+    with correct spacing"""
     info_list.sort(key=lambda i:int(i[1][3:]))
     max_lengths = []
     for i in xrange(len(info_list[0])):
@@ -131,6 +138,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.options.interactive = sys.stdin.isatty()
 
     def launch_ssh(self, options, name):
+        """Launch the ssh command in the child process"""
         if options.ssh_shell_cmd:
             shell = os.environ.get('SHELL', '/bin/sh')
             exec_args = (shell, '-c', '%s %s' % (options.ssh_shell_cmd, name))
@@ -140,10 +148,12 @@ class remote_dispatcher(buffered_dispatcher):
         os.execlp(exec_args[0], *exec_args)
 
     def change_state(self, state):
+        """Change the state of the remote process, logging the change"""
         self.log('state => %s\n' % (STATE_NAMES[state]), debug=True)
         self.state = state
 
     def disconnect(self):
+        """We are no more interested in this remote process"""
         self.read_buffer = ''
         self.write_buffer = ''
         self.active = False
@@ -152,11 +162,14 @@ class remote_dispatcher(buffered_dispatcher):
             raise asyncore.ExitNow
 
     def reconnect(self):
+        """Relaunch and reconnect to this same remote process"""
         os.kill(self.pid, signal.SIGKILL)
         self.close()
         remote_dispatcher(self.options, self.name)
 
     def dispatch_termination(self):
+        """Start the termination procedure on this remote process, using the
+        same trick as the prompt to hide it"""
         if not self.termination:
             self.term1 = '[gsh termination ' + str(random.random())[2:]
             self.term2 = str(random.random())[2:] + ']'
@@ -166,6 +179,9 @@ class remote_dispatcher(buffered_dispatcher):
                 self.change_state(STATE_EXPECTING_NEXT_LINE)
 
     def set_prompt(self):
+        """The prompt is important because we detect the readyness of a process
+        by waiting for its prompt. The prompt is built in two parts for it not
+        to appear in its building"""
         # No right prompt
         self.dispatch_write('RPS1=\n')
         self.dispatch_write('RPROMPT=\n')
@@ -176,16 +192,18 @@ class remote_dispatcher(buffered_dispatcher):
         self.dispatch_write('PS1="%s""%s\n"\n' % (prompt1, prompt2))
 
     def readable(self):
-        # When self.active is set to False we are no more interested in reading
+        """We are always interested in reading from active remote processes"""
         return self.active
 
     def handle_error(self):
+        """An exception may or may not lead to a disconnection"""
         if buffered_dispatcher.handle_error(self):
             console_output('Error talking to %s\n ' % (self.name), sys.stderr)
             self.disconnect()
 
     def handle_read(self):
-        """We got some output from a remote shell"""
+        """We got some output from a remote shell, this is one of the state
+        machine"""
         if not self.active:
             return
         try:
@@ -204,8 +222,10 @@ class remote_dispatcher(buffered_dispatcher):
             lf_pos += len(self.read_buffer) - len(new_data)
         limit = buffered_dispatcher.MAX_BUFFER_SIZE / 10
         if lf_pos < 0 and len(self.read_buffer) > limit:
+            # A large unfinished line is treated as a complete line
             lf_pos = limit
         while lf_pos >= 0:
+            # For each line in the buffer
             line = self.read_buffer[:lf_pos]
             if self.prompt in line:
                 if self.options.interactive:
@@ -216,6 +236,7 @@ class remote_dispatcher(buffered_dispatcher):
                 self.change_state(STATE_TERMINATED)
                 self.disconnect()
             elif self.termination and self.term1 in line and self.term2 in line:
+                # Just ignore this line
                 pass
             elif self.state == STATE_EXPECTING_NEXT_LINE:
                 self.change_state(STATE_EXPECTING_LINE)
@@ -231,6 +252,7 @@ class remote_dispatcher(buffered_dispatcher):
             lf_pos = self.read_buffer.find('\n')
 
     def print_unfinished_line(self):
+        """The unfinished line stayed long enough in the buffer to be printed"""
         if self.state in (STATE_EXPECTING_LINE, STATE_RUNNING):
             if not self.options.print_first or \
                self.state == STATE_EXPECTING_LINE:
@@ -240,18 +262,22 @@ class remote_dispatcher(buffered_dispatcher):
                     console_output(self.name + ': ' + line)
 
     def writable(self):
+        """Do we want to write something?"""
         return self.active and buffered_dispatcher.writable(self)
 
     def log(self, buf, debug=False):
+        """Log some information, either to a file or on the console"""
         if self.log_file is None:
             if debug and self.options.debug:
                 state = STATE_NAMES[self.state]
                 console_output('[dbg] %s[%s]: %s' % (self.name, state, buf))
         else:
+            # None != False, that's why we use 'not'
             if (not debug) == (not self.options.debug):
                 os.write(self.log_file, buf)
 
     def get_info(self):
+        """Return a list will all information available about this process"""
         if self.active:
             state = STATE_NAMES[self.state]
         else:
@@ -264,6 +290,7 @@ class remote_dispatcher(buffered_dispatcher):
                 'enabled:%s' % (str(self.enabled)), state]
 
     def dispatch_write(self, buf):
+        """There is new stuff to write when possible"""
         if self.active and self.enabled:
             self.log('<== ' + buf, debug=True)
             try:

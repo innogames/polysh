@@ -27,49 +27,63 @@ from threading import Thread, Event, Lock
 from gsh import remote_dispatcher
 from gsh.console import set_blocking_stdin, console_output
 
+# Handling of stdin is certainly the most complex part of gsh
+
 def restore_streams_flags_at_exit():
+    """We play we fcntl flags, so we make sure to restore them on exit"""
     get_flags = lambda fd: (fd, fcntl.fcntl(fd, fcntl.F_GETFL, 0))
     flags = map(get_flags, range(3))
     set_flags = lambda (fd, flags): fcntl.fcntl(fd, fcntl.F_SETFL, flags)
     atexit.register(map, set_flags, flags)
 
 class stdin_dispatcher(asyncore.file_dispatcher):
+    """The stdin reader in the main thread => no fancy editing"""
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, 0)
         self.is_readable = True
 
     def readable(self):
+        """We set it to be readable only when the stdin thread is not in
+        raw_input()"""
         return self.is_readable
 
     def writable(self):
+        """We don't write to stdin"""
         return False
 
     def handle_close(self):
+        """Ctrl-D was received but the remote processes were not ready"""
         remote_dispatcher.dispatch_termination_to_all()
 
     def handle_read(self):
+        """Some data can be read on stdin"""
         while True:
             try:
                 data = self.recv(4096)
             except OSError, e:
                 if e.errno == errno.EAGAIN:
+                    # End of available data
                     break
                 else:
                     raise
             else:
                 if data:
+                    # Handle the just read data
                     the_stdin_thread.input_buffer.add(data)
                     process_input_buffer()
                 else:
+                    # Closed?
                     self.is_readable = False
                     break
 
 class input_buffer(object):
+    """The shared input buffer between the main thread and the stdin thread"""
     def __init__(self):
         self.lock = Lock()
         self.buf = ''
 
     def add(self, data):
+        """Add data to the buffer"""
         self.lock.acquire()
         try:
             self.buf += data
@@ -78,6 +92,7 @@ class input_buffer(object):
             
 
     def get(self):
+        """Get the content of the buffer"""
         self.lock.acquire()
         try:
             data = self.buf
@@ -88,6 +103,8 @@ class input_buffer(object):
             self.lock.release()
 
 def process_input_buffer():
+    """Send the content of the input buffer to all remote processes, this must
+    be called in the main thread"""
     data = the_stdin_thread.input_buffer.get()
     if not data:
         return
@@ -97,6 +114,8 @@ def process_input_buffer():
         if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
             r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
 
+# The stdin thread uses a pipe to communicate with the main thread, which is
+# most of the time waiting in the select() loop.
 # Pipe character protocol:
 # s: entering in raw_input, the main loop should not read stdin
 # e: leaving raw_input, the main loop can read stdin
@@ -104,6 +123,7 @@ def process_input_buffer():
 # d: there is new data to send
 
 class pipe_notification_reader(asyncore.file_dispatcher):
+    """The pipe reader in the main thread"""
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, the_stdin_thread.pipe_read)
 
@@ -118,6 +138,7 @@ class pipe_notification_reader(asyncore.file_dispatcher):
             raise Exception, 'Unknown code: %s' % (c)
 
     def handle_read(self):
+        """Handle all the available character commands in the pipe"""
         while True:
             try:
                 c = self.recv(1)
@@ -128,19 +149,23 @@ class pipe_notification_reader(asyncore.file_dispatcher):
             else:
                 self._do(c)
 
+# All the words that have been typed in gsh. Used by the completion mechanism.
 history_words = set()
 
 def complete(text, state):
+    """On tab press, return the next possible completion"""
     matches = [w for w in history_words if w.startswith(text)]
     if state <= len(matches):
         return matches[state]
 
 class stdin_thread(Thread):
+    """The stdin thread, used to call raw_input()"""
     def __init__(self):
         Thread.__init__(self, name='stdin thread')
 
     @staticmethod
     def activate(interactive):
+        """Activate the thread at initialization time"""
         the_stdin_thread.ready_event = Event()
         if interactive:
             the_stdin_thread.interrupted_event = Event()
@@ -156,6 +181,7 @@ class stdin_thread(Thread):
     def run(self):
         while True:
             self.ready_event.wait()
+            # The remote processes are ready, the thread can call raw_input
             self.interrupted_event.clear()
             console_output('\r')
             set_blocking_stdin(True)
@@ -179,6 +205,8 @@ class stdin_thread(Thread):
             except EOFError:
                 if self.wants_control_shell:
                     self.ready_event.clear()
+                    # Ok, we are no more in raw_input(), tell it to the
+                    # main thread
                     self.interrupted_event.set()
                 else:
                     os.write(self.pipe_write, 'q')
