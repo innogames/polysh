@@ -50,14 +50,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
             # The main loop will launch the control shell
             raise
         except OSError:
-            return True
-        except:
-            set_blocking_stdin(True)
-            try:
-                print t, v
-                traceback.print_tb(tb)
-            finally:
-                set_blocking_stdin(False)
+            # I/O error, let the parent take action
             return True
 
     def handle_expt(self):
