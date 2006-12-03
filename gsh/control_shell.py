@@ -231,6 +231,18 @@ class control_shell(cmd.Cmd):
         for host in command.split():
             remote_dispatcher.remote_dispatcher(self.options, host)
 
+    def do_delete_disabled(self, command):
+        """
+        Delete remote processes that are disabled, in order to have a shorter
+        list
+        """
+        to_delete = []
+        for i in remote_dispatcher.all_instances():
+            if not i.enabled:
+                to_delete.append(i)
+        for i in to_delete:
+            i.close()
+
     def postcmd(self, stop, line):
         return self.stop
 
