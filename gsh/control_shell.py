@@ -224,6 +224,13 @@ class control_shell(cmd.Cmd):
             if not i.active:
                 i.reconnect()
 
+    def do_add(self, command):
+        """
+        Add a remote shell
+        """
+        for host in command.split():
+            remote_dispatcher.remote_dispatcher(self.options, host)
+
     def postcmd(self, stop, line):
         return self.stop
 
