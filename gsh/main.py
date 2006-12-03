@@ -79,7 +79,7 @@ def main_loop():
         try:
             while True:
                 completed, total = remote_dispatcher.count_completed_processes()
-                if completed and completed == total:
+                if completed == total:
                     the_stdin_thread.ready_event.set()
                 if not the_stdin_thread.ready_event.isSet():
                     show_status(completed, total)
