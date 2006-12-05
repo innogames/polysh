@@ -58,6 +58,8 @@ def parse_cmdline():
     parser.add_option('--ssh-shell-cmd', type='str', dest='ssh_shell_cmd',
                       default=None, help='shell command used to launch ssh',
                       metavar='CMD')
+    parser.add_option('--quick-sh', action='store_true', dest='quick_sh',
+                      help='Do not launch a full ssh session',)
     parser.add_option('--print-first', action='store_true', dest='print_first',
                       help='print first line [by default all lines]')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
@@ -69,8 +71,15 @@ def parse_cmdline():
     if not args:
         parser.error('no hosts given')
 
-    if options.ssh_exec and options.ssh_shell_cmd:
-        parser.error('--ssh-exec and --ssh-shell-cmd are mutually exclusive')
+    nr = (options.ssh_exec and 1 or 0) + \
+         (options.ssh_shell_cmd and 1 or 0) + \
+         (options.quick_sh and 1 or 0)
+    if nr > 1:
+        parser.error('--ssh-exec, --ssh-shell-cmd and --quick-sh are\n'
+                     'mutually exclusive')
+
+    if options.quick_sh:
+        options.ssh_shell_cmd = 'ssh -t %(host)s sh'
 
     return options, args
 
