@@ -69,7 +69,7 @@ def parse_cmdline():
     if not args:
         parser.error('no hosts given')
 
-    if options.ssh_exec and options.ssh_shell:
+    if options.ssh_exec and options.ssh_shell_cmd:
         parser.error('--ssh-exec and --ssh-shell-cmd are mutually exclusive')
 
     return options, args
