@@ -154,7 +154,8 @@ history_words = set()
 
 def complete(text, state):
     """On tab press, return the next possible completion"""
-    matches = [w for w in history_words if w.startswith(text)]
+    l = len(text)
+    matches = [w for w in history_words if len(w) > l and w.startswith(text)]
     if state <= len(matches):
         return matches[state]
 
@@ -198,7 +199,9 @@ class stdin_thread(Thread):
                         # text is in the line buffer
                         raise EOFError
                     if len(history_words) < 10000:
-                        history_words.update(cmd.split())
+                        for word in cmd.split():
+                            if len(word) > 1:
+                                history_words.add(word)
                 finally:
                     set_blocking_stdin(False)
                     os.write(self.pipe_write, 'e')
