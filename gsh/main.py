@@ -26,6 +26,12 @@ import os
 import signal
 import sys
 
+if sys.version.split()[0] < '2.4':
+        print >> sys.stderr, 'Your python version is too old (%s)' % \
+                                                        (sys.version.split()[0])
+        print >> sys.stderr, 'You need at least Python 2.4'
+        sys.exit(1)
+
 from gsh import remote_dispatcher
 from gsh.console import show_status, watch_window_size, set_blocking_stdin
 from gsh import control_shell
