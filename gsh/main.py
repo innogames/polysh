@@ -36,6 +36,7 @@ from gsh import remote_dispatcher
 from gsh.console import show_status, watch_window_size, set_blocking_stdin
 from gsh import control_shell
 from gsh.stdin import the_stdin_thread, restore_streams_flags_at_exit
+from gsh.host_syntax import expand_syntax
 
 def kill_all():
     """When gsh quits, we kill all the remote shells we started"""
@@ -122,8 +123,9 @@ def main():
             pass # The dir already exists
 
     atexit.register(kill_all)
-    for host in args:
-        remote_dispatcher.remote_dispatcher(options, host)
+    for arg in args:
+        for host in expand_syntax(arg):
+            remote_dispatcher.remote_dispatcher(options, host)
 
     watch_window_size()
 

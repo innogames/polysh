@@ -26,6 +26,7 @@ from fnmatch import fnmatch
 
 from gsh.console import set_blocking_stdin
 from gsh.stdin import the_stdin_thread
+from gsh.host_syntax import expand_syntax
 from gsh import remote_dispatcher
 
 # The controlling shell, accessible with Ctrl-C
@@ -56,10 +57,11 @@ def selected_shells(command):
     """Iterator over the shells with names matching the patterns"""
     for pattern in command.split():
         found = False
-        for i in remote_dispatcher.all_instances():
-            if fnmatch(i.name, pattern):
-                found = True
-                yield i
+        for expanded_pattern in expand_syntax(pattern):
+            for i in remote_dispatcher.all_instances():
+                if fnmatch(i.name, expanded_pattern):
+                    found = True
+                    yield i
         if not found:
             print pattern, 'not found'
 
