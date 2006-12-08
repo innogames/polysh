@@ -26,7 +26,7 @@ import os
 import signal
 import sys
 
-if sys.version.split()[0] < '2.4':
+if sys.hexversion < 0x02040000:
         print >> sys.stderr, 'Your python version is too old (%s)' % \
                                                         (sys.version.split()[0])
         print >> sys.stderr, 'You need at least Python 2.4'
