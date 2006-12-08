@@ -94,7 +94,11 @@ def format_info(info_list):
     with correct spacing"""
     info_list.sort(key=lambda i:int(i[1][3:]))
     max_lengths = []
-    for i in xrange(len(info_list[0])):
+    if info_list:
+        nr_columns = len(info_list[0])
+    else:
+        nr_columns = 0
+    for i in xrange(nr_columns):
         max_lengths.append(max([len(str(info[i])) for info in info_list]))
     for info_id in xrange(len(info_list)):
         info = info_list[info_id]
