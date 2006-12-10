@@ -85,6 +85,8 @@ def interrupt_stdin_thread():
         the_stdin_thread.interrupted_event.wait() # Wait for this return
         the_stdin_thread.wants_control_shell = False
         os.dup2(dupped_stdin, 0) # Restore stdin
+        os.close(dupped_stdin) # Cleanup
+        os.close(null_fd) # Cleanup
 
 def switch_readline_history(new_histo):
     """Alternate between the command line history from the remote shells (gsh)
