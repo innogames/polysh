@@ -33,10 +33,9 @@ class buffered_dispatcher(asyncore.file_dispatcher):
     class BufferTooLarge(Exception):
         pass
 
-    def __init__(self, fd, name):
+    def __init__(self, fd):
         asyncore.file_dispatcher.__init__(self, fd)
         self.fd = fd
-        self.name = name
         self.read_buffer = ''
         self.write_buffer = ''
 

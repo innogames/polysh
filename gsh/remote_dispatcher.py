@@ -46,6 +46,18 @@ def all_instances():
         if isinstance(i, remote_dispatcher):
             yield i
 
+def make_unique_name(name):
+    display_names = set([i.display_name for i in all_instances()])
+    candidate_name = name
+    if candidate_name in display_names:
+        i = 1
+        while True:
+            candidate_name = '%s#%d' % (name, i)
+            if candidate_name not in display_names:
+                break
+            i += 1
+    return candidate_name
+
 def count_completed_processes():
     """Return a tuple with the number of ready processes and the total number"""
     completed_processes = 0
@@ -111,15 +123,16 @@ def format_info(info_list):
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
 
-    def __init__(self, options, name):
+    def __init__(self, options, hostname):
         self.pid, fd = pty.fork()
         if self.pid == 0:
             # Child
-            self.launch_ssh(options, name)
+            self.launch_ssh(options, hostname)
             sys.exit(1)
         # Parent
-        buffered_dispatcher.__init__(self, fd, name)
-
+        self.hostname = hostname
+        self.display_name = make_unique_name(hostname)
+        buffered_dispatcher.__init__(self, fd)
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
         self.options = options
@@ -176,7 +189,7 @@ class remote_dispatcher(buffered_dispatcher):
         """Relaunch and reconnect to this same remote process"""
         os.kill(self.pid, signal.SIGKILL)
         self.close()
-        remote_dispatcher(self.options, self.name)
+        remote_dispatcher(self.options, self.hostname)
 
     def dispatch_termination(self):
         """Start the termination procedure on this remote process, using the
@@ -209,7 +222,8 @@ class remote_dispatcher(buffered_dispatcher):
     def handle_error(self):
         """An exception may or may not lead to a disconnection"""
         if buffered_dispatcher.handle_error(self):
-            console_output('Error talking to %s\n ' % (self.name), sys.stderr)
+            console_output('Error talking to %s\n ' % (self.display_name),
+                           sys.stderr)
             self.disconnect()
 
     def handle_read(self):
@@ -220,7 +234,7 @@ class remote_dispatcher(buffered_dispatcher):
         try:
             new_data = buffered_dispatcher.handle_read(self)
         except buffered_dispatcher.BufferTooLarge:
-            console_output('%s: read buffer too large\n' % (self.name),
+            console_output('%s: read buffer too large\n' % (self.display_name),
                            sys.stderr)
             self.disconnect()
             return
@@ -255,7 +269,7 @@ class remote_dispatcher(buffered_dispatcher):
                 self.log(line + '\n')
                 if not self.options.print_first or \
                    self.state == STATE_EXPECTING_LINE:
-                    console_output(self.name + ': ' + line + '\n')
+                    console_output(self.display_name + ': ' + line + '\n')
                     self.change_state(STATE_RUNNING)
 
             # Go to the next line in the buffer
@@ -270,7 +284,7 @@ class remote_dispatcher(buffered_dispatcher):
                     line = self.read_buffer + '\n'
                     self.read_buffer = ''
                     self.log(line)
-                    console_output(self.name + ': ' + line)
+                    console_output(self.display_name + ': ' + line)
 
     def writable(self):
         """Do we want to write something?"""
@@ -281,7 +295,8 @@ class remote_dispatcher(buffered_dispatcher):
         if self.log_file is None:
             if debug and self.options.debug:
                 state = STATE_NAMES[self.state]
-                console_output('[dbg] %s[%s]: %s' % (self.name, state, buf))
+                console_output('[dbg] %s[%s]: %s' %
+                                (self.display_name, state, buf))
         else:
             # None != False, that's why we use 'not'
             if (not debug) == (not self.options.debug):
@@ -294,7 +309,7 @@ class remote_dispatcher(buffered_dispatcher):
         else:
             state = ''
 
-        return [self.name, 'fd:%d' % (self.fd),
+        return [self.display_name, 'fd:%d' % (self.fd),
                 'r:%d' % (len(self.read_buffer)),
                 'w:%d' % (len(self.write_buffer)),
                 'active:%s' % (str(self.active)),
@@ -307,6 +322,7 @@ class remote_dispatcher(buffered_dispatcher):
             try:
                 buffered_dispatcher.dispatch_write(self, buf)
             except buffered_dispatcher.BufferTooLarge:
-                console_output('%s: write buffer too large\n' % (self.name),
+                console_output('%s: write buffer too large\n' %
+                                    (self.display_name),
                                sys.stderr)
                 self.disconnect()

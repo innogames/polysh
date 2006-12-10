@@ -59,7 +59,7 @@ def selected_shells(command):
         found = False
         for expanded_pattern in expand_syntax(pattern):
             for i in remote_dispatcher.all_instances():
-                if fnmatch(i.name, expanded_pattern):
+                if fnmatch(i.display_name, expanded_pattern):
                     found = True
                     yield i
         if not found:
@@ -68,10 +68,10 @@ def selected_shells(command):
 def complete_shells(text, line, predicate):
     """Return the shell names to include in the completion"""
     given = line.split()[1:]
-    res = [i.name for i in remote_dispatcher.all_instances() if \
-                i.name.startswith(text) and \
+    res = [i.display_name for i in remote_dispatcher.all_instances() if \
+                i.display_name.startswith(text) and \
                 predicate(i) and \
-                i.name not in given]
+                i.display_name not in given]
     return res
 
 def interrupt_stdin_thread():
