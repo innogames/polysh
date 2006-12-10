@@ -254,6 +254,16 @@ class control_shell(cmd.Cmd):
         for i in to_delete:
             i.close()
 
+    def do_rename(self, command):
+        """
+        Rename all enabled remote processes with the argument. The argument will
+        be shell expanded on the remote processes. With no argument, the
+        original hostname will be restored as the displayed name.
+        """
+        for i in remote_dispatcher.all_instances():
+            if i.enabled:
+                i.rename(command)
+
     def postcmd(self, stop, line):
         return self.stop
 

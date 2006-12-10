@@ -131,8 +131,8 @@ class remote_dispatcher(buffered_dispatcher):
             sys.exit(1)
         # Parent
         self.hostname = hostname
-        self.display_name = make_unique_name(hostname)
         buffered_dispatcher.__init__(self, fd)
+        self.change_name(hostname)
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
         self.options = options
@@ -147,6 +147,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.state = STATE_NOT_STARTED
         self.termination = None
         self.set_prompt()
+        self.pending_rename = None
         if options.command:
             self.dispatch_write(options.command + '\n')
             self.dispatch_termination()
@@ -263,6 +264,8 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.termination and self.term1 in line and self.term2 in line:
                 # Just ignore this line
                 pass
+            elif self.pending_rename and self.pending_rename in line:
+                self.received_rename(line)
             elif self.state == STATE_EXPECTING_NEXT_LINE:
                 self.change_state(STATE_EXPECTING_LINE)
             elif self.state != STATE_NOT_STARTED:
@@ -326,3 +329,24 @@ class remote_dispatcher(buffered_dispatcher):
                                     (self.display_name),
                                sys.stderr)
                 self.disconnect()
+
+    def change_name(self, name):
+        self.display_name = None
+        self.display_name = make_unique_name(name)
+
+    def rename(self, string):
+        previous_name = self.display_name
+        if string:
+            pending_rename1 = str(random.random())[2:] + ','
+            pending_rename2 = str(random.random())[2:] + ':'
+            self.pending_rename = pending_rename1 + pending_rename2
+            self.dispatch_write('echo "%s""%s" %s\n' %
+                                    (pending_rename1, pending_rename2, string))
+            self.change_state(STATE_EXPECTING_NEXT_LINE)
+        else:
+            self.change_name(self.hostname)
+
+    def received_rename(self, line):
+        new_name = line[len(self.pending_rename) + 1:-1]
+        self.change_name(new_name)
+        self.pending_rename = None
