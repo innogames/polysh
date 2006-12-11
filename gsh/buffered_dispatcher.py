@@ -29,9 +29,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
     # 1 MiB should be enough for everybody
     MAX_BUFFER_SIZE = 1 * 1024 * 1024
 
-    class BufferTooLarge(Exception):
-        pass
-
     def __init__(self, fd):
         asyncore.file_dispatcher.__init__(self, fd)
         self.fd = fd
@@ -56,10 +53,9 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def handle_read(self):
         """Some data can be read"""
-        if len(self.read_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
-            raise buffered_dispatcher.BufferTooLarge
         new_data = ''
-        while True:
+        buffer_length = len(self.read_buffer)
+        while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
             try:
                 piece = self.recv(4096)
             except OSError, e:
@@ -69,9 +65,11 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                 else:
                     raise
             if not piece:
-                self.read_buffer += new_data
-                return new_data
+                break
             new_data += piece
+            buffer_length += len(piece)
+        self.read_buffer += new_data
+        return new_data
 
     def writable(self):
         """Do we have something to write?"""
@@ -84,6 +82,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def dispatch_write(self, buf):
         """Augment the buffer with stuff to write when possible"""
-        if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
-            raise buffered_dispatcher.BufferTooLarge
         self.write_buffer += buf
+        if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
+            raise Exception, 'Buffer too big (%d)' % (len(self.write_buffer))

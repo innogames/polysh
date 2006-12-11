@@ -22,6 +22,7 @@ import errno
 import fcntl
 import os
 import readline # Just to say we want to use it with raw_input
+import sys
 from threading import Thread, Event, Lock
 
 from gsh import remote_dispatcher
@@ -109,10 +110,16 @@ def process_input_buffer():
     if not data:
         return
     for r in remote_dispatcher.all_instances():
-        r.dispatch_write(data)
-        r.log('<== ' + data)
-        if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
-            r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
+        try:
+            r.dispatch_write(data)
+        except Exception, msg:
+            console_output('%s for %s, disconnecting\n' % (msg, r.display_name),
+                           output=sys.stderr)
+            r.disconnect()
+        else:
+            r.log('<== ' + data)
+            if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
+                r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
 
 # The stdin thread uses a pipe to communicate with the main thread, which is
 # most of the time waiting in the select() loop.
@@ -168,9 +175,9 @@ class stdin_thread(Thread):
     def activate(interactive):
         """Activate the thread at initialization time"""
         the_stdin_thread.ready_event = Event()
+        the_stdin_thread.input_buffer = input_buffer()
         if interactive:
             the_stdin_thread.interrupted_event = Event()
-            the_stdin_thread.input_buffer = input_buffer()
             the_stdin_thread.pipe_read, the_stdin_thread.pipe_write = os.pipe()
             the_stdin_thread.wants_control_shell = False
             the_stdin_thread.setDaemon(True)

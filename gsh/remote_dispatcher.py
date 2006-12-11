@@ -232,13 +232,7 @@ class remote_dispatcher(buffered_dispatcher):
         machine"""
         if not self.active:
             return
-        try:
-            new_data = buffered_dispatcher.handle_read(self)
-        except buffered_dispatcher.BufferTooLarge:
-            console_output('%s: read buffer too large\n' % (self.display_name),
-                           sys.stderr)
-            self.disconnect()
-            return
+        new_data = buffered_dispatcher.handle_read(self)
         self.log('==> ' + new_data, debug=True)
         lf_pos = new_data.find('\n')
         if lf_pos >= 0:
@@ -322,13 +316,7 @@ class remote_dispatcher(buffered_dispatcher):
         """There is new stuff to write when possible"""
         if self.active and self.enabled:
             self.log('<== ' + buf, debug=True)
-            try:
-                buffered_dispatcher.dispatch_write(self, buf)
-            except buffered_dispatcher.BufferTooLarge:
-                console_output('%s: write buffer too large\n' %
-                                    (self.display_name),
-                               sys.stderr)
-                self.disconnect()
+            buffered_dispatcher.dispatch_write(self, buf)
 
     def change_name(self, name):
         self.display_name = None
