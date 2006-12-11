@@ -130,6 +130,7 @@ def _profile(continuation):
     stats.strip_dirs()
     stats.sort_stats('time', 'calls')
     stats.print_stats(40)
+    os.remove('gsh.prof')
 
 def main():
     """Launch gsh"""
