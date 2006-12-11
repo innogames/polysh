@@ -18,7 +18,6 @@
 
 import asyncore
 import errno
-import sys
 import traceback
 
 from gsh.console import set_blocking_stdin
@@ -42,9 +41,8 @@ class buffered_dispatcher(asyncore.file_dispatcher):
     def handle_error(self):
         """Handle the Ctrl-C or print the exception and its stack trace.
         Returns True if it was an actual error"""
-        t, v, tb = sys.exc_info()
         try:
-            raise t
+            raise
         except KeyboardInterrupt:
             # The main loop will launch the control shell
             raise
