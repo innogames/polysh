@@ -113,24 +113,25 @@ def main_loop():
             sys.exit(0)
 
 def _profile(continuation):
+    prof_file = 'gsh.prof'
     try:
         import cProfile
         import pstats
         print 'Profiling using cProfile'
-        cProfile.runctx('continuation()', globals(), locals(), 'gsh.prof')
-        stats = pstats.Stats('gsh.prof')
+        cProfile.runctx('continuation()', globals(), locals(), prof_file)
+        stats = pstats.Stats(prof_file)
     except ImportError:
         import hotshot
         import hotshot.stats
-        prof = hotshot.Profile('gsh.prof')
+        prof = hotshot.Profile(prof_file)
         print 'Profiling using hotshot'
         prof.runcall(continuation)
         prof.close()
-        stats = hotshot.stats.load('gsh.prof')
+        stats = hotshot.stats.load(prof_file)
     stats.strip_dirs()
     stats.sort_stats('time', 'calls')
     stats.print_stats(40)
-    os.remove('gsh.prof')
+    os.remove(prof_file)
 
 def main():
     """Launch gsh"""
