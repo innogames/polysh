@@ -73,6 +73,8 @@ def parse_cmdline():
                       help='abort if hosts are failing [by default ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
                       help='fill the logs with debug informations')
+    parser.add_option('--profile', action='store_true', dest='profile',
+                      default=False, help=optparse.SUPPRESS_HELP)
 
     options, args = parser.parse_args()
     if not args:
@@ -110,6 +112,25 @@ def main_loop():
         except asyncore.ExitNow:
             sys.exit(0)
 
+def _profile(continuation):
+    try:
+        import cProfile
+        import pstats
+        print 'Profiling using cProfile'
+        cProfile.runctx('continuation()', globals(), locals(), 'gsh.prof')
+        stats = pstats.Stats('gsh.prof')
+    except ImportError:
+        import hotshot
+        import hotshot.stats
+        prof = hotshot.Profile('gsh.prof')
+        print 'Profiling using hotshot'
+        prof.runcall(continuation)
+        prof.close()
+        stats = hotshot.stats.load('gsh.prof')
+    stats.strip_dirs()
+    stats.sort_stats('time', 'calls')
+    stats.print_stats(40)
+
 def main():
     """Launch gsh"""
     locale.setlocale(locale.LC_ALL, '')
@@ -132,4 +153,7 @@ def main():
     restore_streams_flags_at_exit()
     the_stdin_thread.activate(not options.command)
 
-    main_loop()
+    if options.profile:
+        _profile(main_loop)
+    else:
+        main_loop()
