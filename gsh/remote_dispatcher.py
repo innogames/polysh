@@ -65,7 +65,7 @@ def count_completed_processes():
     for i in all_instances():
         if i.enabled:
             total += 1
-            if i.state == STATE_IDLE:
+            if i.state is STATE_IDLE:
                 completed_processes += 1
     return completed_processes, total
 
@@ -96,7 +96,7 @@ def all_terminated():
     it is in the right state or if it requested termination but will never
     receive the acknowledgement"""
     for i in all_instances():
-        if i.state != STATE_TERMINATED:
+        if i.state is not STATE_TERMINATED:
             if i.enabled or not i.termination:
                 return False
     return True
@@ -200,7 +200,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.term2 = str(random.random())[2:] + ']'
             self.termination = self.term1 + self.term2
             self.dispatch_write('echo "%s""%s"\n' % (self.term1, self.term2))
-            if self.state != STATE_NOT_STARTED:
+            if self.state is not STATE_NOT_STARTED:
                 self.change_state(STATE_EXPECTING_NEXT_LINE)
 
     def set_prompt(self):
@@ -260,12 +260,12 @@ class remote_dispatcher(buffered_dispatcher):
                 pass
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
-            elif self.state == STATE_EXPECTING_NEXT_LINE:
+            elif self.state is STATE_EXPECTING_NEXT_LINE:
                 self.change_state(STATE_EXPECTING_LINE)
-            elif self.state != STATE_NOT_STARTED:
+            elif self.state is not STATE_NOT_STARTED:
                 self.log((line, '\n'))
                 if not self.options.print_first or \
-                   self.state == STATE_EXPECTING_LINE:
+                   self.state is STATE_EXPECTING_LINE:
                     console_output(self.display_name + ': ' + line + '\n')
                     self.change_state(STATE_RUNNING)
 
@@ -277,7 +277,7 @@ class remote_dispatcher(buffered_dispatcher):
         """The unfinished line stayed long enough in the buffer to be printed"""
         if self.state in (STATE_EXPECTING_LINE, STATE_RUNNING):
             if not self.options.print_first or \
-               self.state == STATE_EXPECTING_LINE:
+               self.state is STATE_EXPECTING_LINE:
                     line = self.read_buffer + '\n'
                     self.read_buffer = ''
                     self.log((line,))

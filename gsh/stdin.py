@@ -123,7 +123,7 @@ def process_input_buffer():
             r.disconnect()
         else:
             r.log(('<== ', data))
-            if r.enabled and r.state == remote_dispatcher.STATE_IDLE:
+            if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
                 r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
 
 # The stdin thread uses a pipe to communicate with the main thread, which is
