@@ -21,6 +21,7 @@ import os
 from readline import get_current_history_length, get_history_item
 from readline import add_history, clear_history
 import sys
+import tempfile
 import termios
 from fnmatch import fnmatch
 
@@ -74,19 +75,26 @@ def complete_shells(text, line, predicate):
                 i.display_name not in given]
     return res
 
+#
+# This file descriptor is used to interrupt readline in raw_input().
+# /dev/null is not enough as it does not get out of a 'Ctrl-R' reverse-i-search.
+# A simple '\n' seems to makes raw_input() return in all cases.
+tempfile_fd, tempfile_name = tempfile.mkstemp()
+os.remove(tempfile_name)
+os.write(tempfile_fd, '\n')
+
 def interrupt_stdin_thread():
     """The stdin thread may be in raw_input(), get out of it"""
     if the_stdin_thread.ready_event.isSet():
         dupped_stdin = os.dup(0) # Backup the stdin fd
-        null_fd = os.open('/dev/null', os.O_RDONLY) # The temporary new stdin
         assert not the_stdin_thread.wants_control_shell
         the_stdin_thread.wants_control_shell = True # Not user triggered
-        os.dup2(null_fd, 0) # This will make raw_input() return
+        os.lseek(fd, 0, 0) # Rewind in the temp file
+        os.dup2(fd, 0) # This will make raw_input() return
         the_stdin_thread.interrupted_event.wait() # Wait for this return
         the_stdin_thread.wants_control_shell = False
         os.dup2(dupped_stdin, 0) # Restore stdin
         os.close(dupped_stdin) # Cleanup
-        os.close(null_fd) # Cleanup
 
 def switch_readline_history(new_histo):
     """Alternate between the command line history from the remote shells (gsh)
