@@ -49,33 +49,41 @@ def set_blocking_stdin(blocking):
 # We remember the last printed status in order to clear it with ' ' characters
 last_status = None
 
+stdout_is_terminal = sys.stdout.isatty()
+
 def console_output(msg, output=sys.stdout):
     """Use instead of print, to clear the status information before printing"""
-    global last_status
-    if last_status:
-        status_length = len(last_status)
-    else:
-        status_length = 0
+    if stdout_is_terminal:
+        global last_status
+        if last_status:
+            status_length = len(last_status)
+        else:
+            status_length = 0
     set_blocking_stdin(True)
     try:
-        print >> output, '\r', status_length * ' ', '\r', msg,
+        if stdout_is_terminal:
+            print >> output, '\r', status_length * ' ', '\r', msg,
+        else:
+            print >> output, msg,
     finally:
         set_blocking_stdin(False)
-    last_status = None
+    if stdout_is_terminal:
+        last_status = None
 
 def show_status(completed, total):
     """The status is '[available shells/alive shells]>'"""
-    status = '\r[%d/%d]> ' % (completed, total)
-    global last_status
-    if last_status != status:
-        console_output(status)
-        last_status = status
-        set_blocking_stdin(True)
-        try:
-            # We flush because there is no '\n' but a '\r'
-            sys.stdout.flush()
-        finally:
-            set_blocking_stdin(False)
+    if stdout_is_terminal:
+        status = '[%d/%d]> ' % (completed, total)
+        global last_status
+        if last_status != status:
+            console_output(status)
+            last_status = status
+            set_blocking_stdin(True)
+            try:
+                # We flush because there is no '\n' but a '\r'
+                sys.stdout.flush()
+            finally:
+                set_blocking_stdin(False)
 
 def watch_window_size():
     """Detect when the window size changes, and propagate the new size to the

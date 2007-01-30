@@ -246,7 +246,7 @@ class remote_dispatcher(buffered_dispatcher):
             lf_pos = limit
         while lf_pos >= 0:
             # For each line in the buffer
-            line = self.read_buffer[:lf_pos]
+            line = self.read_buffer[:lf_pos - 1]
             if self.prompt in line:
                 if self.options.interactive:
                     self.change_state(STATE_IDLE)
