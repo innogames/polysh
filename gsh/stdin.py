@@ -42,6 +42,7 @@ class stdin_dispatcher(asyncore.file_dispatcher):
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, 0)
         self.is_readable = True
+        set_blocking_stdin(True)
 
     def readable(self):
         """We set it to be readable only when the stdin thread is not in
@@ -60,7 +61,11 @@ class stdin_dispatcher(asyncore.file_dispatcher):
         """Some data can be read on stdin"""
         while True:
             try:
-                data = self.recv(4096)
+                set_blocking_stdin(False)
+                try:
+                    data = self.recv(4096)
+                finally:
+                    set_blocking_stdin(True)
             except OSError, e:
                 if e.errno == errno.EAGAIN:
                     # End of available data

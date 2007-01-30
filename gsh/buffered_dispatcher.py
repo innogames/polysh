@@ -20,8 +20,6 @@ import asyncore
 import errno
 import traceback
 
-from gsh.console import set_blocking_stdin
-
 class buffered_dispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
     read buffer to permit line oriented manipulations"""

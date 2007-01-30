@@ -26,21 +26,24 @@ import termios
 from gsh.terminal_size import terminal_size
 
 stdin_is_blocking_counter = 0
+stdin_blocking_flags = fcntl.fcntl(0, fcntl.F_GETFL, 0) & ~os.O_NONBLOCK
+stdin_nonblocking_flags = fcntl.fcntl(0, fcntl.F_GETFL, 0) | os.O_NONBLOCK
 
 def set_blocking_stdin(blocking):
     """stdin and stdout may be dup(2)ed streams. So when we print to
     stdout, we have to ensure stdin is in non-blocking mode"""
     global stdin_is_blocking_counter
-    flags = fcntl.fcntl(0, fcntl.F_GETFL, 0)
+    new_flags = None
     if blocking:
         stdin_is_blocking_counter += 1
         if stdin_is_blocking_counter == 1:
-            flags = flags & ~os.O_NONBLOCK
+            new_flags = stdin_blocking_flags
     else:
         stdin_is_blocking_counter -= 1
         if stdin_is_blocking_counter == 0:
-            flags = flags | os.O_NONBLOCK
-    fcntl.fcntl(0, fcntl.F_SETFL, flags)
+            new_flags = stdin_nonblocking_flags
+    if new_flags is not None:
+        fcntl.fcntl(0, fcntl.F_SETFL, new_flags)
 
 
 # We remember the last printed status in order to clear it with ' ' characters

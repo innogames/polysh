@@ -33,7 +33,7 @@ if sys.hexversion < 0x02040000:
         sys.exit(1)
 
 from gsh import remote_dispatcher
-from gsh.console import show_status, watch_window_size, set_blocking_stdin
+from gsh.console import show_status, watch_window_size
 from gsh import control_shell
 from gsh.stdin import the_stdin_thread, restore_streams_flags_at_exit
 from gsh.host_syntax import expand_syntax
@@ -156,6 +156,11 @@ def main():
     the_stdin_thread.activate(not options.command)
 
     if options.profile:
-        _profile(main_loop)
+        def safe_main_loop():
+            try:
+                main_loop()
+            except:
+                pass
+        _profile(safe_main_loop)
     else:
         main_loop()
