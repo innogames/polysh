@@ -3,7 +3,7 @@
 import os
 import sys
 
-sys.path.append('setuptools-0.6c3-py2.4.egg')
+sys.path.append('setuptools-0.6c5-py2.4.egg')
 from setuptools import setup, find_packages
 
 news_file = file('NEWS')
