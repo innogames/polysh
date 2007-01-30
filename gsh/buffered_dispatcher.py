@@ -18,7 +18,6 @@
 
 import asyncore
 import errno
-import traceback
 
 class buffered_dispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
