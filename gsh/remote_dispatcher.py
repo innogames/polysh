@@ -174,7 +174,7 @@ class remote_dispatcher(buffered_dispatcher):
 
     def change_state(self, state):
         """Change the state of the remote process, logging the change"""
-        self.log('state => %s\n' % (STATE_NAMES[state]), debug=True)
+        self.log(('state => ', STATE_NAMES[state], '\n'), debug=True)
         self.state = state
 
     def disconnect(self):
@@ -233,7 +233,7 @@ class remote_dispatcher(buffered_dispatcher):
         if not self.active:
             return
         new_data = buffered_dispatcher.handle_read(self)
-        self.log('==> ' + new_data, debug=True)
+        self.log(('==> ', new_data), debug=True)
         lf_pos = new_data.find('\n')
         if lf_pos >= 0:
             # Optimization: we knew there were no '\n' in the previous read
@@ -263,7 +263,7 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.state == STATE_EXPECTING_NEXT_LINE:
                 self.change_state(STATE_EXPECTING_LINE)
             elif self.state != STATE_NOT_STARTED:
-                self.log(line + '\n')
+                self.log((line, '\n'))
                 if not self.options.print_first or \
                    self.state == STATE_EXPECTING_LINE:
                     console_output(self.display_name + ': ' + line + '\n')
@@ -280,24 +280,24 @@ class remote_dispatcher(buffered_dispatcher):
                self.state == STATE_EXPECTING_LINE:
                     line = self.read_buffer + '\n'
                     self.read_buffer = ''
-                    self.log(line)
+                    self.log((line,))
                     console_output(self.display_name + ': ' + line)
 
     def writable(self):
         """Do we want to write something?"""
         return self.active and buffered_dispatcher.writable(self)
 
-    def log(self, buf, debug=False):
+    def log(self, msgs, debug=False):
         """Log some information, either to a file or on the console"""
         if self.log_file is None:
             if debug and self.options.debug:
                 state = STATE_NAMES[self.state]
                 console_output('[dbg] %s[%s]: %s' %
-                                (self.display_name, state, buf))
+                                (self.display_name, state, ''.join(msgs)))
         else:
             # None != False, that's why we use 'not'
             if (not debug) == (not self.options.debug):
-                os.write(self.log_file, buf)
+                os.write(self.log_file, ''.join(msgs))
 
     def get_info(self):
         """Return a list will all information available about this process"""
@@ -315,7 +315,7 @@ class remote_dispatcher(buffered_dispatcher):
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
         if self.active and self.enabled:
-            self.log('<== ' + buf, debug=True)
+            self.log(('<== ', buf), debug=True)
             buffered_dispatcher.dispatch_write(self, buf)
 
     def change_name(self, name):
