@@ -95,7 +95,6 @@ class input_buffer(object):
             self.buf += data
         finally:
             self.lock.release()
-            
 
     def get(self):
         """Get the content of the buffer"""
