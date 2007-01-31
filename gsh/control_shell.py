@@ -89,8 +89,8 @@ def interrupt_stdin_thread():
         dupped_stdin = os.dup(0) # Backup the stdin fd
         assert not the_stdin_thread.wants_control_shell
         the_stdin_thread.wants_control_shell = True # Not user triggered
-        os.lseek(fd, 0, 0) # Rewind in the temp file
-        os.dup2(fd, 0) # This will make raw_input() return
+        os.lseek(tempfile_fd, 0, 0) # Rewind in the temp file
+        os.dup2(tempfile_fd, 0) # This will make raw_input() return
         the_stdin_thread.interrupted_event.wait() # Wait for this return
         the_stdin_thread.wants_control_shell = False
         os.dup2(dupped_stdin, 0) # Restore stdin
