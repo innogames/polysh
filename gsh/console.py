@@ -74,16 +74,15 @@ def show_status(completed, total):
     """The status is '[available shells/alive shells]>'"""
     if stdout_is_terminal:
         status = '[%d/%d]> ' % (completed, total)
+        console_output(status)
         global last_status
-        if last_status != status:
-            console_output(status)
-            last_status = status
-            set_blocking_stdin(True)
-            try:
-                # We flush because there is no '\n' but a '\r'
-                sys.stdout.flush()
-            finally:
-                set_blocking_stdin(False)
+        last_status = status
+        set_blocking_stdin(True)
+        try:
+            # We flush because there is no '\n' but a '\r'
+            sys.stdout.flush()
+        finally:
+            set_blocking_stdin(False)
 
 def watch_window_size():
     """Detect when the window size changes, and propagate the new size to the
