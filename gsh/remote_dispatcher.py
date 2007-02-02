@@ -228,6 +228,24 @@ class remote_dispatcher(buffered_dispatcher):
                            sys.stderr)
             self.disconnect()
 
+    def handle_read_fast_case(self, data):
+        """If we are in a fast case we'll avoid the long processing of each
+        line"""
+        if '\n' not in data or self.prompt in data or \
+           self.state is not STATE_RUNNING or \
+           self.term1 and (self.term1 in data or self.term2 in data) or \
+           self.pending_rename and self.pending_rename in data:
+            # Slow case :-(
+            return False
+        
+        lines = data.split('\n')
+        self.read_buffer = lines[-1]
+        del lines[-1]
+        self.log([line + '\n' for line in lines])
+        to_print = [''] + [': ' + line[:-1] + '\n' for line in lines]
+        console_output(self.display_name.join(to_print))
+        return True
+
     def handle_read(self):
         """We got some output from a remote shell, this is one of the state
         machine"""
@@ -235,6 +253,8 @@ class remote_dispatcher(buffered_dispatcher):
             return
         new_data = buffered_dispatcher.handle_read(self)
         self.log(('==> ', new_data), debug=True)
+        if self.handle_read_fast_case(self.read_buffer):
+            return
         lf_pos = new_data.find('\n')
         if lf_pos >= 0:
             # Optimization: we knew there were no '\n' in the previous read
