@@ -75,10 +75,9 @@ def console_output(msg, output=sys.stdout):
                 status_length = len(last_status)
             else:
                 status_length = 0
-            print >> output, '\r' + status_length * ' ' + '\r' + msg,
+            print >> output, '\r' + status_length * ' ' + '\r',
             last_status = None
-        else:
-            print >> output, msg,
+        print >> output, msg,
     finally:
         set_blocking_stdin(False)
         lock.release()
