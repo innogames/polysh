@@ -205,7 +205,7 @@ class stdin_thread(Thread):
                     readline.set_completer(complete)
                     readline.parse_and_bind('tab: complete')
                     readline.set_completer_delims(' \t\n')
-                    cmd = raw_input('gsh (%d)> ' % (nr))
+                    cmd = raw_input('ready (%d)> ' % (nr))
                     if self.wants_control_shell:
                         # This seems to be needed if Ctrl-C is hit when some
                         # text is in the line buffer

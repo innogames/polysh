@@ -85,7 +85,7 @@ def console_output(msg, output=sys.stdout):
 def show_status(completed, total):
     """The status is '[available shells/alive shells]>'"""
     if stdout_is_terminal:
-        status = '[%d/%d]> ' % (completed, total)
+        status = 'waiting [%d/%d]> ' % (completed, total)
         set_blocking_stdin(True)
         console_output(status)
         global last_status
