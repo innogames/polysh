@@ -79,7 +79,7 @@ def show_status(completed, total):
         last_status = status
         set_blocking_stdin(True)
         try:
-            # We flush because there is no '\n' but a '\r'
+            # We flush because there is no '\n'
             sys.stdout.flush()
         finally:
             set_blocking_stdin(False)
