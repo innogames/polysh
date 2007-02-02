@@ -51,7 +51,8 @@ class buffered_dispatcher(asyncore.file_dispatcher):
     def handle_read(self):
         """Some data can be read"""
         new_data = ''
-        while True:
+        buffer_length = len(self.read_buffer)
+        while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
             try:
                 piece = self.recv(4096)
             except OSError, e:
@@ -63,6 +64,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
             if not piece:
                 break
             new_data += piece
+            buffer_length += len(piece)
         self.read_buffer += new_data
         return new_data
 
