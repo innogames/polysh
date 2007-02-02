@@ -314,7 +314,6 @@ class remote_dispatcher(buffered_dispatcher):
         return self.active and buffered_dispatcher.writable(self)
 
     def is_logging(self, debug=False):
-#        return True
         if debug:
             return self.options.debug
         return self.log_file is not None
