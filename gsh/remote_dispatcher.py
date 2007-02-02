@@ -243,10 +243,11 @@ class remote_dispatcher(buffered_dispatcher):
         lines = data.split('\n')
         self.read_buffer = lines[-1]
         del lines[-1]
+        lines = [line[:-1] + '\n' for line in lines]
         if self.is_logging():
-            self.log('\n'.join(lines + ['']))
-        to_print = [''] + [': ' + line[:-1] + '\n' for line in lines]
-        console_output(self.display_name.join(to_print))
+            self.log(''.join(lines))
+        prefix = self.display_name + ': '
+        console_output((self.display_name + ': ').join([''] + lines))
         return True
 
     def handle_read(self):
