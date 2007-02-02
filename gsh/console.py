@@ -85,10 +85,10 @@ def show_status(completed, total):
     """The status is '[available shells/alive shells]>'"""
     if stdout_is_terminal:
         status = '[%d/%d]> ' % (completed, total)
+        set_blocking_stdin(True)
         console_output(status)
         global last_status
         last_status = status
-        set_blocking_stdin(True)
         try:
             # We flush because there is no '\n'
             sys.stdout.flush()
