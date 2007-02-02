@@ -62,7 +62,7 @@ def console_output(msg, output=sys.stdout):
     set_blocking_stdin(True)
     try:
         if stdout_is_terminal:
-            print >> output, '\r', status_length * ' ', '\r', msg,
+            print >> output, '\r' + status_length * ' ' + '\r' + msg,
         else:
             print >> output, msg,
     finally:
