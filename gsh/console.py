@@ -43,17 +43,19 @@ def set_blocking_stdin(blocking):
     lock.acquire()
     try:
         global stdin_is_blocking_counter
-        new_flags = None
         if blocking:
             stdin_is_blocking_counter += 1
             if stdin_is_blocking_counter == 1:
                 new_flags = stdin_blocking_flags
+            else:
+                return
         else:
             stdin_is_blocking_counter -= 1
             if stdin_is_blocking_counter == 0:
                 new_flags = stdin_nonblocking_flags
-        if new_flags is not None:
-            fcntl.fcntl(0, fcntl.F_SETFL, new_flags)
+            else:
+                return
+        fcntl.fcntl(0, fcntl.F_SETFL, new_flags)
     finally:
         lock.release()
 
