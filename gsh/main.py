@@ -123,14 +123,15 @@ def _profile(continuation):
     except ImportError:
         import hotshot
         import hotshot.stats
-        prof = hotshot.Profile(prof_file)
+        prof = hotshot.Profile(prof_file, lineevents=1)
         print 'Profiling using hotshot'
         prof.runcall(continuation)
         prof.close()
         stats = hotshot.stats.load(prof_file)
     stats.strip_dirs()
     stats.sort_stats('time', 'calls')
-    stats.print_stats(40)
+    stats.print_stats(50)
+    stats.print_callees(50)
     os.remove(prof_file)
 
 def main():
