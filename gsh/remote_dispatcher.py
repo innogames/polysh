@@ -234,7 +234,7 @@ class remote_dispatcher(buffered_dispatcher):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
         if self.prompt in data or self.state is not STATE_RUNNING or \
-           self.term1 and (self.term1 in data or self.term2 in data) or \
+           self.termination and (self.term1 in data or self.term2 in data) or \
            self.pending_rename and self.pending_rename in data:
             # Slow case :-(
             return False
