@@ -122,7 +122,7 @@ def process_input_buffer():
             r.disconnect()
         else:
             if r.is_logging():
-                r.log(('<== ', data))
+                r.log('<== ' + data)
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
                 r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
 
