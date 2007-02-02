@@ -138,7 +138,8 @@ class remote_dispatcher(buffered_dispatcher):
         self.options = options
         if options.log_dir:
             # Open the log file
-            log_path = os.path.join(options.log_dir, hostname.replace('/', '_'))
+            filename = self.display_name.replace('/', '_')
+            log_path = os.path.join(options.log_dir, filename)
             self.log_file = os.open(log_path, os.O_WRONLY|os.O_CREAT, 0644)
             os.ftruncate(self.log_file, 0)
         else:
