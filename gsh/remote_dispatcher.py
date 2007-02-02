@@ -233,14 +233,16 @@ class remote_dispatcher(buffered_dispatcher):
     def handle_read_fast_case(self, data):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
-        if '\n' not in data or self.prompt in data or \
-           self.state is not STATE_RUNNING or \
+        if self.prompt in data or self.state is not STATE_RUNNING or \
            self.term1 and (self.term1 in data or self.term2 in data) or \
            self.pending_rename and self.pending_rename in data:
             # Slow case :-(
             return False
         
         lines = data.split('\n')
+        if len(lines) == 1:
+            # No '\n' in data => slow case
+            return False
         self.read_buffer = lines[-1]
         del lines[-1]
         lines = [line[:-1] + '\n' for line in lines]
