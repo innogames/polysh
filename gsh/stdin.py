@@ -197,7 +197,7 @@ class stdin_thread(Thread):
             # The remote processes are ready, the thread can call raw_input
             self.interrupted_event.clear()
             set_blocking_stdin(True)
-            console_output('')
+            console_output('\r')
             try:
                 try:
                     os.write(self.pipe_write, 's')
