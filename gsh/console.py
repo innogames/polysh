@@ -22,29 +22,40 @@ import signal
 import struct
 import sys
 import termios
+from threading import RLock
 
 from gsh.terminal_size import terminal_size
 
-stdin_is_blocking_counter = 0
-stdin_blocking_flags = fcntl.fcntl(0, fcntl.F_GETFL, 0) & ~os.O_NONBLOCK
-stdin_nonblocking_flags = fcntl.fcntl(0, fcntl.F_GETFL, 0) | os.O_NONBLOCK
+def init_blocking_stdin():
+    flags = fcntl.fcntl(0, fcntl.F_GETFL, 0)
+    is_blocking = not (flags & os.O_NONBLOCK)
+    assert is_blocking == False
+    global lock, stdin_is_blocking_counter, stdin_blocking_flags, \
+           stdin_nonblocking_flags
+    lock = RLock()
+    stdin_is_blocking_counter = 0
+    stdin_blocking_flags = flags & ~os.O_NONBLOCK
+    stdin_nonblocking_flags = flags
 
 def set_blocking_stdin(blocking):
     """stdin and stdout may be dup(2)ed streams. So when we print to
     stdout, we have to ensure stdin is in non-blocking mode"""
-    global stdin_is_blocking_counter
-    new_flags = None
-    if blocking:
-        stdin_is_blocking_counter += 1
-        if stdin_is_blocking_counter == 1:
-            new_flags = stdin_blocking_flags
-    else:
-        stdin_is_blocking_counter -= 1
-        if stdin_is_blocking_counter == 0:
-            new_flags = stdin_nonblocking_flags
-    if new_flags is not None:
-        fcntl.fcntl(0, fcntl.F_SETFL, new_flags)
-
+    lock.acquire()
+    try:
+        global stdin_is_blocking_counter
+        new_flags = None
+        if blocking:
+            stdin_is_blocking_counter += 1
+            if stdin_is_blocking_counter == 1:
+                new_flags = stdin_blocking_flags
+        else:
+            stdin_is_blocking_counter -= 1
+            if stdin_is_blocking_counter == 0:
+                new_flags = stdin_nonblocking_flags
+        if new_flags is not None:
+            fcntl.fcntl(0, fcntl.F_SETFL, new_flags)
+    finally:
+        lock.release()
 
 # We remember the last printed status in order to clear it with ' ' characters
 last_status = None
@@ -53,22 +64,22 @@ stdout_is_terminal = sys.stdout.isatty()
 
 def console_output(msg, output=sys.stdout):
     """Use instead of print, to clear the status information before printing"""
-    if stdout_is_terminal:
-        global last_status
-        if last_status:
-            status_length = len(last_status)
-        else:
-            status_length = 0
+    lock.acquire()
     set_blocking_stdin(True)
     try:
         if stdout_is_terminal:
+            global last_status
+            if last_status:
+                status_length = len(last_status)
+            else:
+                status_length = 0
             print >> output, '\r' + status_length * ' ' + '\r' + msg,
+            last_status = None
         else:
             print >> output, msg,
     finally:
         set_blocking_stdin(False)
-    if stdout_is_terminal:
-        last_status = None
+        lock.release()
 
 def show_status(completed, total):
     """The status is '[available shells/alive shells]>'"""

@@ -26,7 +26,7 @@ import sys
 from threading import Thread, Event, Lock
 
 from gsh import remote_dispatcher
-from gsh.console import set_blocking_stdin, console_output
+from gsh.console import init_blocking_stdin, set_blocking_stdin, console_output
 
 # Handling of stdin is certainly the most complex part of gsh
 
@@ -42,7 +42,7 @@ class stdin_dispatcher(asyncore.file_dispatcher):
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, 0)
         self.is_readable = True
-        set_blocking_stdin(True)
+        init_blocking_stdin()
 
     def readable(self):
         """We set it to be readable only when the stdin thread is not in
