@@ -25,7 +25,7 @@ import tempfile
 import termios
 from fnmatch import fnmatch
 
-from gsh.console import set_blocking_stdin
+from gsh.console import set_blocking_stdin, console_output
 from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
 from gsh import remote_dispatcher
@@ -125,9 +125,9 @@ class control_shell(cmd.Cmd):
         try:
             while True:
                 try:
-                    cmd.Cmd.cmdloop(self, '\n')
+                    cmd.Cmd.cmdloop(self)
                 except KeyboardInterrupt:
-                    pass
+                    console_output('\n')
                 else:
                     break
         finally:
