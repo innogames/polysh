@@ -121,7 +121,8 @@ def process_input_buffer():
                            output=sys.stderr)
             r.disconnect()
         else:
-            r.log(('<== ', data))
+            if r.is_logging():
+                r.log(('<== ', data))
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
                 r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
 
