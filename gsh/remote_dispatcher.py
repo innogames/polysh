@@ -217,8 +217,9 @@ class remote_dispatcher(buffered_dispatcher):
         self.dispatch_write('PS1="%s""%s\n"\n' % (prompt1, prompt2))
 
     def readable(self):
-        """We are always interested in reading from active remote processes"""
-        return self.active
+        """We are always interested in reading from active remote processes if
+        the buffer is OK"""
+        return self.active and buffered_dispatcher.readable(self)
 
     def handle_error(self):
         """An exception may or may not lead to a disconnection"""
