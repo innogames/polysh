@@ -25,7 +25,7 @@ import tempfile
 import termios
 from fnmatch import fnmatch
 
-from gsh.console import set_blocking_stdin, console_output
+from gsh.console import console_output
 from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
 from gsh import remote_dispatcher
@@ -120,7 +120,6 @@ class control_shell(cmd.Cmd):
             sys.exit(1)
         self.stop = False
         interrupt_stdin_thread()
-        set_blocking_stdin(True)
         gsh_histo = switch_readline_history(self.history)
         console_output('\r')
         try:
@@ -133,7 +132,6 @@ class control_shell(cmd.Cmd):
                     break
         finally:
             self.history = switch_readline_history(gsh_histo)
-            set_blocking_stdin(False)
 
     # We do this just to have 'help' in the 'Documented commands'
     def do_help(self, command):

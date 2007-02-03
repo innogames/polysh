@@ -26,23 +26,31 @@ import sys
 from threading import Thread, Event, Lock
 
 from gsh import remote_dispatcher
-from gsh.console import init_blocking_stdin, set_blocking_stdin, console_output
+from gsh.console import console_output
 
 # Handling of stdin is certainly the most complex part of gsh
 
+stdin_fcntl_flags = fcntl.fcntl(0, fcntl.F_GETFL, 0)
+
+def set_stdin_blocking(blocking):
+    """We set O_NONBLOCK on stdin only when we read from it"""
+    if blocking:
+        flags = stdin_fcntl_flags & ~os.O_NONBLOCK
+    else:
+        flags = stdin_fcntl_flags | os.O_NONBLOCK
+    fcntl.fcntl(0, fcntl.F_SETFL, flags)
+
 def restore_streams_flags_at_exit():
     """We play we fcntl flags, so we make sure to restore them on exit"""
-    get_flags = lambda fd: (fd, fcntl.fcntl(fd, fcntl.F_GETFL, 0))
-    flags = map(get_flags, range(3))
-    set_flags = lambda (fd, flags): fcntl.fcntl(fd, fcntl.F_SETFL, flags)
-    atexit.register(map, set_flags, flags)
+    atexit.register(fcntl.fcntl, 0, fcntl.F_SETFL, stdin_fcntl_flags)
 
 class stdin_dispatcher(asyncore.file_dispatcher):
     """The stdin reader in the main thread => no fancy editing"""
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, 0)
         self.is_readable = True
-        init_blocking_stdin()
+        atexit.register(fcntl.fcntl, 0, fcntl.F_SETFL, stdin_fcntl_flags)
+        set_stdin_blocking(True)
 
     def readable(self):
         """We set it to be readable only when the stdin thread is not in
@@ -61,11 +69,11 @@ class stdin_dispatcher(asyncore.file_dispatcher):
         """Some data can be read on stdin"""
         while True:
             try:
-                set_blocking_stdin(False)
+                set_stdin_blocking(False)
                 try:
                     data = self.recv(4096)
                 finally:
-                    set_blocking_stdin(True)
+                    set_stdin_blocking(True)
             except OSError, e:
                 if e.errno == errno.EAGAIN:
                     # End of available data
@@ -196,7 +204,6 @@ class stdin_thread(Thread):
             self.ready_event.wait()
             # The remote processes are ready, the thread can call raw_input
             self.interrupted_event.clear()
-            set_blocking_stdin(True)
             console_output('\r')
             try:
                 try:
@@ -215,7 +222,6 @@ class stdin_thread(Thread):
                             if len(word) > 1:
                                 history_words.add(word)
                 finally:
-                    set_blocking_stdin(False)
                     os.write(self.pipe_write, 'e')
             except EOFError:
                 if self.wants_control_shell:
