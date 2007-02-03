@@ -122,6 +122,7 @@ class control_shell(cmd.Cmd):
         interrupt_stdin_thread()
         set_blocking_stdin(True)
         gsh_histo = switch_readline_history(self.history)
+        console_output('\r')
         try:
             while True:
                 try:
