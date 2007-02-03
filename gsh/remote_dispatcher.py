@@ -132,19 +132,11 @@ class remote_dispatcher(buffered_dispatcher):
         # Parent
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
+        self.options = options
+        self.log_file = None
         self.change_name(hostname)
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
-        self.options = options
-        if options.log_dir:
-            # Open the log file
-            filename = self.display_name.replace('/', '_')
-            log_path = os.path.join(options.log_dir, filename)
-            self.log_file = os.open(log_path, os.O_WRONLY|os.O_CREAT, 0644)
-            os.ftruncate(self.log_file, 0)
-        else:
-            self.log_file = None
-
         self.state = STATE_NOT_STARTED
         self.termination = None
         self.set_prompt()
@@ -357,6 +349,18 @@ class remote_dispatcher(buffered_dispatcher):
     def change_name(self, name):
         self.display_name = None
         self.display_name = make_unique_name(name)
+        if self.options.log_dir:
+            # The log file
+            filename = self.display_name.replace('/', '_')
+            log_path = os.path.join(self.options.log_dir, filename)
+            if self.log_file:
+                # Rename it
+                os.rename(self.log_path, log_path)
+            else:
+                # Open it
+                self.log_file = os.open(log_path, os.O_WRONLY|os.O_CREAT, 0644)
+                os.ftruncate(self.log_file, 0)
+            self.log_path = log_path
 
     def rename(self, string):
         previous_name = self.display_name
