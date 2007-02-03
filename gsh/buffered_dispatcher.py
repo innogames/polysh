@@ -76,7 +76,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         return new_data
 
     def readable(self):
-    	"""No need to ask data if our buffer is full"""
+        """No need to ask data if our buffer is full"""
         return len(self.read_buffer) < buffered_dispatcher.MAX_BUFFER_SIZE
 
     def writable(self):

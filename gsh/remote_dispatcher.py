@@ -230,7 +230,7 @@ class remote_dispatcher(buffered_dispatcher):
            self.pending_rename and self.pending_rename in data:
             # Slow case :-(
             return False
-        
+
         lines = data.split('\n')
         if len(lines) == 1:
             # No '\n' in data => slow case
