@@ -17,12 +17,10 @@
 # Copyright (c) 2006 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import fcntl
-import os
 import signal
 import struct
 import sys
 import termios
-from threading import RLock
 
 from gsh.terminal_size import terminal_size
 
