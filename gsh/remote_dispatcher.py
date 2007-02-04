@@ -22,6 +22,7 @@ import pty
 import random
 import signal
 import sys
+import termios
 import time
 
 from gsh.buffered_dispatcher import buffered_dispatcher
@@ -120,6 +121,12 @@ def format_info(info_list):
             info[str_id] = orig_str + indent * ' '
         info_list[info_id] = ' '.join(info)
 
+def disable_crlf(fd):
+    """We don't want \n to be replaced with \r\n"""
+    attr = termios.tcgetattr(fd)
+    attr[1] &= ~termios.ONLCR
+    termios.tcsetattr(fd, termios.TCSANOW, attr)
+
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
 
@@ -130,6 +137,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.launch_ssh(options, hostname)
             sys.exit(1)
         # Parent
+        disable_crlf(fd)
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
         self.options = options
@@ -228,17 +236,16 @@ class remote_dispatcher(buffered_dispatcher):
             # Slow case :-(
             return False
 
-        lines = data.split('\n')
-        if len(lines) == 1:
+        last_nl = data.rfind('\n')
+        if last_nl == -1:
             # No '\n' in data => slow case
             return False
-        self.read_buffer = lines[-1]
-        del lines[-1]
-        lines = [line[:-1] + '\n' for line in lines]
+        self.read_buffer = data[last_nl + 1:]
+        data = data[:last_nl]
         if self.is_logging():
-            self.log(''.join(lines))
+            self.log(data + '\n')
         prefix = self.display_name + ': '
-        console_output((self.display_name + ': ').join([''] + lines))
+        console_output(prefix + data.replace('\n', '\n' + prefix) + '\n')
         return True
 
     def handle_read(self):
@@ -263,7 +270,7 @@ class remote_dispatcher(buffered_dispatcher):
             lf_pos = limit
         while lf_pos >= 0:
             # For each line in the buffer
-            line = self.read_buffer[:lf_pos - 1]
+            line = self.read_buffer[:lf_pos + 1]
             if self.prompt in line:
                 if self.options.interactive:
                     self.change_state(STATE_IDLE)
@@ -280,11 +287,13 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.state is STATE_EXPECTING_NEXT_LINE:
                 self.change_state(STATE_EXPECTING_LINE)
             elif self.state is not STATE_NOT_STARTED:
+                if line[-1] != '\n':
+                    line += '\n'
                 if self.is_logging():
-                    self.log(line + '\n')
+                    self.log(line)
                 if not self.options.print_first or \
                    self.state is STATE_EXPECTING_LINE:
-                    console_output(self.display_name + ': ' + line + '\n')
+                    console_output(self.display_name + ': ' + line)
                     self.change_state(STATE_RUNNING)
 
             # Go to the next line in the buffer
