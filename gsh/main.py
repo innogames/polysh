@@ -60,11 +60,11 @@ def parse_cmdline():
     parser.add_option('--command', type='str', dest='command', default=None,
                       help='command to execute on the remote shells',
                       metavar='CMD')
-    parser.add_option('--ssh-exec', type='str', dest='ssh_exec', default=None,
-                      help='path to the ssh command [ssh]', metavar='FILE')
-    parser.add_option('--ssh-shell-cmd', type='str', dest='ssh_shell_cmd',
-                      default=None, help='shell command used to launch ssh',
-                      metavar='CMD')
+    parser.add_option('--ssh', type='str', dest='ssh', default='ssh',
+                      help='ssh command to use [ssh]', metavar='SSH')
+    parser.add_option('--shell-expand-ssh', action='store_true',
+                      dest='shell_expand_ssh',
+                      help='shell expand the command used to launch ssh')
     parser.add_option('--quick-sh', action='store_true', dest='quick_sh',
                       help='Do not launch a full ssh session',)
     parser.add_option('--print-first', action='store_true', dest='print_first',
@@ -80,15 +80,10 @@ def parse_cmdline():
     if not args:
         parser.error('no hosts given')
 
-    nr = (options.ssh_exec and 1 or 0) + \
-         (options.ssh_shell_cmd and 1 or 0) + \
-         (options.quick_sh and 1 or 0)
-    if nr > 1:
-        parser.error('--ssh-exec, --ssh-shell-cmd and --quick-sh are\n'
-                     'mutually exclusive')
-
     if options.quick_sh:
-        options.ssh_shell_cmd = 'ssh -t %(host)s sh'
+        if options.ssh != 'ssh':
+            parser.error('--ssh and --quick-sh are mutually exclusive')
+        options.ssh = 'ssh -t %(host)s sh'
 
     return options, args
 

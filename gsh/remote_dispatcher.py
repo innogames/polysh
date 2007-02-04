@@ -150,16 +150,14 @@ class remote_dispatcher(buffered_dispatcher):
 
     def launch_ssh(self, options, name):
         """Launch the ssh command in the child process"""
-        if options.ssh_shell_cmd:
+        evaluated = options.ssh % {'host': name}
+        if options.shell_expand_ssh:
             shell = os.environ.get('SHELL', '/bin/sh')
-            evaluated = options.ssh_shell_cmd % {'host': name}
-            if evaluated == options.ssh_shell_cmd:
-                evaluated = '%s %s' % (options.ssh_shell_cmd, name)
+            if evaluated == options.ssh:
+                evaluated = '%s %s' % (options.ssh, name)
             exec_args = (shell, '-c', evaluated)
         else:
-            exe = options.ssh_exec or 'ssh'
-            evaluated = exe % {'host': name}
-            if evaluated == exe:
+            if evaluated == options.ssh:
                 exec_args = (exe, name)
             else:
                 exec_args = (evaluated)
