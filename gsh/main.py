@@ -37,6 +37,7 @@ from gsh.console import show_status, watch_window_size
 from gsh import control_shell
 from gsh.stdin import the_stdin_thread, restore_streams_flags_at_exit
 from gsh.host_syntax import expand_syntax
+from gsh.version import VERSION
 
 def kill_all():
     """When gsh quits, we kill all the remote shells we started"""
@@ -45,7 +46,7 @@ def kill_all():
 
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...' % (sys.argv[0])
-    parser = optparse.OptionParser(usage)
+    parser = optparse.OptionParser(usage, version='gsh ' + VERSION)
     try:
         parser.add_option('--log-dir', type='str', dest='log_dir',
                           help='directory to log each machine conversation' +

@@ -4,12 +4,10 @@ import sys
 
 sys.path.append('setuptools-0.6c5-py2.4.egg')
 from setuptools import setup, find_packages
-
-news_file = file('NEWS')
-version = news_file.readline().strip()
+from gsh.version import VERSION
 
 setup(name='gsh',
-      version=version,
+      version=VERSION,
       description='Group Shell',
       long_description=
 '''gsh is used to launch several remote shells on many machines at the same
