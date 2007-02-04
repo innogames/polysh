@@ -2,7 +2,7 @@
 
 import sys
 
-sys.path.append('setuptools-0.6c5-py2.4.egg')
+sys.path.append('setuptools-0.7a1dev_r53614-py2.4.egg')
 from setuptools import setup, find_packages
 from gsh.version import VERSION
 
