@@ -220,7 +220,7 @@ class stdin_thread(Thread):
                     if len(history_words) < 10000:
                         for word in cmd.split():
                             if len(word) > 1:
-                                history_words.add(word)
+                                history_words.add(word + ' ')
                 finally:
                     os.write(self.pipe_write, 'e')
             except EOFError:

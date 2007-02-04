@@ -68,11 +68,10 @@ def selected_shells(command):
 
 def complete_shells(text, line, predicate):
     """Return the shell names to include in the completion"""
-    given = line.split()[1:]
-    res = [i.display_name for i in remote_dispatcher.all_instances() if \
+    res = [i.display_name + ' ' for i in remote_dispatcher.all_instances() if \
                 i.display_name.startswith(text) and \
                 predicate(i) and \
-                i.display_name not in given]
+                ' ' + i.display_name + ' ' not in line]
     return res
 
 #
@@ -132,6 +131,10 @@ class control_shell(cmd.Cmd):
                     break
         finally:
             self.history = switch_readline_history(gsh_histo)
+
+    def completenames(self, text, *ignored):
+        """Overriden to add the trailing space"""
+        return [c + ' ' for c in cmd.Cmd.completenames(self, text, ignored)]
 
     # We do this just to have 'help' in the 'Documented commands'
     def do_help(self, command):
