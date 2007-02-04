@@ -141,7 +141,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
         self.options = options
-        self.log_file = None
+        self.log_path = None
         self.change_name(hostname)
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
@@ -319,11 +319,11 @@ class remote_dispatcher(buffered_dispatcher):
     def is_logging(self, debug=False):
         if debug:
             return self.options.debug
-        return self.log_file is not None
+        return self.log_path is not None
 
     def log(self, msg, debug=False):
         """Log some information, either to a file or on the console"""
-        if self.log_file is None:
+        if self.log_path is None:
             if debug and self.options.debug:
                 state = STATE_NAMES[self.state]
                 console_output('[dbg] %s[%s]: %s' %
@@ -331,7 +331,9 @@ class remote_dispatcher(buffered_dispatcher):
         else:
             # None != False, that's why we use 'not'
             if (not debug) == (not self.options.debug):
-                os.write(self.log_file, msg)
+                log = os.open(self.log_path, os.O_WRONLY|os.O_APPEND|os.O_CREAT)
+                os.write(log, msg)
+                os.close(log)
 
     def get_info(self):
         """Return a list will all information available about this process"""
@@ -360,13 +362,9 @@ class remote_dispatcher(buffered_dispatcher):
             # The log file
             filename = self.display_name.replace('/', '_')
             log_path = os.path.join(self.options.log_dir, filename)
-            if self.log_file:
-                # Rename it
+            if self.log_path:
+                # Rename the previous log
                 os.rename(self.log_path, log_path)
-            else:
-                # Open it
-                self.log_file = os.open(log_path, os.O_WRONLY|os.O_CREAT, 0644)
-                os.ftruncate(self.log_file, 0)
             self.log_path = log_path
 
     def rename(self, string):
