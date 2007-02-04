@@ -80,10 +80,8 @@ def parse_cmdline():
     if not args:
         parser.error('no hosts given')
 
-    if options.quick_sh:
-        if options.ssh != 'ssh':
-            parser.error('--ssh and --quick-sh are mutually exclusive')
-        options.ssh = 'ssh -t %(host)s sh'
+    if options.quick_sh and options.ssh != 'ssh':
+        parser.error('--ssh and --quick-sh are mutually exclusive')
 
     return options, args
 
