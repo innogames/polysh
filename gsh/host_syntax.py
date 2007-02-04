@@ -14,7 +14,7 @@
 #
 # See the COPYING file for license information.
 #
-# Copyright (c) 2006 Guillaume Chazarain <guichaz@yahoo.fr>
+# Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import re
 
