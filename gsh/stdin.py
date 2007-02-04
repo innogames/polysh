@@ -218,9 +218,8 @@ class stdin_thread(Thread):
                         # text is in the line buffer
                         raise EOFError
                     if len(history_words) < 10000:
-                        for word in cmd.split():
-                            if len(word) > 1:
-                                history_words.add(word + ' ')
+                        words = [w + ' ' for w in cmd.split() if len(w) > 1]
+                        history_words.update(words)
                 finally:
                     os.write(self.pipe_write, 'e')
             except EOFError:
