@@ -1,3 +1,14 @@
+0.2
+~~~
+
+o Using readline to provide fancy command line edition and completion from
+history
+o Incomplete lines are printed after some delay
+o Remote shells can be dynamically added/deleted/renamed
+o New option --quick-sh to avoid launching a full blown session
+o Added hostname expansion: for example host<1-100> and host<001-100>
+o Misc. bug fixes and optimizations
+
 0.1
 ~~~
 
