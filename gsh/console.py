@@ -34,11 +34,8 @@ def console_output(msg, output=sys.stdout):
     if stdout_is_terminal:
         global last_status
         if last_status:
-            status_length = len(last_status)
-        else:
-            status_length = 0
-        print >> output, '\r' + status_length * ' ' + '\r',
-        last_status = None
+            print >> output, '\r' + len(last_status) * ' ' + '\r',
+            last_status = None
     print >> output, msg,
 
 def show_status(completed, total):
