@@ -6,7 +6,7 @@ set -e # Exit on error
 PACKAGE=$(basename "$PWD")
 mkdir dist
 TEMPDIR="$(mktemp -d)"
-read VERSION < NEWS
+VERSION=$(python -c 'from gsh.version import VERSION; print VERSION')
 echo "$PACKAGE-$VERSION: $TEMPDIR"
 hg archive "$TEMPDIR/$PACKAGE-$VERSION"
 DIR="$PWD"
