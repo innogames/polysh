@@ -210,6 +210,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.dispatch_write('RPS1=\n')
         self.dispatch_write('RPROMPT=\n')
         self.dispatch_write('TERM=ansi\n')
+        self.dispatch_write('stty -onlcr\n')
         prompt1 = '[gsh prompt ' + str(random.random())[2:]
         prompt2 = str(random.random())[2:] + ']'
         self.prompt = prompt1 + prompt2
