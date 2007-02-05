@@ -58,11 +58,9 @@ class buffered_dispatcher(asyncore.file_dispatcher):
             except OSError, e:
                 if e.errno == errno.EAGAIN:
                     # End of the available data
-                    piece = None
+                    break
                 else:
                     raise
-            if not piece:
-                break
             new_data += piece
             buffer_length += len(piece)
         self.read_buffer += new_data
