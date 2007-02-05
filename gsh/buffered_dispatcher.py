@@ -26,9 +26,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
     # 1 MiB should be enough for everybody
     MAX_BUFFER_SIZE = 1 * 1024 * 1024
 
-    # We always try to read PIECE_SIZE bytes at a time
-    PIECE_SIZE = 4096
-
     def __init__(self, fd):
         asyncore.file_dispatcher.__init__(self, fd)
         self.fd = fd
@@ -57,7 +54,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         buffer_length = len(self.read_buffer)
         while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
             try:
-                piece = self.recv(buffered_dispatcher.PIECE_SIZE)
+                piece = self.recv(4096)
             except OSError, e:
                 if e.errno == errno.EAGAIN:
                     # End of the available data
@@ -67,11 +64,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
             if not piece:
                 break
             new_data += piece
-            piece_len = len(piece)
-            buffer_length += piece_len
-            if piece_len < buffered_dispatcher.PIECE_SIZE:
-                # No need to try another read, this one was the last
-                break
+            buffer_length += len(piece)
         self.read_buffer += new_data
         return new_data
 
