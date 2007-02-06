@@ -331,7 +331,8 @@ class remote_dispatcher(buffered_dispatcher):
         else:
             # None != False, that's why we use 'not'
             if (not debug) == (not self.options.debug):
-                log = os.open(self.log_path, os.O_WRONLY|os.O_APPEND|os.O_CREAT)
+                log = os.open(self.log_path,
+                              os.O_WRONLY|os.O_APPEND|os.O_CREAT, 0664)
                 os.write(log, msg)
                 os.close(log)
 
