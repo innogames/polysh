@@ -7,6 +7,7 @@ o Incomplete lines are printed after some delay
 o Remote shells can be dynamically added/deleted/renamed
 o New option --quick-sh to avoid launching a full blown session
 o Added hostname expansion: for example host<1-100> and host<001-100>
+o Added an option to read hostnames from a file
 o Misc. bug fixes and optimizations
 
 0.1

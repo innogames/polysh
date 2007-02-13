@@ -58,6 +58,9 @@ def parse_cmdline():
                                                         (sys.version.split()[0])
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
+    parser.add_option('--hosts-file', type='str', dest='hosts_filename',
+                      default=None, metavar='FILE',
+                      help='read hostnames from given file, one per line')
     parser.add_option('--command', type='str', dest='command', default=None,
                       help='command to execute on the remote shells',
                       metavar='CMD')
@@ -78,11 +81,19 @@ def parse_cmdline():
                       default=False, help=optparse.SUPPRESS_HELP)
 
     options, args = parser.parse_args()
-    if not args:
-        parser.error('no hosts given')
-
     if options.quick_sh and options.ssh != 'ssh':
         parser.error('--ssh and --quick-sh are mutually exclusive')
+    
+    if options.hosts_filename:
+        try:
+            hosts_file = open(options.hosts_filename, 'r')
+            args[0:0] = [h.rstrip() for h in hosts_file.readlines()]
+            hosts_file.close()
+        except IOError, e:
+            parser.error(e)
+
+    if not args:
+        parser.error('no hosts given')
 
     return options, args
 
