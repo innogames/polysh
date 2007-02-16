@@ -23,12 +23,32 @@ from gsh_tests import launch_gsh
 class TestBasic(unittest.TestCase):
     def localhost(self, nr_localhost, extra=''):
         arg = nr_localhost * 'localhost ' + extra
-        child = launch_gsh(arg)
-        child.expect('.*ready \(%d\)> .*' % (nr_localhost))
-        self.assertEquals(child.before, '')
-        child.sendeof()
-        child.expect(pexpect.EOF)
-        self.assertEquals(child.before, '')
+
+        def start_child():
+            child = launch_gsh(arg)
+            child.expect('.*ready \(%d\)> .*' % (nr_localhost))
+            self.assertEquals(child.before, '')
+            return child
+
+        def stop_child(child):
+            child.sendeof()
+            child.expect(pexpect.EOF)
+            self.assertEquals(child.before, '')
+        
+        def test_eof():
+            child = start_child()
+            stop_child(child)
+        
+        def test_exit():
+            child = start_child()
+            child.sendline('exit')
+            for i in xrange(nr_localhost):
+                child.expect('Error talking to localhost.*\r\n')
+            child.expect('.*ready \(0\)> .*')
+            stop_child(child)
+
+        test_eof()
+        test_exit()
 
     def testLocalhost(self):
         self.localhost(1)
