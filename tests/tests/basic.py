@@ -21,40 +21,29 @@ import pexpect
 from gsh_tests import launch_gsh
 
 class TestBasic(unittest.TestCase):
-    def testLocalhost(self):
-        child = launch_gsh('localhost')
-        child.expect('.*ready \(1\)> .*')
+    def localhost(self, nr_localhost, extra=''):
+        arg = nr_localhost * 'localhost ' + extra
+        child = launch_gsh(arg)
+        child.expect('.*ready \(%d\)> .*' % (nr_localhost))
         child.sendeof()
         child.expect(pexpect.EOF)
+
+    def testLocalhost(self):
+        self.localhost(1)
 
     def testLocalhostLocalhost(self):
-        child = launch_gsh('localhost localhost')
-        child.expect('.*ready \(2\)> .*')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+        self.localhost(2)
 
     def testLocalhostLocalhostLocalhost(self):
-        child = launch_gsh('localhost localhost localhost')
-        child.expect('.*ready \(3\)> .*')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+        self.localhost(3)
 
     def testQuickLocalhost(self):
-        child = launch_gsh('--quick-sh localhost')
-        child.expect('.*ready \(1\)> .*')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+        self.localhost(1, extra='--quick-sh')
 
     def testQuickLocalhostLocalhost(self):
-        child = launch_gsh('--quick-sh localhost localhost')
-        child.expect('.*ready \(2\)> .*')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+        self.localhost(2, extra='--quick-sh')
 
     def testQuickLocalhostLocalhostLocalhost(self):
-        child = launch_gsh('--quick-sh localhost localhost localhost')
-        child.expect('.*ready \(3\)> .*')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+        self.localhost(3, extra='--quick-sh')
 
 TESTS = (TestBasic,)
