@@ -21,9 +21,39 @@ import pexpect
 from gsh_tests import launch_gsh
 
 class TestBasic(unittest.TestCase):
-    def testBasic(self):
+    def testLocalhost(self):
         child = launch_gsh('localhost')
         child.expect('.*ready \(1\)> .*')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def testLocalhostLocalhost(self):
+        child = launch_gsh('localhost localhost')
+        child.expect('.*ready \(2\)> .*')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def testLocalhostLocalhostLocalhost(self):
+        child = launch_gsh('localhost localhost localhost')
+        child.expect('.*ready \(3\)> .*')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def testQuickLocalhost(self):
+        child = launch_gsh('--quick-sh localhost')
+        child.expect('.*ready \(1\)> .*')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def testQuickLocalhostLocalhost(self):
+        child = launch_gsh('--quick-sh localhost localhost')
+        child.expect('.*ready \(2\)> .*')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def testQuickLocalhostLocalhostLocalhost(self):
+        child = launch_gsh('--quick-sh localhost localhost localhost')
+        child.expect('.*ready \(3\)> .*')
         child.sendeof()
         child.expect(pexpect.EOF)
 
