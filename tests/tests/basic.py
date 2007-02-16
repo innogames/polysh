@@ -25,8 +25,10 @@ class TestBasic(unittest.TestCase):
         arg = nr_localhost * 'localhost ' + extra
         child = launch_gsh(arg)
         child.expect('.*ready \(%d\)> .*' % (nr_localhost))
+        self.assertEquals(child.before, '')
         child.sendeof()
         child.expect(pexpect.EOF)
+        self.assertEquals(child.before, '')
 
     def testLocalhost(self):
         self.localhost(1)
