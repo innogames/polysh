@@ -118,12 +118,6 @@ def format_info(info_list):
             info[str_id] = orig_str + indent * ' '
         info_list[info_id] = ' '.join(info)
 
-def disable_crlf(fd):
-    """We don't want \n to be replaced with \r\n"""
-    attr = termios.tcgetattr(fd)
-    attr[1] &= ~termios.ONLCR
-    termios.tcsetattr(fd, termios.TCSANOW, attr)
-
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
 
@@ -134,7 +128,6 @@ class remote_dispatcher(buffered_dispatcher):
             self.launch_ssh(options, hostname)
             sys.exit(1)
         # Parent
-        disable_crlf(fd)
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
         self.options = options
@@ -208,7 +201,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.dispatch_write('RPS1=\n')
         self.dispatch_write('RPROMPT=\n')
         self.dispatch_write('TERM=ansi\n')
-        self.dispatch_write('stty -onlcr\n')
         prompt1 = '[gsh prompt ' + str(random.random())[2:]
         prompt2 = str(random.random())[2:] + ']'
         self.prompt = prompt1 + prompt2

@@ -54,7 +54,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         buffer_length = len(self.read_buffer)
         while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
             try:
-                piece = self.recv(4096)
+                piece = self.recv(4096).replace('\r\n', '\n')
             except OSError, e:
                 if e.errno == errno.EAGAIN:
                     # End of the available data
