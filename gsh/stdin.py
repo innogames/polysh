@@ -57,6 +57,10 @@ class stdin_dispatcher(asyncore.file_dispatcher):
         raw_input()"""
         return self.is_readable
 
+    def handle_expt(self):
+        # Emulate the select with poll as in: asyncore.loop(use_poll=True)
+        self.handle_read()
+
     def writable(self):
         """We don't write to stdin"""
         return False
