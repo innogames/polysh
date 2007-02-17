@@ -21,11 +21,31 @@ import pexpect
 from gsh_tests import launch_gsh
 
 class TestControlShell(unittest.TestCase):
-    def testControlShell(self):
+    def testControl(self):
         child = launch_gsh('--quick-sh localhost')
-        child.expect('.*ready \(1\)> .*')
+        child.expect('ready \(1\)> ')
+        child.sendline('sleep 1h')
+        child.expect('waiting \[0/1\]> ')
         child.sendintr()
-        child.expect('.*\[ctrl\]> .*')
+        child.expect('\[ctrl\]> ')
+        child.sendline('disabl\tlocal* not_found')
+        child.expect('not_found not found\r\n')
+        child.sendeof()
+        child.expect('ready \(0\)> ')
+        child.sendintr()
+        child.expect('\[ctrl\]> ')
+        child.sendintr()
+        child.expect('\[ctrl\]> ')
+        child.sendline('help')
+        child.sendline('enable local\t')
+        child.sendline('list')
+        child.expect('1 active shells, 0 dead shells, total: 1')
+        child.sendline('send_sigint')
+        child.sendline('continue')
+        child.sendline('')
+        child.expect('ready \(1\)> ')
+        child.sendintr()
+        child.expect('\[ctrl\]> ')
         child.sendline('quit')
         child.expect(pexpect.EOF)
 
