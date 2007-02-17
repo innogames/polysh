@@ -70,7 +70,7 @@ def parse_cmdline():
                       dest='shell_expand_ssh',
                       help='shell expand the command used to launch ssh')
     parser.add_option('--quick-sh', action='store_true', dest='quick_sh',
-                      help='Do not launch a full ssh session',)
+                      help='Do not launch a full ssh session')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
                       help='abort if hosts are failing [by default ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
