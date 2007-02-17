@@ -28,18 +28,15 @@ import time
 from gsh.buffered_dispatcher import buffered_dispatcher
 from gsh.console import console_output
 
-# Either the remote shell is expecting a command, or we are waiting
-# for the first line (options.print_first), or we already printed the
-# first line and a command is running
+# Either the remote shell is expecting a command or one is already running
 STATE_NOT_STARTED,         \
 STATE_IDLE,                \
 STATE_EXPECTING_NEXT_LINE, \
-STATE_EXPECTING_LINE,      \
 STATE_RUNNING,             \
-STATE_TERMINATED = range(6)
+STATE_TERMINATED = range(5)
 
 STATE_NAMES = ['not_started', 'idle', 'expecting_next_line',
-                'expecting_line', 'running', 'terminated']
+               'running', 'terminated']
 
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
@@ -287,16 +284,14 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
             elif self.state is STATE_EXPECTING_NEXT_LINE:
-                self.change_state(STATE_EXPECTING_LINE)
+                self.change_state(STATE_RUNNING)
             elif self.state is not STATE_NOT_STARTED:
                 if line[-1] != '\n':
                     line += '\n'
                 if self.is_logging():
                     self.log(line)
-                if not self.options.print_first or \
-                   self.state is STATE_EXPECTING_LINE:
-                    console_output(self.display_name + ': ' + line)
-                    self.change_state(STATE_RUNNING)
+                console_output(self.display_name + ': ' + line)
+                self.change_state(STATE_RUNNING)
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
@@ -304,14 +299,12 @@ class remote_dispatcher(buffered_dispatcher):
 
     def print_unfinished_line(self):
         """The unfinished line stayed long enough in the buffer to be printed"""
-        if self.state in (STATE_EXPECTING_LINE, STATE_RUNNING):
-            if not self.options.print_first or \
-               self.state is STATE_EXPECTING_LINE:
-                    line = self.read_buffer + '\n'
-                    self.read_buffer = ''
-                    if self.is_logging():
-                        self.log(line)
-                    console_output(self.display_name + ': ' + line)
+        if self.state is STATE_RUNNING:
+            line = self.read_buffer + '\n'
+            self.read_buffer = ''
+            if self.is_logging():
+                self.log(line)
+            console_output(self.display_name + ': ' + line)
 
     def writable(self):
         """Do we want to write something?"""

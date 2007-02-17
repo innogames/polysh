@@ -177,24 +177,6 @@ class control_shell(cmd.Cmd):
         """
         sys.exit(0)
 
-    def do_get_print_first(self, command):
-        """
-        Check whether we only print the first line for each command output
-        """
-        print 'print_first = ' + str(not not self.options.print_first)
-
-    def do_set_print_first(self, command):
-        """
-        Print only the first line for each command output
-        """
-        self.options.print_first = True
-
-    def do_unset_print_first(self, command):
-        """
-        Print all lines for each command output
-        """
-        self.options.print_first = False
-
     def do_send_sigint(self, command):
         """
         Send a Ctrl-C to all remote shells
