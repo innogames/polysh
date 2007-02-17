@@ -804,7 +804,7 @@ class spawn (object):
         """This sends a control character to the child like Ctrl-C
         or Ctrl-D.
         """
-        os.write (self.child_fd, '%c' % char)
+        self.send ('%c' % char)
 
     def sendeof(self):
         """This sends an EOF to the child.
