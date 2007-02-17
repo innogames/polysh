@@ -71,7 +71,7 @@ def handle_unfinished_lines():
     """Typically we print only lines with a '\n', but if some buffers keep an
     unfinished line for some time we'll add an artificial '\n'"""
     for r in all_instances():
-        if r.read_buffer:
+        if r.read_buffer and r.read_buffer[0] != chr(27):
             break
     else:
         # No unfinished lines
