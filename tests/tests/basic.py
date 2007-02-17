@@ -26,8 +26,7 @@ class TestBasic(unittest.TestCase):
 
         def start_child():
             child = launch_gsh(arg)
-            child.expect('.*ready \(%d\)> ' % (nr_localhost))
-            self.assertEquals(child.before, '')
+            child.expect('ready \(%d\)> ' % (nr_localhost))
             return child
 
         def stop_child(child):
@@ -44,7 +43,7 @@ class TestBasic(unittest.TestCase):
             child.sendline('exit')
             for i in xrange(nr_localhost):
                 child.expect('Error talking to localhost[#0-9]*\r\n')
-            child.expect('.*ready \(0\)> ')
+            child.expect('ready \(0\)> ')
             stop_child(child)
 
         test_eof()
