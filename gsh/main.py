@@ -81,7 +81,7 @@ def parse_cmdline():
     options, args = parser.parse_args()
     if options.quick_sh and options.ssh != 'ssh':
         parser.error('--ssh and --quick-sh are mutually exclusive')
-    
+
     if options.hosts_filename:
         try:
             hosts_file = open(options.hosts_filename, 'r')
