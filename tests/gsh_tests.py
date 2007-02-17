@@ -54,6 +54,7 @@ def remove_coverage_files():
 def end_coverage():
     coverage.the_coverage.start()
     coverage.the_coverage.collect()
+    coverage.the_coverage.stop()
     modules = [p[:-3] for p in os.listdir('../gsh') if p.endswith('.py')]
     coverage.report(['../gsh/%s.py' % (m) for m in modules])
     remove_coverage_files()
@@ -62,7 +63,6 @@ def end_coverage():
 
 def main():
     options = parse_cmdline()
-    sys.path.insert(0, '..')
     if options.coverage:
         remove_coverage_files()
     import_tests()
@@ -76,7 +76,7 @@ def launch_gsh(arg):
     prefix = '../gsh.py'
     if parse_cmdline().coverage:
         prefix = './coverage.py -x -p ' + prefix
-    return pexpect.spawn(prefix + ' ' + arg)
+    return pexpect.spawn(prefix + ' ' + arg, timeout=5)
 
 if __name__ == '__main__':
     main()
