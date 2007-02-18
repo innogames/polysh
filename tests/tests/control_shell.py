@@ -24,6 +24,13 @@ class TestControlShell(unittest.TestCase):
     def testControl(self):
         child = launch_gsh('--quick-sh localhost')
         child.expect('ready \(1\)> ')
+        child.sendline('cat')
+        child.expect('waiting \[0/1\]> ')
+        child.sendintr()
+        child.expect('\[ctrl\]> ')
+        child.sendline('send_eof')
+        child.sendeof()
+        child.expect('ready \(1\)> ')
         child.sendline('sleep 1h')
         child.expect('waiting \[0/1\]> ')
         child.sendintr()
