@@ -62,4 +62,18 @@ class TestControlShell(unittest.TestCase):
         child.sendline('quit')
         child.expect(pexpect.EOF)
 
+    def testReconnect(self):
+        child = launch_gsh('--quick-sh localhost')
+        child.expect('ready \(1\)> ')
+        child.sendline('exit')
+        child.expect('Error talking to localhost\r\n')
+        child.expect('ready \(0\)>')
+        child.sendintr()
+        child.expect('\[ctrl\]> ')
+        child.sendline('reconnect l\t')
+        child.sendline('continue')
+        child.expect('ready \(1\)> ')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
 TESTS = (TestControlShell,)
