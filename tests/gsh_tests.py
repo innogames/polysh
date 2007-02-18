@@ -66,7 +66,7 @@ def main():
     if options.coverage:
         remove_coverage_files()
     import_tests()
-    try:        
+    try:
         unittest.main(argv=[sys.argv[0], '-v'], defaultTest='ALL_TESTS')
     finally:
         if options.coverage:

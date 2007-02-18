@@ -33,11 +33,11 @@ class TestBasic(unittest.TestCase):
             child.sendeof()
             child.expect(pexpect.EOF)
             self.assertEquals(child.before, '')
-        
+
         def test_eof():
             child = start_child()
             stop_child(child)
-        
+
         def test_exit():
             child = start_child()
             child.sendline('exit')
