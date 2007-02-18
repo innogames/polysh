@@ -22,7 +22,7 @@ from gsh_tests import launch_gsh
 
 class TestControlShell(unittest.TestCase):
     def testControl(self):
-        child = launch_gsh('--quick-sh localhost')
+        child = launch_gsh(['--quick-sh', 'localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('cat')
         child.expect('waiting \[0/1\]> ')
@@ -65,7 +65,7 @@ class TestControlShell(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testReconnect(self):
-        child = launch_gsh('--quick-sh localhost')
+        child = launch_gsh(['--quick-sh', 'localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('exit')
         child.expect('Error talking to localhost\r\n')
@@ -79,7 +79,7 @@ class TestControlShell(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testListManipulation(self):
-        child = launch_gsh('--quick-sh localhost')
+        child = launch_gsh(['--quick-sh', 'localhost'])
         child.expect('ready \(1\)> ')
         child.sendintr()
         child.expect('\[ctrl\]> ')

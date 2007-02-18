@@ -21,11 +21,11 @@ import pexpect
 from gsh_tests import launch_gsh
 
 class TestBasic(unittest.TestCase):
-    def localhost(self, nr_localhost, extra=''):
-        arg = nr_localhost * 'localhost ' + extra
+    def localhost(self, nr_localhost, extra=[]):
+        args = extra + nr_localhost * ['localhost']
 
         def start_child():
-            child = launch_gsh(arg)
+            child = launch_gsh(args)
             child.expect('ready \(%d\)> ' % (nr_localhost))
             return child
 
@@ -59,12 +59,12 @@ class TestBasic(unittest.TestCase):
         self.localhost(3)
 
     def testQuickLocalhost(self):
-        self.localhost(1, extra='--quick-sh')
+        self.localhost(1, extra=['--quick-sh'])
 
     def testQuickLocalhostLocalhost(self):
-        self.localhost(2, extra='--quick-sh')
+        self.localhost(2, extra=['--quick-sh'])
 
     def testQuickLocalhostLocalhostLocalhost(self):
-        self.localhost(3, extra='--quick-sh')
+        self.localhost(3, extra=['--quick-sh'])
 
 TESTS = (TestBasic,)

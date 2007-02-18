@@ -22,7 +22,7 @@ from gsh_tests import launch_gsh
 
 class TestHostSyntax(unittest.TestCase):
     def assertHostSyntax(self, to_expand, expanded):
-        child = launch_gsh('"%s"' % to_expand)
+        child = launch_gsh([to_expand])
         child.expect('ready')
         child.sendintr()
         child.expect('\[ctrl\]> ')

@@ -72,11 +72,11 @@ def main():
         if options.coverage:
             end_coverage()
 
-def launch_gsh(arg):
-    prefix = '../gsh.py'
+def launch_gsh(args):
+    args = ['../gsh.py'] + args
     if parse_cmdline().coverage:
-        prefix = './coverage.py -x -p ' + prefix
-    return pexpect.spawn(prefix + ' ' + arg, timeout=5)
+        args = ['./coverage.py', '-x', '-p'] + args
+    return pexpect.spawn(args[0], args=args[1:], timeout=5)
 
 if __name__ == '__main__':
     main()
