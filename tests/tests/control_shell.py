@@ -42,7 +42,6 @@ class TestControlShell(unittest.TestCase):
         child.expect('1 active shells, 0 dead shells, total: 1')
         child.sendline('send_sigint')
         child.sendline('continue')
-        child.sendline('')
         child.expect('ready \(1\)> ')
         child.sendintr()
         child.expect('\[ctrl\]> ')
