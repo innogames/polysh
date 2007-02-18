@@ -42,7 +42,7 @@ class TestControlShell(unittest.TestCase):
         child.expect('waiting \[0/1\]> ')
         child.sendintr()
         child.expect('\[ctrl\]> ')
-        child.sendline('disabl\tlocal* not_found')
+        child.sendline('disabl\tlocal* not_found\t')
         child.expect('not_found not found\r\n')
         child.sendeof()
         child.expect('ready \(0\)> ')
