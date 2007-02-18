@@ -34,6 +34,8 @@ class TestControlShell(unittest.TestCase):
         child.sendline('fg')
         child.expect('waiting \[0/1\]> ')
         child.sendintr()
+        child.expect('\[ctrl\]> ')       
+        child.sendline('') 
         child.expect('\[ctrl\]> ')        
         child.sendline('send_eof')
         child.sendeof()
