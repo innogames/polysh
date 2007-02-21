@@ -55,8 +55,9 @@ def toggle_shells(command, enable):
             i.enabled = enable
 
 def selected_shells(command):
-    """Iterator over the shells with names matching the patterns"""
-    for pattern in command.split():
+    """Iterator over the shells with names matching the patterns.
+    An empty patterns matches all shells"""
+    for pattern in (command or '*').split():
         found = False
         for expanded_pattern in expand_syntax(pattern):
             for i in remote_dispatcher.all_instances():
@@ -143,13 +144,16 @@ class control_shell(cmd.Cmd):
         """
         return cmd.Cmd.do_help(self, command)
 
+    def complete_list(self, text, line, begidx, endidx):
+        return complete_shells(text, line, lambda i: True)
+
     def do_list(self, command):
         """
-        List all remote shells and their states
+        List the specified or all remote shells and their states
         """
         nr_active = nr_dead = 0
         instances = []
-        for i in remote_dispatcher.all_instances():
+        for i in selected_shells(command):
             instances.append(i.get_info())
             if i.active:
                 nr_active += 1
@@ -234,13 +238,16 @@ class control_shell(cmd.Cmd):
         for host in command.split():
             remote_dispatcher.remote_dispatcher(self.options, host)
 
+    def complete_delete_disabled(self, text, line, begidx, endidx):
+        return complete_shells(text, line, lambda i: not i.enabled)
+
     def do_delete_disabled(self, command):
         """
-        Delete remote processes that are disabled, in order to have a shorter
-        list
+        Delete the specified or all remote processes that are disabled,
+        in order to have a shorter list
         """
         to_delete = []
-        for i in remote_dispatcher.all_instances():
+        for i in selected_shells(command):
             if not i.enabled:
                 to_delete.append(i)
         for i in to_delete:
