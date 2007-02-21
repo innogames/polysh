@@ -53,5 +53,5 @@ class TestCommandLine(unittest.TestCase):
         child = launch_gsh(['--hosts-file=/dev/null'])
         child.expect('error: no hosts given')
         child.expect(pexpect.EOF)
-        
+
 TESTS = (TestCommandLine,)

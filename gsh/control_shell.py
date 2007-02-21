@@ -177,7 +177,7 @@ class control_shell(cmd.Cmd):
         """
         sys.exit(0)
 
-    def complete_send_control(self, text, line, begidx, endidx):        
+    def complete_send_control(self, text, line, begidx, endidx):
         if line[len('send_control'):begidx].strip():
             # Control letter already given in command line
             return complete_shells(text, line, lambda i: i.enabled)
