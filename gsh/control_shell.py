@@ -22,7 +22,6 @@ from readline import get_current_history_length, get_history_item
 from readline import add_history, clear_history
 import sys
 import tempfile
-import termios
 from fnmatch import fnmatch
 
 from gsh.console import console_output
@@ -41,12 +40,6 @@ def make_singleton(options):
 def launch():
     """Ctrl-C was pressed"""
     return singleton.launch()
-
-def send_termios_char(char):
-    """Used to send a special character to all processes"""
-    for i in remote_dispatcher.all_instances():
-        c = termios.tcgetattr(i.fd)[6][char]
-        i.dispatch_write(c)
 
 def toggle_shells(command, enable):
     """Enable or disable the specified shells"""
@@ -181,23 +174,29 @@ class control_shell(cmd.Cmd):
         """
         sys.exit(0)
 
-    def do_send_sigint(self, command):
-        """
-        Send a Ctrl-C to all remote shells
-        """
-        send_termios_char(termios.VINTR)
+    def complete_send_control(self, text, line, begidx, endidx):        
+        if line[len('send_control'):begidx].strip():
+            # Control letter already given in command line
+            return complete_shells(text, line, lambda i: i.enabled)
+        if text in ('c', 'd', 'z'):
+            return [text + ' ']
+        return ['c', 'd', 'z']
 
-    def do_send_eof(self, command):
+    def do_send_control(self, command):
         """
-        Send a Ctrl-D to all remote shells
+        Send a control character to the specified or all enabled shells.
+        The first argument is the control character to send: c, d or z
+        The remaining optional arguments are the destination shells.
         """
-        send_termios_char(termios.VEOF)
-
-    def do_send_sigtstp(self, command):
-        """
-        Send a Ctrl-Z to all remote shells
-        """
-        send_termios_char(termios.VSUSP)
+        splitted = command.split()
+        letter = splitted[0]
+        if len(letter) != 1:
+            print 'Expected a single letter, got:', letter
+            return
+        control_letter = chr(ord(letter.lower()) - ord('a') + 1)
+        for i in selected_shells(' '.join(splitted[1:])):
+            if i.enabled:
+                i.dispatch_write(control_letter)
 
     def complete_enable(self, text, line, begidx, endidx):
         return complete_shells(text, line, lambda i: i.active and not i.enabled)
