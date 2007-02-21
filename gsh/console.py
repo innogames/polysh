@@ -34,9 +34,9 @@ def console_output(msg, output=sys.stdout):
     if stdout_is_terminal:
         global last_status
         if last_status:
-            print >> output, '\r' + len(last_status) * ' ' + '\r',
+            output.write('\r' + len(last_status) * ' ' + '\r')
             last_status = None
-    print >> output, msg,
+    output.write(msg)
 
 def show_status(completed, total):
     """The status is '[available shells/alive shells]>'"""

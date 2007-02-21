@@ -71,10 +71,11 @@ def complete_shells(text, line, predicate):
 #
 # This file descriptor is used to interrupt readline in raw_input().
 # /dev/null is not enough as it does not get out of a 'Ctrl-R' reverse-i-search.
-# A simple '\n' seems to makes raw_input() return in all cases.
+# A Ctrl-C seems to make raw_input() return in all cases, and avoids printing
+# a newline
 tempfile_fd, tempfile_name = tempfile.mkstemp()
 os.remove(tempfile_name)
-os.write(tempfile_fd, '\n')
+os.write(tempfile_fd, chr(3))
 
 def interrupt_stdin_thread():
     """The stdin thread may be in raw_input(), get out of it"""
@@ -114,7 +115,8 @@ class control_shell(cmd.Cmd):
         self.stop = False
         interrupt_stdin_thread()
         gsh_histo = switch_readline_history(self.history)
-        console_output('\r')
+        print ''
+        console_output('')
         try:
             while True:
                 try:
@@ -125,6 +127,7 @@ class control_shell(cmd.Cmd):
                     break
         finally:
             self.history = switch_readline_history(gsh_histo)
+            console_output('\r')
 
     def completenames(self, text, *ignored):
         """Overriden to add the trailing space"""
