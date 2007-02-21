@@ -209,7 +209,7 @@ class control_shell(cmd.Cmd):
         toggle_shells(command, True)
 
     def complete_disable(self, text, line, begidx, endidx):
-        return complete_shells(text, line, lambda i: i.active and i.enabled)
+        return complete_shells(text, line, lambda i: i.enabled)
 
     def do_disable(self, command):
         """
