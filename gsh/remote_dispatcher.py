@@ -287,6 +287,8 @@ class remote_dispatcher(buffered_dispatcher):
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
+            if self.handle_read_fast_case(self.read_buffer):
+                return
             lf_pos = self.read_buffer.find('\n')
 
     def print_unfinished_line(self):
