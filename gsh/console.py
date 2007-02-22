@@ -16,6 +16,7 @@
 #
 # Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
+import errno
 import fcntl
 import signal
 import struct
@@ -29,14 +30,25 @@ last_status = None
 
 stdout_is_terminal = sys.stdout.isatty()
 
+def safe_write(output, buf):
+    """We can get a SIGWINCH when printing, which will cause write to raise
+    an EINTR. That's not a reason to stop printing."""
+    while True:
+        try:
+            output.write(buf)
+            break
+        except IOError, e:
+            if e.errno != errno.EINTR:
+                raise
+
 def console_output(msg, output=sys.stdout):
     """Use instead of print, to clear the status information before printing"""
     if stdout_is_terminal:
         global last_status
         if last_status:
-            output.write('\r' + len(last_status) * ' ' + '\r')
+            safe_write(output, '\r' + len(last_status) * ' ' + '\r')
             last_status = None
-    output.write(msg)
+    safe_write(output, msg)
 
 def show_status(completed, total):
     """The status is '[available shells/alive shells]>'"""
