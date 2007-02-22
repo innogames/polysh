@@ -65,11 +65,11 @@ def watch_window_size():
     remote shells"""
     def sigwinch(unused_signum, unused_frame):
         from gsh import remote_dispatcher
-        h, w = terminal_size()
+        w, h = terminal_size()
         # python bug http://python.org/sf/1112949 on amd64
         # from ajaxterm.py
         bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
-        packed_size = struct.pack('HHHH', w, h, 0, 0)
+        packed_size = struct.pack('HHHH', h, w, 0, 0)
         for i in remote_dispatcher.all_instances():
             if i.enabled:
                 fcntl.ioctl(i.fd, bug, packed_size)
