@@ -57,9 +57,6 @@ def parse_cmdline():
                       metavar='CMD')
     parser.add_option('--ssh', type='str', dest='ssh', default='ssh',
                       help='ssh command to use [ssh]', metavar='SSH')
-    parser.add_option('--shell-expand-ssh', action='store_true',
-                      dest='shell_expand_ssh',
-                      help='shell expand the command used to launch ssh')
     parser.add_option('--quick-sh', action='store_true', dest='quick_sh',
                       help='Do not launch a full ssh session')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
@@ -70,9 +67,6 @@ def parse_cmdline():
                       default=False, help=optparse.SUPPRESS_HELP)
 
     options, args = parser.parse_args()
-    if options.quick_sh and options.ssh != 'ssh':
-        parser.error('--ssh and --quick-sh are mutually exclusive')
-
     if options.hosts_filename:
         try:
             hosts_file = open(options.hosts_filename, 'r')

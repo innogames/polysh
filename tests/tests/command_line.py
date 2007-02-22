@@ -23,11 +23,6 @@ import os
 from gsh_tests import launch_gsh
 
 class TestCommandLine(unittest.TestCase):
-    def testExclusion(self):
-        child = launch_gsh(['--quick-sh', '--ssh=echo'])
-        child.expect('error: --ssh and --quick-sh are mutually exclusive')
-        child.expect(pexpect.EOF)
-
     def testGoodHostsFilename(self):
         tmp_name = '/tmp/gsh_tests.%d' % (os.getpid())
         tmp = open(tmp_name, 'w', 0600)
