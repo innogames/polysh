@@ -173,6 +173,10 @@ class pipe_notification_reader(asyncore.file_dispatcher):
             else:
                 self._do(c)
 
+    def writable(self):
+        """That's a reader"""
+        return False
+
 # All the words that have been typed in gsh. Used by the completion mechanism.
 history_words = set()
 
