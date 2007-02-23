@@ -42,7 +42,11 @@ from gsh.version import VERSION
 def kill_all():
     """When gsh quits, we kill all the remote shells we started"""
     for i in remote_dispatcher.all_instances():
-        os.kill(i.pid, signal.SIGKILL)
+        try:
+            os.kill(i.pid, signal.SIGKILL)
+        except OSError:
+            # The process was already dead, no problem
+            pass
 
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...' % (sys.argv[0])
