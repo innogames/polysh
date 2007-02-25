@@ -92,7 +92,8 @@ def main_loop():
                 if completed == total:
                     # Time to use raw_input() in the stdin thread
                     the_stdin_thread.ready_event.set()
-                if not the_stdin_thread.ready_event.isSet():
+                else:
+                    the_stdin_thread.ready_event.clear()
                     # Otherwise, just print the status
                     show_status(completed, total)
                 if remote_dispatcher.all_terminated():

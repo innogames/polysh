@@ -22,6 +22,7 @@ import errno
 import fcntl
 import os
 import readline # Just to say we want to use it with raw_input
+import socket
 import sys
 from threading import Thread, Event, Lock
 
@@ -134,18 +135,21 @@ def process_input_buffer():
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
                 r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
 
-# The stdin thread uses a pipe to communicate with the main thread, which is
-# most of the time waiting in the select() loop.
-# Pipe character protocol:
+# The stdin thread uses a synchronous (with ACK) socket to communicate with the
+# main thread, which is most of the time waiting in the poll() loop.
+# Socket character protocol:
 # s: entering in raw_input, the main loop should not read stdin
 # e: leaving raw_input, the main loop can read stdin
 # q: Ctrl-D was pressed, exiting
 # d: there is new data to send
+# A: ACK, same reply for every message, communications are synchronous, so the
+# stdin thread sends a character to the socket, the main thread processes it,
+# sends the ACK, and the stdin thread can go on.
 
-class pipe_notification_reader(asyncore.file_dispatcher):
-    """The pipe reader in the main thread"""
+class socket_notification_reader(asyncore.dispatcher):
+    """The socket reader in the main thread"""
     def __init__(self):
-        asyncore.file_dispatcher.__init__(self, the_stdin_thread.pipe_read)
+        asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
     def _do(self, c):
         if c in ('s', 'e'):
@@ -158,19 +162,21 @@ class pipe_notification_reader(asyncore.file_dispatcher):
             raise Exception, 'Unknown code: %s' % (c)
 
     def handle_read(self):
-        """Handle all the available character commands in the pipe"""
+        """Handle all the available character commands in the socket"""
         while True:
             try:
                 c = self.recv(1)
-            except OSError, e:
-                ok = e.errno == errno.EAGAIN
-                assert ok
+            except socket.error, why:
+                assert why[0] == errno.EWOULDBLOCK
                 return
             else:
                 self._do(c)
+                self.socket.setblocking(True)
+                self.send('A')
+                self.socket.setblocking(False)
 
     def writable(self):
-        """That's a reader"""
+        """Our writes are blocking"""
         return False
 
 # All the words that have been typed in gsh. Used by the completion mechanism.
@@ -182,6 +188,12 @@ def complete(text, state):
     matches = [w for w in history_words if len(w) > l and w.startswith(text)]
     if state <= len(matches):
         return matches[state]
+
+def write_main_socket(c):
+    """Synchronous write to the main socket, wait for ACK"""
+    the_stdin_thread.socket_write.send(c)
+    if True or c != 'e':
+        the_stdin_thread.socket_write.recv(1)
 
 class stdin_thread(Thread):
     """The stdin thread, used to call raw_input()"""
@@ -195,24 +207,28 @@ class stdin_thread(Thread):
         the_stdin_thread.input_buffer = input_buffer()
         if interactive:
             the_stdin_thread.interrupted_event = Event()
-            the_stdin_thread.pipe_read, the_stdin_thread.pipe_write = os.pipe()
+            s1, s2 = socket.socketpair()
+            the_stdin_thread.socket_read, the_stdin_thread.socket_write = s1, s2
             the_stdin_thread.wants_control_shell = False
             the_stdin_thread.setDaemon(True)
             the_stdin_thread.start()
-            pipe_notification_reader()
+            socket_notification_reader()
         else:
             the_stdin_thread.ready_event.set()
 
     def run(self):
         while True:
-            self.ready_event.wait()
+            while True:
+                self.ready_event.wait()
+                nr, total = remote_dispatcher.count_completed_processes()
+                if nr == total:
+                    break
             # The remote processes are ready, the thread can call raw_input
             self.interrupted_event.clear()
-            console_output('\r')
             try:
                 try:
-                    os.write(self.pipe_write, 's')
-                    nr = remote_dispatcher.count_completed_processes()[0]
+                    write_main_socket('s')
+                    console_output('\r')
                     readline.set_completer(complete)
                     readline.parse_and_bind('tab: complete')
                     readline.set_completer_delims(' \t\n')
@@ -225,7 +241,8 @@ class stdin_thread(Thread):
                         words = [w + ' ' for w in cmd.split() if len(w) > 1]
                         history_words.update(words)
                 finally:
-                    os.write(self.pipe_write, 'e')
+                    if not self.wants_control_shell:
+                        write_main_socket('e')
             except EOFError:
                 if self.wants_control_shell:
                     self.ready_event.clear()
@@ -233,12 +250,12 @@ class stdin_thread(Thread):
                     # main thread
                     self.interrupted_event.set()
                 else:
-                    os.write(self.pipe_write, 'q')
+                    write_main_socket('q')
                     return
             else:
                 self.ready_event.clear()
                 self.input_buffer.add(cmd + '\n')
-                os.write(self.pipe_write, 'd')
+                write_main_socket('d')
 
 the_stdin_thread = stdin_thread()
 the_stdin_dispatcher = stdin_dispatcher()

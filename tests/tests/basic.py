@@ -32,7 +32,6 @@ class TestBasic(unittest.TestCase):
         def stop_child(child):
             child.sendeof()
             child.expect(pexpect.EOF)
-            self.assertEquals(child.before, '')
 
         def test_eof():
             child = start_child()
