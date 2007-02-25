@@ -40,10 +40,6 @@ def set_stdin_blocking(blocking):
         flags = stdin_fcntl_flags | os.O_NONBLOCK
     fcntl.fcntl(0, fcntl.F_SETFL, flags)
 
-def restore_streams_flags_at_exit():
-    """We play we fcntl flags, so we make sure to restore them on exit"""
-    atexit.register(fcntl.fcntl, 0, fcntl.F_SETFL, stdin_fcntl_flags)
-
 class stdin_dispatcher(asyncore.file_dispatcher):
     """The stdin reader in the main thread => no fancy editing"""
     def __init__(self):

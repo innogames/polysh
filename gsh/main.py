@@ -35,7 +35,7 @@ if sys.hexversion < 0x02040000:
 from gsh import remote_dispatcher
 from gsh.console import show_status, watch_window_size
 from gsh import control_shell
-from gsh.stdin import the_stdin_thread, restore_streams_flags_at_exit
+from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
 from gsh.version import VERSION
 
@@ -144,8 +144,6 @@ def main():
             remote_dispatcher.remote_dispatcher(options, host)
 
     watch_window_size()
-
-    restore_streams_flags_at_exit()
     the_stdin_thread.activate(not options.command)
 
     if options.profile:
