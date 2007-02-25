@@ -73,7 +73,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
             buffer_length += len(piece)
         new_data = new_data.replace('\r\n', '\n')
         if new_data[-1] == '\r':
-            del new_data[-1]
+            new_data = new_data[:-1]
             self.dropped_last_CR = True
         self.read_buffer += new_data
         return new_data
