@@ -332,8 +332,9 @@ class remote_dispatcher(buffered_dispatcher):
         return [self.display_name, 'fd:%d' % (self.fd),
                 'r:%d' % (len(self.read_buffer)),
                 'w:%d' % (len(self.write_buffer)),
-                'active:%s' % (str(self.active)),
-                'enabled:%s' % (str(self.enabled)), state]
+                self.active and 'active' or 'dead',
+                self.enabled and 'enabled' or 'disabled',
+                state]
 
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
