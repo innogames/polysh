@@ -140,6 +140,7 @@ def main():
             pass # The dir already exists
 
     atexit.register(kill_all)
+    signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies
     for arg in args:
         for host in expand_syntax(arg):
             remote_dispatcher.remote_dispatcher(options, host)

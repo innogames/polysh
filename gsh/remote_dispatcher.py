@@ -128,8 +128,6 @@ class remote_dispatcher(buffered_dispatcher):
             self.launch_ssh(options, hostname)
             sys.exit(1)
         # Parent
-        while os.waitpid(-1, os.WNOHANG) != (0, 0):
-            pass
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
         self.options = options
