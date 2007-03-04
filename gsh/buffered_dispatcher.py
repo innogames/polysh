@@ -31,9 +31,9 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         self.fd = fd
         self.read_buffer = ''
         self.write_buffer = ''
-        # We replace '\r\n' with '\n' so if a buffer finishes with a '\r' we don't let
-        # it escape as it may be followed by a '\n'. In this case we remember that the
-        # next buffer will start with '\r'.
+        # We replace '\r\n' with '\n' so if a buffer finishes with a '\r' we
+        # don't let it escape as it may be followed by a '\n'. In this case we
+        # remember that the next buffer will start with '\r'.
         self.dropped_last_CR = False
 
     def handle_error(self):
