@@ -192,6 +192,9 @@ class control_shell(cmd.Cmd):
         The remaining optional arguments are the destination shells.
         """
         splitted = command.split()
+        if not splitted:
+            print 'Expected at least a letter'
+            return
         letter = splitted[0]
         if len(letter) != 1:
             print 'Expected a single letter, got:', letter
