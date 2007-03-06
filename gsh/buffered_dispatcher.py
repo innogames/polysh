@@ -71,11 +71,11 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                     raise
             new_data += piece
             buffer_length += len(piece)
-        new_data = new_data.replace('\r\n', '\n')
         if new_data[-1] == '\r':
             new_data = new_data[:-1]
             self.dropped_last_CR = True
-        new_data = new_data.replace('\r', '\n')
+        # We don't want '\r' to hide lines and '\r\n' must be replaced by '\n'
+        new_data = new_data.replace('\n', '').replace('\r', '\n')
         self.read_buffer += new_data
         return new_data
 

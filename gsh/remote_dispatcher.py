@@ -232,7 +232,14 @@ class remote_dispatcher(buffered_dispatcher):
             # No '\n' in data => slow case
             return False
         self.read_buffer = data[last_nl + 1:]
-        data = data[:last_nl]
+        data = data[:last_nl].strip('\n')
+        while True:
+            no_empty_lines = data.replace('\n\n', '\n')
+            if len(no_empty_lines) == len(data):
+                break
+            data = no_empty_lines
+        if not data:
+            return True
         if self.is_logging():
             self.log(data + '\n')
         prefix = self.display_name + ': '
@@ -276,13 +283,16 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
             elif self.state is STATE_EXPECTING_NEXT_LINE:
-                self.change_state(STATE_RUNNING)
+                if not line.startswith(chr(27)):
+                    # Zsh seems to need this
+                    self.change_state(STATE_RUNNING)
             elif self.state is not STATE_NOT_STARTED:
                 if line[-1] != '\n':
                     line += '\n'
                 if self.is_logging():
                     self.log(line)
-                console_output(self.display_name + ': ' + line)
+                if line != '\n':
+                    console_output(self.display_name + ': ' + line)
                 self.change_state(STATE_RUNNING)
 
             # Go to the next line in the buffer
