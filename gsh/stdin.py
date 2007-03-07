@@ -154,6 +154,7 @@ class socket_notification_reader(asyncore.dispatcher):
     def _do(self, c):
         if c in ('s', 'e'):
             the_stdin_dispatcher.is_readable = c == 'e'
+            console_output('\r')
         elif c == 'q':
             remote_dispatcher.dispatch_termination_to_all()
         elif c == 'd':
@@ -228,7 +229,6 @@ class stdin_thread(Thread):
             try:
                 try:
                     write_main_socket('s')
-                    console_output('\r')
                     readline.set_completer(complete)
                     readline.parse_and_bind('tab: complete')
                     readline.set_completer_delims(' \t\n')

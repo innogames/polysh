@@ -33,7 +33,7 @@ if sys.hexversion < 0x02040000:
         sys.exit(1)
 
 from gsh import remote_dispatcher
-from gsh.console import show_status, watch_window_size
+from gsh.console import show_status, watch_window_size, console_output
 from gsh import control_shell
 from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
@@ -97,6 +97,7 @@ def main_loop():
                     # Otherwise, just print the status
                     show_status(completed, total)
                 if remote_dispatcher.all_terminated():
+                    console_output('\n')
                     raise asyncore.ExitNow
                 asyncore.loop(count=1, timeout=None, use_poll=True)
                 remote_dispatcher.handle_unfinished_lines()
