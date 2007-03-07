@@ -17,16 +17,19 @@
 # Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import asyncore
+import fcntl
 import os
 import pty
 import random
 import signal
+import struct
 import sys
 import termios
 import time
 
 from gsh.buffered_dispatcher import buffered_dispatcher
 from gsh.console import console_output
+from gsh.terminal_size import terminal_size
 
 # Either the remote shell is expecting a command or one is already running
 STATE_NOT_STARTED,         \
@@ -99,6 +102,28 @@ def all_terminated():
                 return False
     return True
 
+def update_terminal_size():
+    """Propagate the terminal size to the remote shells accounting for the
+    place taken by the longest name"""
+    w, h = terminal_size()
+    lengths = [len(i.display_name) for i in all_instances() if i.enabled]
+    if not lengths:
+        return
+    max_name_len = max(lengths)
+    for i in all_instances():
+        padding_len = max_name_len - len(i.display_name)
+        i.prefix = i.display_name + padding_len * ' ' + ': '
+    w = max(w - max_name_len - 2, min(w, 10))
+    # python bug http://python.org/sf/1112949 on amd64
+    # from ajaxterm.py
+    bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
+    packed_size = struct.pack('HHHH', h, w, 0, 0)
+    term_size = w, h
+    for i in all_instances():
+        if i.enabled and i.term_size != term_size:
+            i.term_size = term_size
+            fcntl.ioctl(i.fd, bug, packed_size)
+
 def format_info(info_list):
     """Turn a 2-dimension list of strings into a 1-dimension list of strings
     with correct spacing"""
@@ -132,11 +157,12 @@ class remote_dispatcher(buffered_dispatcher):
         buffered_dispatcher.__init__(self, fd)
         self.options = options
         self.log_path = None
-        self.change_name(hostname)
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
         self.state = STATE_NOT_STARTED
         self.termination = None
+        self.term_size = (-1, -1)
+        self.change_name(hostname)
         self.set_prompt()
         self.pending_rename = None
         if options.command:
@@ -156,6 +182,10 @@ class remote_dispatcher(buffered_dispatcher):
             evaluated = '%s %s' % (evaluated, name)
         os.execlp(shell, shell, '-c', evaluated)
 
+    def set_enabled(self, enabled):
+        self.enabled = enabled
+        update_terminal_size()
+
     def change_state(self, state):
         """Change the state of the remote process, logging the change"""
         if state is not self.state:
@@ -168,7 +198,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.read_buffer = ''
         self.write_buffer = ''
         self.active = False
-        self.enabled = False
+        self.set_enabled(False)
         if self.options.abort_error:
             raise asyncore.ExitNow
 
@@ -242,8 +272,8 @@ class remote_dispatcher(buffered_dispatcher):
             return True
         if self.is_logging():
             self.log(data + '\n')
-        prefix = self.display_name + ': '
-        console_output(prefix + data.replace('\n', '\n' + prefix) + '\n')
+        console_output(self.prefix + \
+                       data.replace('\n', '\n' + self.prefix) + '\n')
         return True
 
     def handle_read(self):
@@ -283,17 +313,16 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
             elif self.state is STATE_EXPECTING_NEXT_LINE:
-                if not line.startswith(chr(27)):
+                if not line.startswith('\x1b[K'):
                     # Zsh seems to need this
                     self.change_state(STATE_RUNNING)
-            elif self.state is not STATE_NOT_STARTED:
+            elif self.state is STATE_RUNNING:
                 if line[-1] != '\n':
                     line += '\n'
                 if self.is_logging():
                     self.log(line)
                 if line.strip():
-                    console_output(self.display_name + ': ' + line)
-                self.change_state(STATE_RUNNING)
+                    console_output(self.prefix + line)
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
@@ -308,7 +337,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.read_buffer = ''
             if self.is_logging():
                 self.log(line)
-            console_output(self.display_name + ': ' + line)
+            console_output(self.prefix + line)
 
     def writable(self):
         """Do we want to write something?"""
@@ -358,6 +387,7 @@ class remote_dispatcher(buffered_dispatcher):
     def change_name(self, name):
         self.display_name = None
         self.display_name = make_unique_name(name)
+        update_terminal_size()
         if self.options.log_dir:
             # The log file
             filename = self.display_name.replace('/', '_')

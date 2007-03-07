@@ -45,7 +45,7 @@ def toggle_shells(command, enable):
     """Enable or disable the specified shells"""
     for i in selected_shells(command):
         if i.active:
-            i.enabled = enable
+            i.set_enabled(enable)
 
 def selected_shells(command):
     """Iterator over the shells with names matching the patterns.

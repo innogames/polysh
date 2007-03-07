@@ -33,7 +33,8 @@ if sys.hexversion < 0x02040000:
         sys.exit(1)
 
 from gsh import remote_dispatcher
-from gsh.console import show_status, watch_window_size, console_output
+from gsh.remote_dispatcher import update_terminal_size
+from gsh.console import show_status, console_output
 from gsh import control_shell
 from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
@@ -146,7 +147,9 @@ def main():
         for host in expand_syntax(arg):
             remote_dispatcher.remote_dispatcher(options, host)
 
-    watch_window_size()
+    update_terminal_size()
+    signal.signal(signal.SIGWINCH, lambda signum, frame: update_terminal_size())
+
     the_stdin_thread.activate(not options.command)
 
     if options.profile:

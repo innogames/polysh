@@ -17,13 +17,7 @@
 # Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import errno
-import fcntl
-import signal
-import struct
 import sys
-import termios
-
-from gsh.terminal_size import terminal_size
 
 # We remember the last printed status in order to clear it with ' ' characters
 last_status = None
@@ -59,19 +53,3 @@ def show_status(completed, total):
         last_status = status
         # We flush because there is no '\n'
         sys.stdout.flush()
-
-def watch_window_size():
-    """Detect when the window size changes, and propagate the new size to the
-    remote shells"""
-    def sigwinch(unused_signum, unused_frame):
-        from gsh import remote_dispatcher
-        w, h = terminal_size()
-        # python bug http://python.org/sf/1112949 on amd64
-        # from ajaxterm.py
-        bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
-        packed_size = struct.pack('HHHH', h, w, 0, 0)
-        for i in remote_dispatcher.all_instances():
-            if i.enabled:
-                fcntl.ioctl(i.fd, bug, packed_size)
-    sigwinch(None, None)
-    signal.signal(signal.SIGWINCH, sigwinch)
