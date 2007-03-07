@@ -291,7 +291,7 @@ class remote_dispatcher(buffered_dispatcher):
                     line += '\n'
                 if self.is_logging():
                     self.log(line)
-                if line != '\n':
+                if line.strip():
                     console_output(self.display_name + ': ' + line)
                 self.change_state(STATE_RUNNING)
 
