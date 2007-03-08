@@ -98,7 +98,7 @@ def main_loop():
                     # Otherwise, just print the status
                     show_status(completed, total)
                 if remote_dispatcher.all_terminated():
-                    console_output('\n')
+                    console_output('')
                     raise asyncore.ExitNow
                 asyncore.loop(count=1, timeout=None, use_poll=True)
                 remote_dispatcher.handle_unfinished_lines()
