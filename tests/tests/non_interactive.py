@@ -31,4 +31,12 @@ class TestNonInteractive(unittest.TestCase):
         child.expect('localhost: some text')
         child.expect(pexpect.EOF)
 
+    def testCommandIntr(self):
+        child = launch_gsh(['--command=echo some text; cat', 'localhost'])
+        child.expect('localhost: some text')
+        child.sendintr()
+        child.expect(pexpect.EOF)
+        child.close()
+        self.assertEqual(child.exitstatus, 1)
+
 TESTS=(TestNonInteractive,)
