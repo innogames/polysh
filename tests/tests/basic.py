@@ -41,7 +41,7 @@ class TestBasic(unittest.TestCase):
             child = start_child()
             child.sendline('exit')
             for i in xrange(nr_localhost):
-                child.expect('Error talking to localhost[#0-9]*\r\n')
+                child.expect('Error talking to localhost[#0-9]*')
             child.expect('ready \(0\)> ')
             stop_child(child)
 
