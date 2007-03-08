@@ -41,6 +41,8 @@ def parse_cmdline():
     parser = optparse.OptionParser()
     parser.add_option('--coverage', '-c', action='store_true', dest='coverage',
                       default=False, help='include coverage tests')
+    parser.add_option('--log', type='str', dest='log',
+                      help='log all pexpect I/O')
     options, args = parser.parse_args()
     if args:
         parser.error()
@@ -74,9 +76,15 @@ def main():
 
 def launch_gsh(args):
     args = ['../gsh.py'] + args
-    if parse_cmdline().coverage:
+    options = parse_cmdline()
+    if options.coverage:
         args = ['./coverage.py', '-x', '-p'] + args
-    return pexpect.spawn(args[0], args=args[1:], timeout=5)
+    if options.log:
+        logfile = open(options.log, 'a', 0644)
+        print >> logfile, 'Launching:', str(args)
+    else:
+        logfile = None
+    return pexpect.spawn(args[0], args=args[1:], timeout=5, logfile=logfile)
 
 if __name__ == '__main__':
     main()
