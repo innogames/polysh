@@ -313,7 +313,7 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
             elif self.state is STATE_EXPECTING_NEXT_LINE:
-                if not line.startswith('\x1b[K'):
+                if not (line.startswith('\x1b[K') and len(line) == 5):
                     # Zsh seems to need this
                     self.change_state(STATE_RUNNING)
             elif self.state is STATE_RUNNING:
