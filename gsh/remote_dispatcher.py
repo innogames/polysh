@@ -112,7 +112,13 @@ def update_terminal_size():
     max_name_len = max(lengths)
     for i in all_instances():
         padding_len = max_name_len - len(i.display_name)
-        i.prefix = i.display_name + padding_len * ' ' + ': '
+        new_prefix = i.display_name + padding_len * ' ' + ': '
+        if len(new_prefix) < len(i.prefix) and not i.options.interactive:
+            # In non-interactive mode, remote processes leave as soon
+            # as they are terminated, but we don't want to break the
+            # indentation if all the remaining processes have short names.
+            return
+        i.prefix = new_prefix
     w = max(w - max_name_len - 2, min(w, 10))
     # python bug http://python.org/sf/1112949 on amd64
     # from ajaxterm.py
@@ -162,6 +168,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.state = STATE_NOT_STARTED
         self.termination = None
         self.term_size = (-1, -1)
+        self.prefix = ''
         self.change_name(hostname)
         self.set_prompt()
         self.pending_rename = None
