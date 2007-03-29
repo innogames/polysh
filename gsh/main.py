@@ -54,8 +54,8 @@ def parse_cmdline():
     parser = optparse.OptionParser(usage, version='gsh ' + VERSION)
     parser.add_option('--log-dir', type='str', dest='log_dir',
                       help='directory to log each machine conversation [none]')
-    parser.add_option('--hosts-file', type='str', dest='hosts_filename',
-                      default=None, metavar='FILE',
+    parser.add_option('--hosts-file', type='str', action='append',
+                      dest='hosts_filenames', metavar='FILE',
                       help='read hostnames from given file, one per line')
     parser.add_option('--command', type='str', dest='command', default=None,
                       help='command to execute on the remote shells',
@@ -72,9 +72,9 @@ def parse_cmdline():
                       default=False, help=optparse.SUPPRESS_HELP)
 
     options, args = parser.parse_args()
-    if options.hosts_filename:
+    for filename in options.hosts_filenames:
         try:
-            hosts_file = open(options.hosts_filename, 'r')
+            hosts_file = open(filename, 'r')
             args[0:0] = [h.rstrip() for h in hosts_file.readlines()]
             hosts_file.close()
         except IOError, e:
