@@ -55,7 +55,7 @@ def parse_cmdline():
     parser.add_option('--log-dir', type='str', dest='log_dir',
                       help='directory to log each machine conversation [none]')
     parser.add_option('--hosts-file', type='str', action='append',
-                      dest='hosts_filenames', metavar='FILE',
+                      dest='hosts_filenames', metavar='FILE', default=[],
                       help='read hostnames from given file, one per line')
     parser.add_option('--command', type='str', dest='command', default=None,
                       help='command to execute on the remote shells',
