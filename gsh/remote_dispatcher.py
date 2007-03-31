@@ -269,7 +269,7 @@ class remote_dispatcher(buffered_dispatcher):
             # No '\n' in data => slow case
             return False
         self.read_buffer = data[last_nl + 1:]
-        data = data[:last_nl].strip('\n')
+        data = data[:last_nl].strip('\n').replace('\r', '\n')
         while True:
             no_empty_lines = data.replace('\n\n', '\n')
             if len(no_empty_lines) == len(data):
@@ -302,7 +302,9 @@ class remote_dispatcher(buffered_dispatcher):
         limit = buffered_dispatcher.MAX_BUFFER_SIZE / 10
         if lf_pos < 0 and len(self.read_buffer) > limit:
             # A large unfinished line is treated as a complete line
-            lf_pos = limit
+            # Or maybe there is a '\r' to break the line
+            lf_pos = max(new_data.find('\r'), limit)
+            
         while lf_pos >= 0:
             # For each line in the buffer
             line = self.read_buffer[:lf_pos + 1]
@@ -320,10 +322,9 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
             elif self.state is STATE_EXPECTING_NEXT_LINE:
-                if not (line.startswith('\x1b[K') and len(line) == 5):
-                    # Zsh seems to need this
-                    self.change_state(STATE_RUNNING)
+                self.change_state(STATE_RUNNING)
             elif self.state is STATE_RUNNING:
+                line = line.replace('\r', '\n')
                 if line[-1] != '\n':
                     line += '\n'
                 if self.is_logging():
