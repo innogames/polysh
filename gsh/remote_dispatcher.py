@@ -206,7 +206,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.write_buffer = ''
         self.active = False
         self.set_enabled(False)
-        if self.options.abort_error:
+        if self.options.abort_error and self.state is STATE_NOT_STARTED:
             raise asyncore.ExitNow
 
     def reconnect(self):
