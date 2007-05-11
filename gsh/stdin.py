@@ -46,7 +46,14 @@ class stdin_dispatcher(asyncore.file_dispatcher):
     def __init__(self):
         asyncore.file_dispatcher.__init__(self, 0)
         self.is_readable = True
-        atexit.register(fcntl.fcntl, 0, fcntl.F_SETFL, stdin_fcntl_flags)
+        def restore_stdin_flags():
+            try:
+                fcntl.fcntl(0, fcntl.F_SETFL, stdin_fcntl_flags)
+            except IOError, e:
+                if e.errno != errno.EBADF:
+                    # stdin may have been closed, otherwise propagate
+                    raise e
+        atexit.register(restore_stdin_flags)
         set_stdin_blocking(True)
 
     def readable(self):
@@ -70,26 +77,30 @@ class stdin_dispatcher(asyncore.file_dispatcher):
         """Some data can be read on stdin"""
         while True:
             try:
-                set_stdin_blocking(False)
                 try:
-                    data = self.recv(4096)
-                finally:
-                    set_stdin_blocking(True)
-            except OSError, e:
-                if e.errno == errno.EAGAIN:
-                    # End of available data
-                    break
+                    set_stdin_blocking(False)
+                    try:
+                        data = self.recv(4096)
+                    finally:
+                        set_stdin_blocking(True)
+                except OSError, e:
+                    if e.errno == errno.EAGAIN:
+                        # End of available data
+                        break
+                    else:
+                        raise
                 else:
-                    raise
-            else:
-                if data:
-                    # Handle the just read data
-                    the_stdin_thread.input_buffer.add(data)
-                    process_input_buffer()
-                else:
-                    # Closed?
-                    self.is_readable = False
-                    break
+                    if data:
+                        # Handle the just read data
+                        the_stdin_thread.input_buffer.add(data)
+                        process_input_buffer()
+                    else:
+                        # Closed?
+                        self.is_readable = False
+                        break
+            except KeyboardInterrupt:
+                from gsh import control_shell
+                control_shell.launch()
 
 class input_buffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
@@ -125,6 +136,8 @@ def process_input_buffer():
     for r in remote_dispatcher.all_instances():
         try:
             r.dispatch_write(data)
+        except asyncore.ExitNow, e:
+            raise e
         except Exception, msg:
             console_output('%s for %s, disconnecting\n' % (msg, r.display_name),
                            output=sys.stderr)

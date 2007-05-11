@@ -175,9 +175,6 @@ class remote_dispatcher(buffered_dispatcher):
         if options.command:
             self.dispatch_write(options.command + '\n')
             self.dispatch_termination()
-            self.options.interactive = False
-        else:
-            self.options.interactive = sys.stdin.isatty()
 
     def launch_ssh(self, options, name):
         """Launch the ssh command in the child process"""
@@ -207,7 +204,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.active = False
         self.set_enabled(False)
         if self.options.abort_error and self.state is STATE_NOT_STARTED:
-            raise asyncore.ExitNow
+            raise asyncore.ExitNow(1)
 
     def reconnect(self):
         """Relaunch and reconnect to this same remote process"""
@@ -421,3 +418,6 @@ class remote_dispatcher(buffered_dispatcher):
         new_name = line[len(self.pending_rename) + 1:-1]
         self.change_name(new_name)
         self.pending_rename = None
+
+    def __str__(self):
+        return self.display_name

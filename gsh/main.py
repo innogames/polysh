@@ -86,9 +86,9 @@ def parse_cmdline():
     return options, args
 
 def main_loop():
-    while True:
-        try:
-            while True:
+    try:
+        while True:
+            try:
                 completed, total = remote_dispatcher.count_completed_processes()
                 if completed == total:
                     # Time to use raw_input() in the stdin thread
@@ -99,13 +99,13 @@ def main_loop():
                     show_status(completed, total)
                 if remote_dispatcher.all_terminated():
                     console_output('')
-                    raise asyncore.ExitNow
+                    raise asyncore.ExitNow(0)
                 asyncore.loop(count=1, timeout=None, use_poll=True)
                 remote_dispatcher.handle_unfinished_lines()
-        except KeyboardInterrupt:
-            control_shell.launch()
-        except asyncore.ExitNow:
-            sys.exit(0)
+            except KeyboardInterrupt:
+                control_shell.launch()
+    except asyncore.ExitNow, e:
+        sys.exit(e.args[0])
 
 def _profile(continuation):
     prof_file = 'gsh.prof'
@@ -150,7 +150,9 @@ def main():
     update_terminal_size()
     signal.signal(signal.SIGWINCH, lambda signum, frame: update_terminal_size())
 
-    the_stdin_thread.activate(not options.command)
+    options.interactive = not options.command and sys.stdin.isatty() and \
+                          sys.stdout.isatty()
+    the_stdin_thread.activate(options.interactive)
 
     if options.profile:
         def safe_main_loop():

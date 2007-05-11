@@ -16,6 +16,7 @@
 #
 # Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
+import asyncore
 import cmd
 import os
 from readline import get_current_history_length, get_history_item
@@ -111,7 +112,7 @@ class control_shell(cmd.Cmd):
     def launch(self):
         if not self.options.interactive:
             # A Ctrl-C was issued in a non-interactive gsh => exit
-            sys.exit(1)
+            raise asyncore.ExitNow(1)
         self.stop = False
         interrupt_stdin_thread()
         gsh_histo = switch_readline_history(self.history)
@@ -175,7 +176,7 @@ class control_shell(cmd.Cmd):
         """
         Quit gsh
         """
-        sys.exit(0)
+        raise asyncore.ExitNow(0)
 
     def complete_send_control(self, text, line, begidx, endidx):
         if line[len('send_control'):begidx].strip():

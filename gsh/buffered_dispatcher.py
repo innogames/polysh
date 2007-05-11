@@ -18,6 +18,9 @@
 
 import asyncore
 import errno
+import sys
+
+from console import console_output
 
 class buffered_dispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
@@ -95,4 +98,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         """Augment the buffer with stuff to write when possible"""
         self.write_buffer += buf
         if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
-            raise Exception, 'Buffer too big (%d)' % (len(self.write_buffer))
+            console_output('Buffer too big (%d) for %s\n' %
+                                            (len(self.write_buffer), str(self)),
+                           output=sys.stderr)
+            raise asyncore.ExitNow(1)
