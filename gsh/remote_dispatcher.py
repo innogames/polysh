@@ -34,12 +34,10 @@ from gsh.terminal_size import terminal_size
 # Either the remote shell is expecting a command or one is already running
 STATE_NOT_STARTED,         \
 STATE_IDLE,                \
-STATE_EXPECTING_NEXT_LINE, \
 STATE_RUNNING,             \
-STATE_TERMINATED = range(5)
+STATE_TERMINATED = range(4)
 
-STATE_NAMES = ['not_started', 'idle', 'expecting_next_line',
-               'running', 'terminated']
+STATE_NAMES = ['not_started', 'idle', 'running', 'terminated']
 
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
@@ -149,6 +147,12 @@ def format_info(info_list):
             info[str_id] = orig_str + indent * ' '
         info_list[info_id] = ' '.join(info)
 
+def configure_tty(fd):
+    """We don't want \n to be replaced with \r\n, and we disable the echo"""
+    attr = termios.tcgetattr(fd)
+    attr[1] &= ~termios.ECHO & ~termios.ONLCR
+    termios.tcsetattr(fd, termios.TCSANOW, attr)
+
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
 
@@ -159,6 +163,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.launch_ssh(options, hostname)
             sys.exit(1)
         # Parent
+        configure_tty(fd)
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
         self.options = options
@@ -225,7 +230,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.termination = self.term1 + self.term2
             self.dispatch_write('echo "%s""%s"\n' % (self.term1, self.term2))
             if self.state is not STATE_NOT_STARTED:
-                self.change_state(STATE_EXPECTING_NEXT_LINE)
+                self.change_state(STATE_RUNNING)
 
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
@@ -235,6 +240,8 @@ class remote_dispatcher(buffered_dispatcher):
         self.dispatch_write('RPS1=\n')
         self.dispatch_write('RPROMPT=\n')
         self.dispatch_write('TERM=ansi\n')
+        self.dispatch_write('unsetopt zle 2> /dev/null\n') # Prevent Zsh from resetting the tty
+        self.dispatch_write('stty -echo -onlcr\n')
         prompt1 = '[gsh prompt ' + str(random.random())[2:]
         prompt2 = str(random.random())[2:] + ']'
         self.prompt = prompt1 + prompt2
@@ -309,7 +316,7 @@ class remote_dispatcher(buffered_dispatcher):
                 if self.options.interactive:
                     self.change_state(STATE_IDLE)
                 else:
-                    self.change_state(STATE_EXPECTING_NEXT_LINE)
+                    self.change_state(STATE_RUNNING)
             elif self.termination and self.termination in line:
                 self.change_state(STATE_TERMINATED)
                 self.disconnect()
@@ -318,8 +325,6 @@ class remote_dispatcher(buffered_dispatcher):
                 pass
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
-            elif self.state is STATE_EXPECTING_NEXT_LINE:
-                self.change_state(STATE_RUNNING)
             elif self.state is STATE_RUNNING:
                 line = line.replace('\r', '\n')
                 if line[-1] != '\n':
@@ -411,7 +416,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.pending_rename = pending_rename1 + pending_rename2
             self.dispatch_write('echo "%s""%s" %s\n' %
                                     (pending_rename1, pending_rename2, string))
-            self.change_state(STATE_EXPECTING_NEXT_LINE)
+            self.change_state(STATE_RUNNING)
         else:
             self.change_name(self.hostname)
 

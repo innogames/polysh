@@ -146,7 +146,7 @@ def process_input_buffer():
             if r.is_logging():
                 r.log('<== ' + data)
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
-                r.change_state(remote_dispatcher.STATE_EXPECTING_NEXT_LINE)
+                r.change_state(remote_dispatcher.STATE_RUNNING)
 
 # The stdin thread uses a synchronous (with ACK) socket to communicate with the
 # main thread, which is most of the time waiting in the poll() loop.

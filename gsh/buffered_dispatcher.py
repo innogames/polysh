@@ -34,10 +34,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         self.fd = fd
         self.read_buffer = ''
         self.write_buffer = ''
-        # We replace '\r\n' with '\n' so if a buffer finishes with a '\r' we
-        # don't let it escape as it may be followed by a '\n'. In this case we
-        # remember that the next buffer will start with '\r'.
-        self.dropped_last_CR = False
 
     def handle_error(self):
         """Handle the Ctrl-C or print the exception and its stack trace.
@@ -57,11 +53,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def handle_read(self):
         """Some data can be read"""
-        if self.dropped_last_CR:
-            new_data = '\r'
-            self.dropped_last_CR = False
-        else:
-            new_data = ''
+        new_data = ''
         buffer_length = len(self.read_buffer)
         while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
             try:
@@ -74,10 +66,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                     raise
             new_data += piece
             buffer_length += len(piece)
-        if new_data[-1] == '\r':
-            new_data = new_data[:-1]
-            self.dropped_last_CR = True
-        new_data = new_data.replace('\r\n', '\n')
         self.read_buffer += new_data
         return new_data
 
