@@ -358,7 +358,8 @@ class remote_dispatcher(buffered_dispatcher):
         if self.log_path is None:
             if debug and self.options.debug:
                 state = STATE_NAMES[self.state]
-                console_output('[dbg] %s[%s]: %s' %
+                msg = msg.encode('string_escape')
+                console_output('[dbg] %s[%s]: %s\n' %
                                 (self.display_name, state, msg))
         else:
             # None != False, that's why we use 'not'
