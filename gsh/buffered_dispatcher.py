@@ -66,6 +66,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                     raise
             new_data += piece
             buffer_length += len(piece)
+        new_data = new_data.replace('\r', '\n')
         self.read_buffer += new_data
         return new_data
 

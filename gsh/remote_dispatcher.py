@@ -261,7 +261,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.disconnect()
 
     def print_lines(self, lines):
-        lines = lines.replace('\r', '\n').strip('\n')
+        lines = lines.strip('\n')
         while True:
             no_empty_lines = lines.replace('\n\n', '\n')
             if len(no_empty_lines) == len(lines):
@@ -307,12 +307,6 @@ class remote_dispatcher(buffered_dispatcher):
             # buffer, so we searched only in the new_data and we offset the
             # found index by the length of the previous buffer
             lf_pos += len(self.read_buffer) - len(new_data)
-        limit = buffered_dispatcher.MAX_BUFFER_SIZE / 10
-        if lf_pos < 0 and len(self.read_buffer) > limit:
-            # A large unfinished line is treated as a complete line
-            # Or maybe there is a '\r' to break the line
-            lf_pos = max(new_data.find('\r'), limit)
-            
         while lf_pos >= 0:
             # For each line in the buffer
             line = self.read_buffer[:lf_pos + 1]
