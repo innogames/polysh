@@ -260,6 +260,20 @@ class remote_dispatcher(buffered_dispatcher):
                            sys.stderr)
             self.disconnect()
 
+    def print_lines(self, lines):
+        lines = lines.replace('\r', '\n').strip('\n')
+        while True:
+            no_empty_lines = lines.replace('\n\n', '\n')
+            if len(no_empty_lines) == len(lines):
+                break
+            lines = no_empty_lines
+        if not lines:
+            return
+        if self.is_logging():
+            self.log(lines + '\n')
+        console_output(self.prefix + \
+                       lines.replace('\n', '\n' + self.prefix) + '\n')
+
     def handle_read_fast_case(self, data):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
@@ -274,18 +288,7 @@ class remote_dispatcher(buffered_dispatcher):
             # No '\n' in data => slow case
             return False
         self.read_buffer = data[last_nl + 1:]
-        data = data[:last_nl].strip('\n').replace('\r', '\n')
-        while True:
-            no_empty_lines = data.replace('\n\n', '\n')
-            if len(no_empty_lines) == len(data):
-                break
-            data = no_empty_lines
-        if not data:
-            return True
-        if self.is_logging():
-            self.log(data + '\n')
-        console_output(self.prefix + \
-                       data.replace('\n', '\n' + self.prefix) + '\n')
+        self.print_lines(data[:last_nl])
         return True
 
     def handle_read(self):
@@ -327,13 +330,7 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
             elif self.state is STATE_RUNNING:
-                line = line.replace('\r', '\n')
-                if line[-1] != '\n':
-                    line += '\n'
-                if self.is_logging():
-                    self.log(line)
-                if line.strip():
-                    console_output(self.prefix + line)
+                self.print_lines(line)
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
@@ -344,11 +341,8 @@ class remote_dispatcher(buffered_dispatcher):
     def print_unfinished_line(self):
         """The unfinished line stayed long enough in the buffer to be printed"""
         if self.state is STATE_RUNNING:
-            line = self.read_buffer + '\n'
+            self.print_lines(self.read_buffer)
             self.read_buffer = ''
-            if self.is_logging():
-                self.log(line)
-            console_output(self.prefix + line)
 
     def writable(self):
         """Do we want to write something?"""
