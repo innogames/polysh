@@ -147,12 +147,6 @@ def format_info(info_list):
             info[str_id] = orig_str + indent * ' '
         info_list[info_id] = ' '.join(info)
 
-def configure_tty(fd):
-    """We don't want \n to be replaced with \r\n, and we disable the echo"""
-    attr = termios.tcgetattr(fd)
-    attr[1] &= ~termios.ECHO & ~termios.ONLCR
-    termios.tcsetattr(fd, termios.TCSANOW, attr)
-
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
 
@@ -163,7 +157,6 @@ class remote_dispatcher(buffered_dispatcher):
             self.launch_ssh(options, hostname)
             sys.exit(1)
         # Parent
-        configure_tty(fd)
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
         self.options = options
@@ -175,6 +168,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.term_size = (-1, -1)
         self.prefix = ''
         self.change_name(hostname)
+        self.configure_tty()
         self.set_prompt()
         self.pending_rename = None
         if options.command:
@@ -232,6 +226,15 @@ class remote_dispatcher(buffered_dispatcher):
             if self.state is not STATE_NOT_STARTED:
                 self.change_state(STATE_RUNNING)
 
+    def configure_tty(self):
+        """We don't want \n to be replaced with \r\n, and we disable the echo"""
+        attr = termios.tcgetattr(self.fd)
+        attr[1] &= ~termios.ECHO & ~termios.ONLCR
+        termios.tcsetattr(self.fd, termios.TCSANOW, attr)
+        # Prevent Zsh from resetting the tty
+        self.dispatch_write('unsetopt zle 2> /dev/null\n')
+        self.dispatch_write('stty -echo -onlcr\n')
+
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
         by waiting for its prompt. The prompt is built in two parts for it not
@@ -240,8 +243,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.dispatch_write('RPS1=\n')
         self.dispatch_write('RPROMPT=\n')
         self.dispatch_write('TERM=ansi\n')
-        self.dispatch_write('unsetopt zle 2> /dev/null\n') # Prevent Zsh from resetting the tty
-        self.dispatch_write('stty -echo -onlcr\n')
         prompt1 = '[gsh prompt ' + str(random.random())[2:]
         prompt2 = str(random.random())[2:] + ']'
         self.prompt = prompt1 + prompt2
