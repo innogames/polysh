@@ -91,3 +91,4 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                                             (len(self.write_buffer), str(self)),
                            output=sys.stderr)
             raise asyncore.ExitNow(1)
+        self.handle_write()
