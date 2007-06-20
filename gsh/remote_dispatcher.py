@@ -160,6 +160,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
         self.options = options
+        self.debug = options.debug
         self.log_path = None
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
@@ -344,20 +345,19 @@ class remote_dispatcher(buffered_dispatcher):
 
     def is_logging(self, debug=False):
         if debug:
-            return self.options.debug
+            return self.debug
         return self.log_path is not None
 
     def log(self, msg, debug=False):
         """Log some information, either to a file or on the console"""
         if self.log_path is None:
-            if debug and self.options.debug:
+            if debug and self.debug:
                 state = STATE_NAMES[self.state]
                 msg = msg.encode('string_escape')
                 console_output('[dbg] %s[%s]: %s\n' %
                                 (self.display_name, state, msg))
         else:
-            # None != False, that's why we use 'not'
-            if (not debug) == (not self.options.debug):
+            if debug == self.debug:
                 log = os.open(self.log_path,
                               os.O_WRONLY|os.O_APPEND|os.O_CREAT, 0664)
                 os.write(log, msg)
@@ -370,12 +370,18 @@ class remote_dispatcher(buffered_dispatcher):
         else:
             state = ''
 
+        if self.debug:
+            debug = 'debug'
+        else:
+            debug = ''
+
         return [self.display_name, 'fd:%d' % (self.fd),
                 'r:%d' % (len(self.read_buffer)),
                 'w:%d' % (len(self.write_buffer)),
                 self.active and 'active' or 'dead',
                 self.enabled and 'enabled' or 'disabled',
-                state]
+                state,
+                debug]
 
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""

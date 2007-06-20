@@ -61,7 +61,7 @@ def selected_shells(command):
         if not found:
             print pattern, 'not found'
 
-def complete_shells(text, line, predicate):
+def complete_shells(text, line, predicate=lambda i: True):
     """Return the shell names to include in the completion"""
     res = [i.display_name + ' ' for i in remote_dispatcher.all_instances() if \
                 i.display_name.startswith(text) and \
@@ -143,7 +143,7 @@ class control_shell(cmd.Cmd):
         return cmd.Cmd.do_help(self, command)
 
     def complete_list(self, text, line, begidx, endidx):
-        return complete_shells(text, line, lambda i: True)
+        return complete_shells(text, line)
 
     def do_list(self, command):
         """
@@ -284,6 +284,35 @@ class control_shell(cmd.Cmd):
         for i in remote_dispatcher.all_instances():
             if i.enabled:
                 i.rename(command)
+
+    def complete_set_debug(self, text, line, begidx, endidx):
+        if line[len('set_debug'):begidx].strip():
+            # Control letter already given in command line
+            return complete_shells(text, line)
+        if text in ('y', 'n'):
+            return [text + ' ']
+        return ['y', 'n']
+
+    def do_set_debug(self, command):
+        """
+        Usage: set_debug y|n [SHELLS...]
+        Enable or disable debugging output for all or the specified shells.
+        The first argument is 'y' to enable the debugging output, 'n' to
+        disable it.
+        The remaining optional arguments are the selected shells.
+        The special characters * ? and [] work as expected
+        """
+        splitted = command.split()
+        if not splitted:
+            print 'Expected at least a letter'
+            return
+        letter = splitted[0].lower()
+        if letter not in ('y', 'n'):
+            print "Expected 'y' or 'n', got:", splitted[0]
+            return
+        debug = letter == 'y'
+        for i in selected_shells(' '.join(splitted[1:])):
+            i.debug = debug
 
     def postcmd(self, stop, line):
         return self.stop
