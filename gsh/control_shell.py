@@ -137,7 +137,8 @@ class control_shell(cmd.Cmd):
     # We do this just to have 'help' in the 'Documented commands'
     def do_help(self, command):
         """
-        List available commands
+        Usage: help [COMMAND]
+        List available commands or show the documentation of a specific command
         """
         return cmd.Cmd.do_help(self, command)
 
@@ -146,7 +147,9 @@ class control_shell(cmd.Cmd):
 
     def do_list(self, command):
         """
+        Usage: list [SHELLS...]
         List the specified or all remote shells and their states
+        The special characters * ? and [] work as expected
         """
         nr_active = nr_dead = 0
         instances = []
@@ -162,18 +165,21 @@ class control_shell(cmd.Cmd):
 
     def do_continue(self, command):
         """
+        Usage: continue
         Go back to gsh
         """
         self.stop = True
 
     def do_EOF(self, command):
         """
+        Usage: Ctrl-D
         Go back to gsh
         """
         return self.do_continue(command)
 
     def do_quit(self, command):
         """
+        Usage: quit
         Quit gsh
         """
         raise asyncore.ExitNow(0)
@@ -188,9 +194,11 @@ class control_shell(cmd.Cmd):
 
     def do_send_control(self, command):
         """
+        Usage: send_control LETTER [SHELLS...]
         Send a control character to the specified or all enabled shells.
         The first argument is the control character to send: c, d or z
         The remaining optional arguments are the destination shells.
+        The special characters * ? and [] work as expected
         """
         splitted = command.split()
         if not splitted:
@@ -210,8 +218,9 @@ class control_shell(cmd.Cmd):
 
     def do_enable(self, command):
         """
-        Enable sending commands to the specified shells
-        * ? and [] work as expected
+        Usage: enable [SHELLS...]
+        Enable sending commands to all or the specified shells
+        The special characters * ? and [] work as expected
         """
         toggle_shells(command, True)
 
@@ -220,8 +229,9 @@ class control_shell(cmd.Cmd):
 
     def do_disable(self, command):
         """
-        Disable sending commands to the specified shells
-        * ? and [] work as expected
+        Usage: disable [SHELLS...]
+        Disable sending commands to all or the specified shells
+        The special characters * ? and [] work as expected
         """
         toggle_shells(command, False)
 
@@ -230,8 +240,10 @@ class control_shell(cmd.Cmd):
 
     def do_reconnect(self, command):
         """
-        Try to reconnect to the specified remote shells that have been
+        Usage: reconnect [SHELLS...]
+        Try to reconnect to all or the specified remote shells that have been
         disconnected
+        The special characters * ? and [] work as expected
         """
         for i in selected_shells(command):
             if not i.active:
@@ -239,7 +251,8 @@ class control_shell(cmd.Cmd):
 
     def do_add(self, command):
         """
-        Add a remote shell
+        Usage: add NAMES...
+        Add one or many remote shells
         """
         for host in command.split():
             remote_dispatcher.remote_dispatcher(self.options, host)
@@ -249,8 +262,10 @@ class control_shell(cmd.Cmd):
 
     def do_delete_disabled(self, command):
         """
+        Usage: delete_disabled [SHELLS...]
         Delete the specified or all remote processes that are disabled,
         in order to have a shorter list
+        The special characters * ? and [] work as expected
         """
         to_delete = []
         for i in selected_shells(command):
@@ -261,6 +276,7 @@ class control_shell(cmd.Cmd):
 
     def do_rename(self, command):
         """
+        Usage: rename [NEW_NAME]
         Rename all enabled remote processes with the argument. The argument will
         be shell expanded on the remote processes. With no argument, the
         original hostname will be restored as the displayed name.
