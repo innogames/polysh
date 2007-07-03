@@ -233,17 +233,17 @@ class remote_dispatcher(buffered_dispatcher):
         attr[1] &= ~termios.ECHO & ~termios.ONLCR
         termios.tcsetattr(self.fd, termios.TCSANOW, attr)
         # Prevent Zsh from resetting the tty
-        self.dispatch_write('unsetopt zle 2> /dev/null\n')
-        self.dispatch_write('stty -echo -onlcr\n')
+        self.dispatch_write('unsetopt zle 2> /dev/null;')
+        self.dispatch_write('stty -echo -onlcr;')
 
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
         by waiting for its prompt. The prompt is built in two parts for it not
         to appear in its building"""
         # No right prompt
-        self.dispatch_write('RPS1=\n')
-        self.dispatch_write('RPROMPT=\n')
-        self.dispatch_write('TERM=ansi\n')
+        self.dispatch_write('RPS1=;')
+        self.dispatch_write('RPROMPT=;')
+        self.dispatch_write('TERM=ansi;')
         prompt1 = '[gsh prompt ' + str(random.random())[2:]
         prompt2 = str(random.random())[2:] + ']'
         self.prompt = prompt1 + prompt2
