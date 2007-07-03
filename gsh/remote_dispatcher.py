@@ -386,8 +386,6 @@ class remote_dispatcher(buffered_dispatcher):
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
         if self.active and self.enabled:
-            if self.is_logging(debug=True):
-                self.log('<== ' + buf, debug=True)
             buffered_dispatcher.dispatch_write(self, buf)
 
     def change_name(self, name):
