@@ -63,7 +63,7 @@ def parse_cmdline():
     parser.add_option('--ssh', type='str', dest='ssh', default='ssh',
                       help='ssh command to use [ssh]', metavar='SSH')
     parser.add_option('--quick-sh', action='store_true', dest='quick_sh',
-                      help='Do not launch a full ssh session')
+                      help='do not launch a full ssh session')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
                       help='abort if some shell fails to initialize [ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
