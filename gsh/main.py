@@ -75,7 +75,12 @@ def parse_cmdline():
     for filename in options.hosts_filenames:
         try:
             hosts_file = open(filename, 'r')
-            args[0:0] = [h.rstrip() for h in hosts_file.readlines()]
+            for line in hosts_file.readlines():
+                if '#' in line:
+                    line = line[:line.index('#')]
+                line = line.strip()
+                if line:
+                    args.append(line)
             hosts_file.close()
         except IOError, e:
             parser.error(e)
