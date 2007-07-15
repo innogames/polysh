@@ -67,7 +67,7 @@ def parse_cmdline():
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
                       help='abort if some shell fails to initialize [ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
-                      help='fill the logs with debug informations')
+                      help='fill the logs with debug information')
     parser.add_option('--profile', action='store_true', dest='profile',
                       default=False, help=optparse.SUPPRESS_HELP)
 
