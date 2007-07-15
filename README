@@ -1,3 +1,32 @@
 Group Shell
 ~~~~~~~~~~~
 
+Group Shell (also called gsh) is a remote shell multiplexor. It lets you control
+many remote shells at once in a single shell. Unlike other commands dispatchers,
+it is interactive, so shells spawned on the remote hosts are persistent. It
+requires only a SSH server on the remote hosts, or some other way to open a
+remote shell.
+
+Requirements
+~~~~~~~~~~~~
+
+Python >= 2.4 is required.
+
+Running
+~~~~~~~
+
+You can run gsh without installing it simply by executing the gsh.py file in the
+toplevel gsh directory.
+
+Installation
+~~~~~~~~~~~~
+
+Gsh uses the setuptools, so the command './setup.py install' will install it
+in the default python directory. It should also install the gsh script in
+/usr/bin.
+
+
+
+-- 
+Guillaume Chazarain <guichaz@yahoo.fr>
+http://guichaz.free.fr/gsh
