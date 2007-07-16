@@ -279,7 +279,7 @@ class control_shell(cmd.Cmd):
         Usage: rename [NEW_NAME]
         Rename all enabled remote processes with the argument. The argument will
         be shell expanded on the remote processes. With no argument, the
-        original hostname will be restored as the displayed name.
+        original hostname will be restored as the displayed name
         """
         for i in remote_dispatcher.all_instances():
             if i.enabled:
