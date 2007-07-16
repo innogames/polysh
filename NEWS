@@ -10,6 +10,7 @@ o Added hostname expansion: for example host<1-100> and host<001-100>
 o Added an option to read hostnames from a file
 o Removed useless option to print only the first line of output
 o Misc. bug fixes and optimizations
+o Added a man page
 
 0.1
 ~~~

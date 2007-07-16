@@ -1,0 +1,85 @@
+.TH "gsh" "1" "0.2" "Guillaume Chazarain" "Remote shells"
+.SH "NAME"
+gsh \- Group Shell
+.SH "SYNOPSIS"
+\fBgsh\fR [OPTIONS]... HOSTS...
+.SH "DESCRIPTION"
+\fIgsh\fR spawns many remote shells at once and allows to manage them in a single interface.
+.SH "PROMPTS"
+There are two types of prompt in \fIgsh\fR. With the 'ready (NR_HOSTS)>' one, all the remote shells are awaiting commands, and the command line accepts all the readline editing features. Editing features include navigation in the history, searching in the history, completion from the history.
+
+When the 'waiting [AVAILABLE/TOTAL]>' prompt is shown, only 'AVAILABLE' remote shells have completed the execution of the latest command, data entered at this prompt is sent to all remote shells, but no fancy command line editing features are provided.
+.SH "OPTIONS"
+.TP 
+\fB\-\-version\fR
+Show program's version number and exit.
+.TP 
+\fB\-h, \-\-help\fR
+Show the help message and exit.
+.TP 
+\fB\-\-log\-dir=LOG_DIR\fR
+Directory to log each machine conversation [none]. With this option, \fIgsh\fR will log the output of each shell in the specified directory, each output in a file named according to the remote shell name.
+.TP 
+\fB\-\-hosts\-file=FILE\fR
+Read hostnames from given file, one per line. Hostnames are given on the command line, but they can also be read from files. The format is one hostname per line, '#' comments and blank lines are skipped.
+.TP 
+\fB\-\-command=CMD\fR
+Command to execute on the remote shells. This starts \fIgsh\fR in non\-interactive mode. It will start the remote shells, send the command, print the output and exit when the command is completed on all remote shells. This is the same as piping a command on the standard input.
+.TP 
+\fB\-\-ssh=SSH\fR
+Ssh command to use [ssh]. By default, \fIgsh\fR spawns remote shells using the ssh command, but another shell command can be specified here. For example, with \-\-ssh='usleep $((RANDOM*50)); exec ssh' a delay will be introduced to avoid all hosts accessing a NFS server at the same time. If the hostname should not be added at the end of the command, the macro %(host)s can be inserted where the hostname should be placed.
+.TP 
+\fB\-\-quick\-sh\fR
+Do not launch a full ssh session. It has been observed that the main slowdown factor is the launching of the shell on the remote host, particularly if it is a heavy\-weight one like Zsh. This option is a synonym of \-\-ssh='ssh \-t %(host)s sh', if the login shell is not sh this option should make remote shells start faster.
+.TP 
+\fB\-\-abort\-errors\fR
+Abort if some shell fails to initialize [ignore]. By default, \fIgsh\fR just logs an error when it cannot succesfully open a remote shell. With this option, it exits with a failure.
+.TP 
+\fB\-\-debug\fR
+Fill the logs with debug information. Use this option to see exactly what is transferred between \fIgsh\fR and the remote shells. This option can be dynamically toggled using the set_debug command in the control shell.
+.SH "CONTROL SHELL"
+A control shell is available by typing Ctrl\-C. In this mode, instead of sending commands to remote shells, special commands can be sent to \fIgsh\fR. The commands are:
+
+.TP 
+\fBEOF (Ctrl\-D)\fR
+Go back to \fIgsh\fR.
+.TP 
+\fBadd NAMES...\fR
+Add one or many remote shells.
+.TP 
+\fBcontinue\fR
+Go back to \fIgsh\fR.
+.TP 
+\fBdelete_disabled [SHELLS...]\fR
+Delete the specified or all remote processes that are disabled, in order to have a shorter list. The special characters * ? and [] work as expected.
+.TP 
+\fBdisable [SHELLS...]\fR
+Disable sending commands to all or the specified shells. The special characters * ? and [] work as expected.
+.TP 
+\fBenable [SHELLS...]\fR
+Enable sending commands to all or the specified shells. The special characters * ? and [] work as expected.
+.TP 
+\fBhelp [COMMAND]\fR
+List available commands or show the documentation of a specific command.
+.TP 
+\fBlist [SHELLS...]\fR
+List the specified or all remote shells and their states. The special characters * ? and [] work as expected.
+.TP 
+\fBquit\fR
+Quit \fIgsh\fR.
+.TP 
+\fBreconnect [SHELLS...]\fR
+Try to reconnect to all or the specified remote shells that have been disconnected. The special characters * ? and [] work as expected.
+.TP 
+\fBrename [NEW_NAME]\fR
+Rename all enabled remote processes with the argument. The argument will be shell expanded on the remote processes. With no argument, the original hostname will be restored as the displayed name.
+.TP 
+\fBsend_control LETTER [SHELLS...]\fR
+Send a control character to the specified or all enabled shells. The first argument is the control character to send: c, d or z. The remaining optional arguments are the destination shells. The special characters * ? and [] work as expected.
+.TP 
+\fBset_debug y|n [SHELLS...]\fR
+Enable or disable debugging output for all or the specified shells. The first argument is 'y' to enable the debugging output, 'n' to disable it. The remaining optional arguments are the selected shells. The special characters * ? and [] work as expected.
+.SH "AUTHOR"
+Guillaume Chazarain <guichaz@yahoo.fr>
+.br 
+See http://guichaz.free.fr/gsh
