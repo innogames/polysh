@@ -16,6 +16,7 @@ time and control them from a single command prompt.''',
       author_email='guichaz@yahoo.fr',
       url='http://guichaz.free.fr/gsh',
       scripts=['bin/gsh'],
+      data_files=[('share/man/man1', ['gsh.1'])],
       packages=find_packages(),
       license='GPL'
 )
