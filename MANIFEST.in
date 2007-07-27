@@ -1,4 +1,4 @@
 include COPYING
 include NEWS
 include README
-include setuptools-0.7a1dev_r53614-py2.4.egg
+include setuptools-0.6c6-py2.4.egg
