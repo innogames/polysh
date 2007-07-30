@@ -22,9 +22,9 @@ def terminal_size():                    ### decide on *some* terminal size
             os.close(fd)
         except:
             pass
-    if not cr:                            # env vars or finally defaults
-        try:
-            cr = os.environ['LINES'], os.environ['COLUMNS']
-        except:
-            cr = 25, 80
+        if not cr:                            # env vars or finally defaults
+            try:
+                cr = os.environ['LINES'], os.environ['COLUMNS']
+            except:
+                cr = 25, 80
     return int(cr[1]), int(cr[0])         # reverse rows, cols
