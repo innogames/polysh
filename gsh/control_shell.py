@@ -272,6 +272,7 @@ class control_shell(cmd.Cmd):
             if not i.enabled:
                 to_delete.append(i)
         for i in to_delete:
+            i.disconnect()
             i.close()
 
     def do_rename(self, command):

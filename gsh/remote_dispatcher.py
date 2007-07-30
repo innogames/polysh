@@ -199,6 +199,11 @@ class remote_dispatcher(buffered_dispatcher):
 
     def disconnect(self):
         """We are no more interested in this remote process"""
+        try:
+            os.kill(self.pid, signal.SIGKILL)
+        except OSError:
+            # The process was already dead, no problem
+            pass
         self.read_buffer = ''
         self.write_buffer = ''
         self.active = False
@@ -208,11 +213,7 @@ class remote_dispatcher(buffered_dispatcher):
 
     def reconnect(self):
         """Relaunch and reconnect to this same remote process"""
-        try:
-            os.kill(self.pid, signal.SIGKILL)
-        except OSError:
-            # The process was already dead, no problem
-            pass
+        self.disconnect()
         self.close()
         remote_dispatcher(self.options, self.hostname)
 
