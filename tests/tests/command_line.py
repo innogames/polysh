@@ -26,8 +26,9 @@ class TestCommandLine(unittest.TestCase):
     def testGoodHostsFilename(self):
         tmp_name = '/tmp/gsh_tests.%d' % (os.getpid())
         tmp = open(tmp_name, 'w', 0600)
-        print >> tmp, 'localhost'
+        print >> tmp, 'localhost # Comment'
         print >> tmp, '127.0.0.1'
+        print >> tmp, '# Ignore me'
         print >> tmp, 'localhost.localdomain'
         tmp.close()
         child = launch_gsh(['--quick-sh', '--hosts-file=%s' % (tmp_name)])
