@@ -54,3 +54,7 @@ def show_status(completed, total):
         last_status_length = len(status)
         # We flush because there is no '\n'
         sys.stdout.flush()
+
+def set_last_status_length(length):
+    global last_status_length
+    last_status_length = length

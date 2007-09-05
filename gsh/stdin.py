@@ -27,7 +27,7 @@ import sys
 from threading import Thread, Event, Lock
 
 from gsh import remote_dispatcher
-from gsh.console import console_output
+from gsh.console import console_output, set_last_status_length
 
 # Handling of stdin is certainly the most complex part of gsh
 
@@ -245,7 +245,9 @@ class stdin_thread(Thread):
                     readline.set_completer(complete)
                     readline.parse_and_bind('tab: complete')
                     readline.set_completer_delims(' \t\n')
-                    cmd = raw_input('ready (%d)> ' % (nr))
+                    prompt = 'ready (%d)> ' % (nr)
+                    set_last_status_length(len(prompt))
+                    cmd = raw_input(prompt)
                     if self.wants_control_shell:
                         # This seems to be needed if Ctrl-C is hit when some
                         # text is in the line buffer
