@@ -19,8 +19,9 @@
 import errno
 import sys
 
-# We remember the last printed status in order to clear it with ' ' characters
-last_status = None
+# We remember the length of the last printed status in order to
+# clear it with ' ' characters
+last_status_length = None
 
 stdout_is_terminal = sys.stdout.isatty()
 
@@ -38,10 +39,10 @@ def safe_write(output, buf):
 def console_output(msg, output=sys.stdout):
     """Use instead of print, to clear the status information before printing"""
     if stdout_is_terminal:
-        global last_status
-        if last_status:
-            safe_write(output, '\r' + len(last_status) * ' ' + '\r')
-            last_status = None
+        global last_status_length
+        if last_status_length:
+            safe_write(output, '\r' + last_status_length * ' ' + '\r')
+            last_status_length = 0
     safe_write(output, msg)
 
 def show_status(completed, total):
@@ -49,7 +50,7 @@ def show_status(completed, total):
     if stdout_is_terminal:
         status = 'waiting [%d/%d]> ' % (completed, total)
         console_output(status)
-        global last_status
-        last_status = status
+        global last_status_length
+        last_status_length = len(status)
         # We flush because there is no '\n'
         sys.stdout.flush()
