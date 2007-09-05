@@ -325,7 +325,7 @@ class remote_dispatcher(buffered_dispatcher):
                 pass
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
-            elif self.state is STATE_RUNNING:
+            elif self.state in (STATE_IDLE, STATE_RUNNING):
                 self.print_lines(line)
 
             # Go to the next line in the buffer
