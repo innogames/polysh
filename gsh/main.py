@@ -32,8 +32,8 @@ if sys.hexversion < 0x02040000:
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
 
-from gsh import remote_dispatcher
-from gsh.remote_dispatcher import update_terminal_size
+from.remote_dispatcher import remote_dispatcher
+from gsh import dispatchers
 from gsh.console import show_status, console_output
 from gsh import control_shell
 from gsh.stdin import the_stdin_thread
@@ -42,7 +42,7 @@ from gsh.version import VERSION
 
 def kill_all():
     """When gsh quits, we kill all the remote shells we started"""
-    for i in remote_dispatcher.all_instances():
+    for i in dispatchers.all_instances():
         try:
             os.kill(i.pid, signal.SIGKILL)
         except OSError:
@@ -94,7 +94,7 @@ def main_loop():
     try:
         while True:
             try:
-                completed, total = remote_dispatcher.count_completed_processes()
+                completed, total = dispatchers.count_completed_processes()
                 if completed == total:
                     # Time to use raw_input() in the stdin thread
                     the_stdin_thread.ready_event.set()
@@ -102,11 +102,11 @@ def main_loop():
                     the_stdin_thread.ready_event.clear()
                     # Otherwise, just print the status
                     show_status(completed, total)
-                if remote_dispatcher.all_terminated():
+                if dispatchers.all_terminated():
                     console_output('')
                     raise asyncore.ExitNow(0)
                 asyncore.loop(count=1, timeout=None, use_poll=True)
-                remote_dispatcher.handle_unfinished_lines()
+                dispatchers.handle_unfinished_lines()
             except KeyboardInterrupt:
                 control_shell.launch()
     except asyncore.ExitNow, e:
@@ -174,10 +174,11 @@ def main():
     signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies
     for arg in args:
         for host in expand_syntax(arg):
-            remote_dispatcher.remote_dispatcher(options, host)
+            remote_dispatcher(options, host)
 
-    update_terminal_size()
-    signal.signal(signal.SIGWINCH, lambda signum, frame: update_terminal_size())
+    dispatchers.update_terminal_size()
+    signal.signal(signal.SIGWINCH, lambda signum, frame:
+                                            dispatchers.update_terminal_size())
 
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()

@@ -23,6 +23,7 @@ import sys
 # clear it with ' ' characters
 last_status_length = None
 
+# The prompt is displayed only when started from a tty
 stdout_is_terminal = sys.stdout.isatty()
 
 def safe_write(output, buf):
@@ -56,5 +57,6 @@ def show_status(completed, total):
         sys.stdout.flush()
 
 def set_last_status_length(length):
+    """The length of the prefix to be cleared when printing something"""
     global last_status_length
     last_status_length = length

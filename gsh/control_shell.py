@@ -28,7 +28,7 @@ from fnmatch import fnmatch
 from gsh.console import console_output
 from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
-from gsh import remote_dispatcher
+from gsh import dispatchers, remote_dispatcher
 
 # The controlling shell, accessible with Ctrl-C
 singleton = None
@@ -50,11 +50,11 @@ def toggle_shells(command, enable):
 
 def selected_shells(command):
     """Iterator over the shells with names matching the patterns.
-    An empty patterns matches all shells"""
+    An empty patterns matches all the shells"""
     for pattern in (command or '*').split():
         found = False
         for expanded_pattern in expand_syntax(pattern):
-            for i in remote_dispatcher.all_instances():
+            for i in dispatchers.all_instances():
                 if fnmatch(i.display_name, expanded_pattern):
                     found = True
                     yield i
@@ -63,7 +63,7 @@ def selected_shells(command):
 
 def complete_shells(text, line, predicate=lambda i: True):
     """Return the shell names to include in the completion"""
-    res = [i.display_name + ' ' for i in remote_dispatcher.all_instances() if \
+    res = [i.display_name + ' ' for i in dispatchers.all_instances() if \
                 i.display_name.startswith(text) and \
                 predicate(i) and \
                 ' ' + i.display_name + ' ' not in line]
@@ -159,7 +159,7 @@ class control_shell(cmd.Cmd):
                 nr_active += 1
             else:
                 nr_dead += 1
-        remote_dispatcher.format_info(instances)
+        dispatchers.format_info(instances)
         print '%s\n\n%d active shells, %d dead shells, total: %d' % \
                ('\n'.join(instances), nr_active, nr_dead, nr_active + nr_dead)
 
@@ -282,7 +282,7 @@ class control_shell(cmd.Cmd):
         be shell expanded on the remote processes. With no argument, the
         original hostname will be restored as the displayed name.
         """
-        for i in remote_dispatcher.all_instances():
+        for i in dispatchers.all_instances():
             if i.enabled:
                 i.rename(command)
 

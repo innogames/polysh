@@ -26,7 +26,7 @@ import socket
 import sys
 from threading import Thread, Event, Lock
 
-from gsh import remote_dispatcher
+from gsh import dispatchers, remote_dispatcher
 from gsh.console import console_output, set_last_status_length
 
 # Handling of stdin is certainly the most complex part of gsh
@@ -71,7 +71,7 @@ class stdin_dispatcher(asyncore.file_dispatcher):
 
     def handle_close(self):
         """Ctrl-D was received but the remote processes were not ready"""
-        remote_dispatcher.dispatch_termination_to_all()
+        dispatchers.dispatch_termination_to_all()
 
     def handle_read(self):
         """Some data can be read on stdin"""
@@ -133,7 +133,7 @@ def process_input_buffer():
     data = the_stdin_thread.input_buffer.get()
     if not data:
         return
-    for r in remote_dispatcher.all_instances():
+    for r in dispatchers.all_instances():
         try:
             r.dispatch_write(data)
         except asyncore.ExitNow, e:
@@ -169,7 +169,7 @@ class socket_notification_reader(asyncore.dispatcher):
             the_stdin_dispatcher.is_readable = c == 'e'
             console_output('\r')
         elif c == 'q':
-            remote_dispatcher.dispatch_termination_to_all()
+            dispatchers.dispatch_termination_to_all()
         elif c == 'd':
             process_input_buffer()
         else:
@@ -234,7 +234,7 @@ class stdin_thread(Thread):
         while True:
             while True:
                 self.ready_event.wait()
-                nr, total = remote_dispatcher.count_completed_processes()
+                nr, total = dispatchers.count_completed_processes()
                 if nr == total:
                     break
             # The remote processes are ready, the thread can call raw_input
