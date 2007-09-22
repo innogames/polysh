@@ -91,7 +91,7 @@ class remote_dispatcher(buffered_dispatcher):
         """Change the state of the remote process, logging the change"""
         if state is not self.state:
             if self.debug:
-                self.print_debug('state => %s\n' % (STATE_NAMES[state]))
+                self.print_debug('state => %s' % (STATE_NAMES[state]))
             self.state = state
 
     def disconnect(self):
