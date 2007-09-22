@@ -32,6 +32,8 @@ def all_instances():
             yield i
 
 def make_unique_name(name):
+    """Each shell must have a unique display name, so identical hostnames are
+    suffixed by #NUMBER"""
     display_names = set([i.display_name for i in all_instances()])
     candidate_name = name
     i = 0
