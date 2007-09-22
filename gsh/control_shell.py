@@ -51,13 +51,16 @@ def toggle_shells(command, enable):
 def selected_shells(command):
     """Iterator over the shells with names matching the patterns.
     An empty patterns matches all the shells"""
+    selected = set()
     for pattern in (command or '*').split():
         found = False
         for expanded_pattern in expand_syntax(pattern):
             for i in dispatchers.all_instances():
                 if fnmatch(i.display_name, expanded_pattern):
                     found = True
-                    yield i
+                    if i not in selected:
+                        selected.add(i)
+                        yield i
         if not found:
             print pattern, 'not found'
 
