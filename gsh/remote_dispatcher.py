@@ -28,12 +28,13 @@ from gsh.buffered_dispatcher import buffered_dispatcher
 from gsh.console import console_output
 
 # Either the remote shell is expecting a command or one is already running
+STATE_NAMES = ['not_started', 'idle', 'running', 'terminated']
+
 STATE_NOT_STARTED,         \
 STATE_IDLE,                \
 STATE_RUNNING,             \
-STATE_TERMINATED = range(4)
+STATE_TERMINATED = range(len(STATE_NAMES))
 
-STATE_NAMES = ['not_started', 'idle', 'running', 'terminated']
 
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
