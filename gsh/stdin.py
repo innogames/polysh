@@ -204,8 +204,7 @@ def complete(text, state):
 def write_main_socket(c):
     """Synchronous write to the main socket, wait for ACK"""
     the_stdin_thread.socket_write.send(c)
-    if True or c != 'e':
-        the_stdin_thread.socket_write.recv(1)
+    the_stdin_thread.socket_write.recv(1)
 
 class stdin_thread(Thread):
     """The stdin thread, used to call raw_input()"""
