@@ -311,7 +311,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.log_path = log_path
 
     def rename(self, string):
-        previous_name = self.display_name
+        """Send to the remote shell, its new name to be shell expanded"""
         if string:
             pending_rename1 = str(random.random())[2:] + ','
             pending_rename2 = str(random.random())[2:] + ':'
@@ -323,6 +323,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.change_name(self.hostname)
 
     def received_rename(self, line):
+        """The shell expanded name has been received"""
         new_name = line[len(self.pending_rename) + 1:-1]
         self.change_name(new_name)
         self.pending_rename = None
