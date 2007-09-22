@@ -249,9 +249,10 @@ class stdin_thread(Thread):
                         # This seems to be needed if Ctrl-C is hit when some
                         # text is in the line buffer
                         raise EOFError
-                    if len(history_words) < 10000:
-                        words = [w + ' ' for w in cmd.split() if len(w) > 1]
-                        history_words.update(words)
+                    words = [w + ' ' for w in cmd.split() if len(w) > 1]
+                    history_words.update(words)
+                    if len(history_words) > 10000:
+                        del history_words[:-10000]
                 finally:
                     if not self.wants_control_shell:
                         write_main_socket('e')
