@@ -289,7 +289,7 @@ class control_shell(cmd.Cmd):
         if line[len('set_debug'):begidx].strip():
             # Control letter already given in command line
             return complete_shells(text, line)
-        if text in ('y', 'n'):
+        if text.lower() in ('y', 'n'):
             return [text + ' ']
         return ['y', 'n']
 
