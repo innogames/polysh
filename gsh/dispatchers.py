@@ -34,13 +34,10 @@ def all_instances():
 def make_unique_name(name):
     display_names = set([i.display_name for i in all_instances()])
     candidate_name = name
-    if candidate_name in display_names:
-        i = 1
-        while True:
-            candidate_name = '%s#%d' % (name, i)
-            if candidate_name not in display_names:
-                break
-            i += 1
+    i = 0
+    while candidate_name in display_names:
+        i += 1
+        candidate_name = '%s#%d' % (name, i)
     return candidate_name
 
 def count_completed_processes():
