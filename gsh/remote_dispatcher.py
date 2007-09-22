@@ -90,8 +90,8 @@ class remote_dispatcher(buffered_dispatcher):
     def change_state(self, state):
         """Change the state of the remote process, logging the change"""
         if state is not self.state:
-            if self.is_logging(debug=True):
-                self.log('state => %s\n' % (STATE_NAMES[state]), debug=True)
+            if self.debug:
+                self.print_debug('state => %s\n' % (STATE_NAMES[state]))
             self.state = state
 
     def disconnect(self):
@@ -169,8 +169,6 @@ class remote_dispatcher(buffered_dispatcher):
             lines = no_empty_lines
         if not lines:
             return
-        if self.is_logging():
-            self.log(lines + '\n')
         indent = max_display_name_length - len(self.display_name)
         prefix = self.display_name + indent * ' ' + ': '
         console_output(prefix + lines.replace('\n', '\n' + prefix) + '\n')
@@ -198,8 +196,8 @@ class remote_dispatcher(buffered_dispatcher):
         if not self.active:
             return
         new_data = buffered_dispatcher.handle_read(self)
-        if self.is_logging(debug=True):
-            self.log('==> ' + new_data, debug=True)
+        if self.debug:
+            self.print_debug('==> ' + new_data)
         if self.handle_read_fast_case(self.read_buffer):
             return
         lf_pos = new_data.find('\n')
@@ -243,18 +241,11 @@ class remote_dispatcher(buffered_dispatcher):
         """Do we want to write something?"""
         return self.active and buffered_dispatcher.writable(self)
 
-    def is_logging(self, debug=False):
-        """Check if the logging information is requested, to avoid building
-        useless debug strings"""
-        return debug and self.debug
-
-    def log(self, msg, debug=False):
-        """Log some information, either to a file or on the console"""
-        if debug and self.debug:
-            state = STATE_NAMES[self.state]
-            msg = msg.encode('string_escape')
-            console_output('[dbg] %s[%s]: %s\n' %
-                            (self.display_name, state, msg))
+    def print_debug(self, msg):
+        """Log some debugging information to the console"""
+        state = STATE_NAMES[self.state]
+        msg = msg.encode('string_escape')
+        console_output('[dbg] %s[%s]: %s\n' % (self.display_name, state, msg))
 
     def get_info(self):
         """Return a list with all information available about this process"""
