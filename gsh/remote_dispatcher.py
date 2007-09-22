@@ -245,6 +245,8 @@ class remote_dispatcher(buffered_dispatcher):
         return self.active and buffered_dispatcher.writable(self)
 
     def is_logging(self, debug=False):
+        """Check if the logging information is requested, to avoid building
+        useless debug strings"""
         if debug:
             return self.debug
         return self.log_path is not None
@@ -265,7 +267,7 @@ class remote_dispatcher(buffered_dispatcher):
                 os.close(log)
 
     def get_info(self):
-        """Return a list will all information available about this process"""
+        """Return a list with all information available about this process"""
         if self.active:
             state = STATE_NAMES[self.state]
         else:
@@ -290,6 +292,8 @@ class remote_dispatcher(buffered_dispatcher):
             buffered_dispatcher.dispatch_write(self, buf)
 
     def change_name(self, name):
+        """Change the name of the shell, possibly updating the maximum name
+        length"""
         from gsh.dispatchers import make_unique_name, update_max_display_length
 
         previous_name_len = len(self.display_name)
