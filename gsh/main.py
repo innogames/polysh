@@ -176,7 +176,6 @@ def main():
         for host in expand_syntax(arg):
             remote_dispatcher(options, host)
 
-    dispatchers.update_terminal_size()
     signal.signal(signal.SIGWINCH, lambda signum, frame:
                                             dispatchers.update_terminal_size())
 

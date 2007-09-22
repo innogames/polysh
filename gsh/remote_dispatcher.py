@@ -55,7 +55,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.state = STATE_NOT_STARTED
         self.termination = None
         self.term_size = (-1, -1)
-        self.prefix = ''
+        self.display_name = ''
         self.change_name(hostname)
         self.configure_tty()
         self.set_prompt()
@@ -75,9 +75,16 @@ class remote_dispatcher(buffered_dispatcher):
         os.execlp(shell, shell, '-c', evaluated)
 
     def set_enabled(self, enabled):
-        from gsh.dispatchers import update_terminal_size
+        from gsh.dispatchers import update_max_display_length
         self.enabled = enabled
-        update_terminal_size()
+        if self.options.interactive:
+            # In non-interactive mode, remote processes leave as soon
+            # as they are terminated, but we don't want to break the
+            # indentation if all the remaining processes have short names.
+            l = len(self.display_name)
+            if not enabled:
+                l = -l
+            update_max_display_length(l)
 
     def change_state(self, state):
         """Change the state of the remote process, logging the change"""
@@ -152,6 +159,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.disconnect()
 
     def print_lines(self, lines):
+        from gsh.dispatchers import max_display_name_length
         lines = lines.strip('\n')
         while True:
             no_empty_lines = lines.replace('\n\n', '\n')
@@ -162,8 +170,9 @@ class remote_dispatcher(buffered_dispatcher):
             return
         if self.is_logging():
             self.log(lines + '\n')
-        console_output(self.prefix + \
-                       lines.replace('\n', '\n' + self.prefix) + '\n')
+        indent = max_display_name_length - len(self.display_name)
+        prefix = self.display_name + indent * ' ' + ': '
+        console_output(prefix + lines.replace('\n', '\n' + prefix) + '\n')
 
     def handle_read_fast_case(self, data):
         """If we are in a fast case we'll avoid the long processing of each
@@ -279,11 +288,14 @@ class remote_dispatcher(buffered_dispatcher):
             buffered_dispatcher.dispatch_write(self, buf)
 
     def change_name(self, name):
-        from gsh.dispatchers import make_unique_name, update_terminal_size
+        from gsh.dispatchers import make_unique_name, update_max_display_length
 
+        previous_name_len = len(self.display_name)
         self.display_name = None
         self.display_name = make_unique_name(name)
-        update_terminal_size()
+        update_max_display_length(len(self.display_name))
+        update_max_display_length(-previous_name_len)
+
         if self.options.log_dir:
             # The log file
             filename = self.display_name.replace('/', '_')
