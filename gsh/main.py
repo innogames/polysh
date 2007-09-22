@@ -103,6 +103,7 @@ def main_loop():
                     # Otherwise, just print the status
                     show_status(completed, total)
                 if dispatchers.all_terminated():
+                    # Clear the prompt
                     console_output('')
                     raise asyncore.ExitNow(0)
                 asyncore.loop(count=1, timeout=None, use_poll=True)
