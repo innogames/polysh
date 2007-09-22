@@ -45,9 +45,10 @@ class remote_dispatcher(buffered_dispatcher):
             # Child
             self.launch_ssh(options, hostname)
             sys.exit(1)
+
         # Parent
-        self.hostname = hostname
         buffered_dispatcher.__init__(self, fd)
+        self.hostname = hostname
         self.options = options
         self.debug = options.debug
         self.log_path = None
