@@ -77,7 +77,7 @@ class remote_dispatcher(buffered_dispatcher):
         os.execlp(shell, shell, '-c', evaluated)
 
     def set_enabled(self, enabled):
-        from gsh.dispatchers import update_max_display_length
+        from gsh.dispatchers import update_max_display_name_length
         self.enabled = enabled
         if self.options.interactive:
             # In non-interactive mode, remote processes leave as soon
@@ -86,7 +86,7 @@ class remote_dispatcher(buffered_dispatcher):
             l = len(self.display_name)
             if not enabled:
                 l = -l
-            update_max_display_length(l)
+            update_max_display_name_length(l)
 
     def change_state(self, state):
         """Change the state of the remote process, logging the change"""
@@ -294,13 +294,12 @@ class remote_dispatcher(buffered_dispatcher):
     def change_name(self, name):
         """Change the name of the shell, possibly updating the maximum name
         length"""
-        from gsh.dispatchers import make_unique_name, update_max_display_length
-
+        from gsh import dispatchers
         previous_name_len = len(self.display_name)
         self.display_name = None
-        self.display_name = make_unique_name(name)
-        update_max_display_length(len(self.display_name))
-        update_max_display_length(-previous_name_len)
+        self.display_name = dispatchers.make_unique_name(name)
+        dispatchers.update_max_display_name_length(len(self.display_name))
+        dispatchers.update_max_display_name_length(-previous_name_len)
 
         if self.options.log_dir:
             # The log file

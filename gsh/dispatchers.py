@@ -84,7 +84,7 @@ def all_terminated():
     return True
 
 max_display_name_length = 0
-def update_max_display_length(change):
+def update_max_display_name_length(change):
     """The max_display_name_length serves to compute the length of the
     whitespace used to align the output of the remote shells. A positive change
     argument indicates that a remote shells with such a name length was enabled
