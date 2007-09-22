@@ -283,6 +283,8 @@ class remote_dispatcher(buffered_dispatcher):
         """Change the name of the shell, possibly updating the maximum name
         length"""
         from gsh import dispatchers
+        if not name:
+            name = self.hostname
         previous_name_len = len(self.display_name)
         self.display_name = None
         self.display_name = dispatchers.make_unique_name(name)
