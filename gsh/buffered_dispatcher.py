@@ -22,7 +22,7 @@ import sys
 
 from console import console_output
 
-class buffered_dispatcher(asyncore.file_dispatcher):
+class buffered_dispatcher(object, asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
     read buffer to permit line oriented manipulations"""
 
