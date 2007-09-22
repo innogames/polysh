@@ -116,7 +116,6 @@ class control_shell(cmd.Cmd):
         self.stop = False
         interrupt_stdin_thread()
         gsh_histo = switch_readline_history(self.history)
-        print ''
         console_output('')
         try:
             while True:
