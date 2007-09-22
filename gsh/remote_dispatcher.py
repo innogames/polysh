@@ -51,7 +51,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.hostname = hostname
         self.options = options
         self.debug = options.debug
-        self.log_path = None
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
         self.state = STATE_NOT_STARTED
@@ -247,24 +246,15 @@ class remote_dispatcher(buffered_dispatcher):
     def is_logging(self, debug=False):
         """Check if the logging information is requested, to avoid building
         useless debug strings"""
-        if debug:
-            return self.debug
-        return self.log_path is not None
+        return debug and self.debug
 
     def log(self, msg, debug=False):
         """Log some information, either to a file or on the console"""
-        if self.log_path is None:
-            if debug and self.debug:
-                state = STATE_NAMES[self.state]
-                msg = msg.encode('string_escape')
-                console_output('[dbg] %s[%s]: %s\n' %
-                                (self.display_name, state, msg))
-        else:
-            if debug == self.debug:
-                log = os.open(self.log_path,
-                              os.O_WRONLY|os.O_APPEND|os.O_CREAT, 0664)
-                os.write(log, msg)
-                os.close(log)
+        if debug and self.debug:
+            state = STATE_NAMES[self.state]
+            msg = msg.encode('string_escape')
+            console_output('[dbg] %s[%s]: %s\n' %
+                            (self.display_name, state, msg))
 
     def get_info(self):
         """Return a list with all information available about this process"""
@@ -300,15 +290,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.display_name = dispatchers.make_unique_name(name)
         dispatchers.update_max_display_name_length(len(self.display_name))
         dispatchers.update_max_display_name_length(-previous_name_len)
-
-        if self.options.log_dir:
-            # The log file
-            filename = self.display_name.replace('/', '_')
-            log_path = os.path.join(self.options.log_dir, filename)
-            if self.log_path:
-                # Rename the previous log
-                os.rename(self.log_path, log_path)
-            self.log_path = log_path
 
     def rename(self, string):
         """Send to the remote shell, its new name to be shell expanded"""

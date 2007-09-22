@@ -19,9 +19,6 @@ Show program's version number and exit.
 \fB\-h, \-\-help\fR
 Show the help message and exit.
 .TP 
-\fB\-\-log\-dir=LOG_DIR\fR
-Directory to log each machine conversation [none]. With this option, \fIgsh\fR will log the output of each shell in the specified directory, each output in a file named according to the remote shell name.
-.TP 
 \fB\-\-hosts\-file=FILE\fR
 Read hostnames from given file, one per line. Hostnames are given on the command line, but they can also be read from files. The format is one hostname per line, '#' comments and blank lines are skipped.
 .TP 
@@ -38,7 +35,7 @@ Do not launch a full ssh session. It has been observed that the main slowdown fa
 Abort if some shell fails to initialize [ignore]. By default, \fIgsh\fR just logs an error when it cannot succesfully open a remote shell. With this option, it exits with a failure.
 .TP 
 \fB\-\-debug\fR
-Fill the logs with debug information. Use this option to see exactly what is transferred between \fIgsh\fR and the remote shells. This option can be dynamically toggled using the set_debug command in the control shell.
+Print debugging information. Use this option to see exactly what is transferred between \fIgsh\fR and the remote shells. This option can be dynamically toggled using the set_debug command in the control shell.
 .SH "CONTROL SHELL"
 A control shell is available by typing Ctrl\-C. In this mode, instead of sending commands to remote shells, special commands can be sent to \fIgsh\fR. The commands are:
 

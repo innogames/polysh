@@ -52,8 +52,6 @@ def kill_all():
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...' % (sys.argv[0])
     parser = optparse.OptionParser(usage, version='gsh ' + VERSION)
-    parser.add_option('--log-dir', type='str', dest='log_dir',
-                      help='directory to log each machine conversation [none]')
     parser.add_option('--hosts-file', type='str', action='append',
                       dest='hosts_filenames', metavar='FILE', default=[],
                       help='read hostnames from given file, one per line')
@@ -67,7 +65,7 @@ def parse_cmdline():
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
                       help='abort if some shell fails to initialize [ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
-                      help='fill the logs with debug information')
+                      help='print debugging information.')
     parser.add_option('--profile', action='store_true', dest='profile',
                       default=False, help=optparse.SUPPRESS_HELP)
 
@@ -164,12 +162,6 @@ def main():
     setprocname('gsh')
     options, args = parse_cmdline()
     control_shell.make_singleton(options)
-
-    if options.log_dir:
-        try:
-            os.mkdir(options.log_dir)
-        except OSError:
-            pass # The dir already exists
 
     atexit.register(kill_all)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies

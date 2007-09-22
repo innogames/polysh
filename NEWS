@@ -1,3 +1,9 @@
+0.3
+~~~
+
+o Removed --log-dir=LOG_DIR option as it is less useful than expected
+
+
 0.2
 ~~~
 
