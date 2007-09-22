@@ -241,6 +241,13 @@ class remote_dispatcher(buffered_dispatcher):
         """Do we want to write something?"""
         return self.active and buffered_dispatcher.writable(self)
 
+    def handle_write(self):
+        """Let's write as much as we can"""
+        num_sent = self.send(self.write_buffer)
+        if self.debug:
+            self.print_debug('<== ' + self.write_buffer[:num_sent])
+        self.write_buffer = self.write_buffer[num_sent:]
+
     def print_debug(self, msg):
         """Log some debugging information to the console"""
         state = STATE_NAMES[self.state]

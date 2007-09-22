@@ -78,13 +78,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         """Do we have something to write?"""
         return self.write_buffer != ''
 
-    def handle_write(self):
-        """Let's write as much as we can"""
-        num_sent = self.send(self.write_buffer)
-        if self.debug:
-            self.print_debug('<== ' + self.write_buffer[:num_sent])
-        self.write_buffer = self.write_buffer[num_sent:]
-
     def dispatch_write(self, buf):
         """Augment the buffer with stuff to write when possible"""
         self.write_buffer += buf
