@@ -32,7 +32,7 @@ if sys.hexversion < 0x02040000:
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
 
-from.remote_dispatcher import remote_dispatcher
+from gsh.remote_dispatcher import remote_dispatcher
 from gsh import dispatchers
 from gsh.console import show_status, console_output
 from gsh import control_shell
