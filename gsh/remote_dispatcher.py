@@ -224,6 +224,19 @@ class remote_dispatcher(buffered_dispatcher):
                 self.received_rename(line)
             elif self.state in (STATE_IDLE, STATE_RUNNING):
                 self.print_lines(line)
+            elif self.state is STATE_NOT_STARTED:
+                if 'The authenticity of host' in line:
+                    msg = line.strip('\n')
+                elif 'REMOTE HOST IDENTIFICATION HAS CHANGED' in line:
+                    msg = 'Remote host identification has changed.'
+                else:
+                    msg = None
+
+                if msg:
+                    self.print_lines(msg + ' Closing connection, consider ' + 
+                                     'manually connecting or using ' + 
+                                     'ssh-keyscan.')
+                    self.disconnect()
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
