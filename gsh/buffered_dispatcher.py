@@ -55,19 +55,21 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         """Some data can be read"""
         new_data = ''
         buffer_length = len(self.read_buffer)
-        while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
-            try:
-                piece = self.recv(4096)
-            except OSError, e:
-                if e.errno == errno.EAGAIN:
-                    # End of the available data
-                    break
-                else:
-                    raise
-            new_data += piece
-            buffer_length += len(piece)
-        new_data = new_data.replace('\r', '\n')
-        self.read_buffer += new_data
+        try:
+            while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
+                try:
+                    piece = self.recv(4096)
+                except OSError, e:
+                    if e.errno == errno.EAGAIN:
+                        # End of the available data
+                        break
+                    else:
+                        raise
+                new_data += piece
+                buffer_length += len(piece)
+        finally:
+            new_data = new_data.replace('\r', '\n')
+            self.read_buffer += new_data
         return new_data
 
     def readable(self):
