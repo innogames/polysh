@@ -63,6 +63,10 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                     if e.errno == errno.EAGAIN:
                         # End of the available data
                         break
+                    elif e.errno == errno.EIO and new_data:
+                    	# Hopefully we could read an error message before the
+                    	# actual termination
+                        break
                     else:
                         raise
                 new_data += piece
