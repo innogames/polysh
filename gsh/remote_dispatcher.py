@@ -58,22 +58,18 @@ class remote_dispatcher(buffered_dispatcher):
         self.term_size = (-1, -1)
         self.display_name = ''
         self.change_name(hostname)
-        self.configure_tty()
-        self.set_prompt()
+        self.init_string = self.configure_tty() + self.set_prompt()
         self.pending_rename = None
-        if options.command:
-            self.dispatch_write(options.command + '\n')
-            self.dispatch_termination()
+        self.command = self.options.command
 
     def launch_ssh(self, options, name):
         """Launch the ssh command in the child process"""
         evaluated = options.ssh % {'host': name}
-        shell = os.environ.get('SHELL', '/bin/sh')
         if options.quick_sh:
             evaluated = '%s -t %s sh' % (evaluated, name)
         elif evaluated == options.ssh:
             evaluated = '%s %s' % (evaluated, name)
-        os.execlp(shell, shell, '-c', evaluated)
+        os.execlp('/bin/sh', 'sh', '-c', evaluated)
 
     def set_enabled(self, enabled):
         from gsh.dispatchers import update_max_display_name_length
@@ -130,22 +126,21 @@ class remote_dispatcher(buffered_dispatcher):
         attr = termios.tcgetattr(self.fd)
         attr[1] &= ~termios.ECHO & ~termios.ONLCR
         termios.tcsetattr(self.fd, termios.TCSANOW, attr)
-        # Prevent Zsh from resetting the tty
-        self.dispatch_write('unsetopt zle 2> /dev/null;')
-        self.dispatch_write('stty -echo -onlcr;')
+        # unsetopt zle prevents Zsh from resetting the tty
+        return 'unsetopt zle 2> /dev/null;stty -echo -onlcr;'
 
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
         by waiting for its prompt. The prompt is built in two parts for it not
         to appear in its building"""
         # No right prompt
-        self.dispatch_write('RPS1=;')
-        self.dispatch_write('RPROMPT=;')
-        self.dispatch_write('TERM=ansi;')
+        command_line = 'RPS1=;RPROMPT=;'
+        command_line += 'TERM=ansi;'
         prompt1 = '[gsh prompt ' + str(random.random())[2:]
         prompt2 = str(random.random())[2:] + ']'
         self.prompt = prompt1 + prompt2
-        self.dispatch_write('PS1="%s""%s\n"\n' % (prompt1, prompt2))
+        command_line += 'PS1="%s""%s\n"\n' % (prompt1, prompt2)
+        return command_line
 
     def readable(self):
         """We are always interested in reading from active remote processes if
@@ -212,8 +207,12 @@ class remote_dispatcher(buffered_dispatcher):
             if self.prompt in line:
                 if self.options.interactive:
                     self.change_state(STATE_IDLE)
-                else:
+                elif self.command:
+                    self.dispatch_write(self.command + '\n')
+                    self.command = None
                     self.change_state(STATE_RUNNING)
+                else:
+                    self.dispatch_termination()
             elif self.termination and self.termination in line:
                 self.change_state(STATE_TERMINATED)
                 self.disconnect()
@@ -243,6 +242,9 @@ class remote_dispatcher(buffered_dispatcher):
             if self.handle_read_fast_case(self.read_buffer):
                 return
             lf_pos = self.read_buffer.find('\n')
+        if self.state is STATE_NOT_STARTED and self.init_string:
+            self.dispatch_write(self.init_string)
+            self.init_string = None
 
     def print_unfinished_line(self):
         """The unfinished line stayed long enough in the buffer to be printed"""

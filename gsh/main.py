@@ -88,6 +88,18 @@ def parse_cmdline():
 
     return options, args
 
+def find_non_interactive_command(command):
+    if sys.stdin.isatty():
+        return command
+
+    stdin = sys.stdin.read()
+    if stdin and command:
+        print >> sys.stderr, '--command and reading from stdin are incompatible'
+        sys.exit(1)
+    if stdin and not stdin.endswith('\n'):
+        stdin += '\n'
+    return command or stdin
+
 def main_loop():
     try:
         while True:
@@ -165,6 +177,10 @@ def main():
 
     atexit.register(kill_all)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies
+    options.command = find_non_interactive_command(options.command)
+    options.interactive = not options.command and sys.stdin.isatty() and \
+                          sys.stdout.isatty()
+
     for arg in args:
         for host in expand_syntax(arg):
             remote_dispatcher(options, host)
@@ -172,8 +188,6 @@ def main():
     signal.signal(signal.SIGWINCH, lambda signum, frame:
                                             dispatchers.update_terminal_size())
 
-    options.interactive = not options.command and sys.stdin.isatty() and \
-                          sys.stdout.isatty()
     the_stdin_thread.activate(options.interactive)
 
     if options.profile:

@@ -159,12 +159,13 @@ def process_input_buffer():
 
 class socket_notification_reader(asyncore.dispatcher):
     """The socket reader in the main thread"""
-    def __init__(self):
+    def __init__(self, the_stdin_dispatcher):
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
+        self.the_stdin_dispatcher = the_stdin_dispatcher
 
     def _do(self, c):
         if c in ('s', 'e'):
-            the_stdin_dispatcher.is_readable = c == 'e'
+            self.the_stdin_dispatcher.is_readable = c == 'e'
             console_output('\r')
         elif c == 'q':
             dispatchers.dispatch_termination_to_all()
@@ -223,7 +224,8 @@ class stdin_thread(Thread):
             the_stdin_thread.wants_control_shell = False
             the_stdin_thread.setDaemon(True)
             the_stdin_thread.start()
-            socket_notification_reader()
+            the_stdin_dispatcher = stdin_dispatcher()
+            socket_notification_reader(the_stdin_dispatcher)
         else:
             the_stdin_thread.ready_event.set()
 
@@ -271,4 +273,3 @@ class stdin_thread(Thread):
                 write_main_socket('d')
 
 the_stdin_thread = stdin_thread()
-the_stdin_dispatcher = stdin_dispatcher()
