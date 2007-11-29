@@ -232,8 +232,8 @@ class remote_dispatcher(buffered_dispatcher):
                     msg = None
 
                 if msg:
-                    self.print_lines(msg + ' Closing connection, consider ' + 
-                                     'manually connecting or using ' + 
+                    self.print_lines(msg + ' Closing connection, consider ' +
+                                     'manually connecting or using ' +
                                      'ssh-keyscan.')
                     self.disconnect()
 
