@@ -130,9 +130,15 @@ class input_buffer(object):
 def process_input_buffer():
     """Send the content of the input buffer to all remote processes, this must
     be called in the main thread"""
+    from gsh.control_shell import handle_control_command
     data = the_stdin_thread.input_buffer.get()
     if not data:
         return
+
+    if data.startswith(':'):
+        handle_control_command(data[1:-1])
+        return
+
     for r in dispatchers.all_instances():
         try:
             r.dispatch_write(data)

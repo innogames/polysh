@@ -104,6 +104,9 @@ def switch_readline_history(new_histo):
         add_history(line)
     return prev_histo
 
+def handle_control_command(line):
+    singleton.onecmd(line)
+
 class control_shell(cmd.Cmd):
     """The little command line brought when a SIGINT is received"""
     def __init__(self, options):
