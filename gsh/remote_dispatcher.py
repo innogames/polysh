@@ -117,7 +117,8 @@ class remote_dispatcher(buffered_dispatcher):
             self.term1 = '[gsh termination ' + str(random.random())[2:]
             self.term2 = str(random.random())[2:] + ']'
             self.termination = self.term1 + self.term2
-            self.dispatch_write('echo "%s""%s"\n' % (self.term1, self.term2))
+            self.dispatch_write('/bin/echo "%s""%s"\n' %
+                                                       (self.term1, self.term2))
             if self.state is not STATE_NOT_STARTED:
                 self.change_state(STATE_RUNNING)
 
@@ -312,7 +313,7 @@ class remote_dispatcher(buffered_dispatcher):
             pending_rename1 = str(random.random())[2:] + ','
             pending_rename2 = str(random.random())[2:] + ':'
             self.pending_rename = pending_rename1 + pending_rename2
-            self.dispatch_write('echo "%s""%s" %s\n' %
+            self.dispatch_write('/bin/echo "%s""%s" %s\n' %
                                     (pending_rename1, pending_rename2, string))
             self.change_state(STATE_RUNNING)
         else:
