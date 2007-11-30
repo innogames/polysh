@@ -116,7 +116,6 @@ class control_shell(cmd.Cmd):
         if not self.options.interactive:
             # A Ctrl-C was issued in a non-interactive gsh => exit
             raise asyncore.ExitNow(1)
-        self.stop = False
         interrupt_stdin_thread()
         gsh_histo = switch_readline_history(self.history)
         console_output('')
@@ -170,7 +169,7 @@ class control_shell(cmd.Cmd):
         Usage: continue
         Go back to gsh.
         """
-        self.stop = True
+        return True
 
     def do_EOF(self, command):
         """
@@ -316,9 +315,6 @@ class control_shell(cmd.Cmd):
         debug = letter == 'y'
         for i in selected_shells(' '.join(splitted[1:])):
             i.debug = debug
-
-    def postcmd(self, stop, line):
-        return self.stop
 
     def emptyline(self):
         pass
