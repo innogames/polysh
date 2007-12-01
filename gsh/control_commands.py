@@ -33,6 +33,7 @@ def do_help(command):
     Usage: help [COMMAND]
     List control commands or show their documentations.
     """
+    command = command.strip()
     if command:
         texts = []
         for name in command.split():
