@@ -41,8 +41,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         try:
             raise
         except KeyboardInterrupt:
-            # The main loop will launch the control shell
-            raise
+            pass
         except OSError:
             # I/O error, let the parent take action
             return True

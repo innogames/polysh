@@ -99,8 +99,7 @@ class stdin_dispatcher(asyncore.file_dispatcher):
                         self.is_readable = False
                         break
             except KeyboardInterrupt:
-                from gsh import control_shell
-                control_shell.launch()
+                pass
 
 class input_buffer(object):
     """The shared input buffer between the main thread and the stdin thread"""

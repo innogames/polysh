@@ -36,10 +36,6 @@ def make_singleton(options):
     global singleton
     singleton = control_shell(options)
 
-def launch():
-    """Ctrl-C was pressed"""
-    return singleton.launch()
-
 def toggle_shells(command, enable):
     """Enable or disable the specified shells"""
     for i in selected_shells(command):
@@ -104,23 +100,6 @@ class control_shell(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.options = options
         self.prompt = '[ctrl]> '
-
-    def launch(self):
-        if not self.options.interactive:
-            # A Ctrl-C was issued in a non-interactive gsh => exit
-            raise asyncore.ExitNow(1)
-        interrupt_stdin_thread()
-        console_output('')
-        try:
-            while True:
-                try:
-                    cmd.Cmd.cmdloop(self)
-                except KeyboardInterrupt:
-                    console_output('\n')
-                else:
-                    break
-        finally:
-            console_output('\r')
 
     def completenames(self, text, *ignored):
         """Overriden to add the trailing space"""

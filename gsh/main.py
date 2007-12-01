@@ -119,7 +119,7 @@ def main_loop():
                 asyncore.loop(count=1, timeout=None, use_poll=True)
                 dispatchers.handle_unfinished_lines()
             except KeyboardInterrupt:
-                control_shell.launch()
+                pass
     except asyncore.ExitNow, e:
         sys.exit(e.args[0])
 
