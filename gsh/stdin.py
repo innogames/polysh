@@ -203,6 +203,11 @@ history_words = set()
 
 def complete(text, state):
     """On tab press, return the next possible completion"""
+    from gsh.control_shell import complete_control_command
+    if readline.get_line_buffer().startswith(':'):
+        if readline.get_begidx() == 0:
+            return ':' + complete_control_command(text[1:], state)
+        return complete_control_command(text, state)
     l = len(text)
     matches = [w for w in history_words if len(w) > l and w.startswith(text)]
     if state <= len(matches):

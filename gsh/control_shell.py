@@ -104,6 +104,9 @@ def switch_readline_history(new_histo):
         add_history(line)
     return prev_histo
 
+def complete_control_command(text, state):
+    return singleton.modified_cmd_complete(text, state)
+
 def handle_control_command(line):
     singleton.onecmd(line)
 
@@ -137,6 +140,32 @@ class control_shell(cmd.Cmd):
     def completenames(self, text, *ignored):
         """Overriden to add the trailing space"""
         return [c + ' ' for c in cmd.Cmd.completenames(self, text, ignored)]
+
+    def modified_cmd_complete(self, text, state):
+        """Modified to ignore the leading ':'"""
+        if state == 0:
+            import readline
+            origline = readline.get_line_buffer()
+            line = origline.lstrip(':')
+            stripped = len(origline) - len(line)
+            begidx = readline.get_begidx() - stripped
+            endidx = readline.get_endidx() - stripped
+            if begidx>0:
+                cmd, args, foo = self.parseline(line)
+                if cmd == '':
+                    compfunc = self.completedefault
+                else:
+                    try:
+                        compfunc = getattr(self, 'complete_' + cmd)
+                    except AttributeError:
+                        compfunc = self.completedefault
+            else:
+                compfunc = self.completenames
+            self.completion_matches = compfunc(text, line, begidx, endidx)
+        try:
+            return self.completion_matches[state]
+        except IndexError:
+            return None
 
     # We do this just to have 'help' in the 'Documented commands'
     def do_help(self, command):
