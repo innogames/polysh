@@ -35,7 +35,6 @@ if sys.hexversion < 0x02040000:
 from gsh.remote_dispatcher import remote_dispatcher
 from gsh import dispatchers
 from gsh.console import show_status, console_output
-from gsh import control_shell
 from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
 from gsh.version import VERSION
@@ -173,7 +172,6 @@ def main():
     locale.setlocale(locale.LC_ALL, '')
     setprocname('gsh')
     options, args = parse_cmdline()
-    control_shell.make_singleton(options)
 
     atexit.register(kill_all)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies

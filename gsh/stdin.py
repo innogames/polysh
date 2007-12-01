@@ -129,7 +129,7 @@ class input_buffer(object):
 def process_input_buffer():
     """Send the content of the input buffer to all remote processes, this must
     be called in the main thread"""
-    from gsh.control_shell import handle_control_command
+    from gsh.control_commands_helpers import handle_control_command
     data = the_stdin_thread.input_buffer.get()
     if not data:
         return
@@ -202,15 +202,17 @@ history_words = set()
 
 def complete(text, state):
     """On tab press, return the next possible completion"""
-    from gsh.control_shell import complete_control_command
-    if readline.get_line_buffer().startswith(':'):
-        if readline.get_begidx() == 0:
-            return ':' + complete_control_command(text[1:], state)
-        return complete_control_command(text, state)
-    l = len(text)
-    matches = [w for w in history_words if len(w) > l and w.startswith(text)]
-    if state <= len(matches):
-        return matches[state]
+    from gsh.control_commands_helpers import complete_control_command
+    line = readline.get_line_buffer()
+    if line.startswith(':'):
+        # Control command completion
+        matches = complete_control_command(line, text)
+    else:
+        # Main shell completion from history
+        l = len(text)
+        matches = [w for w in history_words if len(w) > l and w.startswith(text)]
+    if state < len(matches):
+        return matches[state] + ' '
 
 def write_main_socket(c):
     """Synchronous write to the main socket, wait for ACK"""
@@ -261,7 +263,7 @@ class stdin_thread(Thread):
                         # This seems to be needed if Ctrl-C is hit when some
                         # text is in the line buffer
                         raise EOFError
-                    words = [w + ' ' for w in cmd.split() if len(w) > 1]
+                    words = [w for w in cmd.split() if len(w) > 1]
                     history_words.update(words)
                     if len(history_words) > 10000:
                         del history_words[:-10000]
