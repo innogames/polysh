@@ -17,7 +17,6 @@
 # Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import asyncore
-import cmd
 import os
 import sys
 import tempfile
