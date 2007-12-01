@@ -79,11 +79,13 @@ def all_terminated():
     """For each remote shell we determine if its terminated by checking if
     it is in the right state or if it requested termination but will never
     receive the acknowledgement"""
+    instances_found = False
     for i in all_instances():
+        instances_found = True
         if i.state is not remote_dispatcher.STATE_TERMINATED:
             if i.enabled or not i.termination:
                 return False
-    return True
+    return instances_found
 
 max_display_name_length = 0
 def update_max_display_name_length(change):
