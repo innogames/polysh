@@ -38,16 +38,18 @@ def selected_shells(command):
     """Iterator over the shells with names matching the patterns.
     An empty patterns matches all the shells"""
     selected = set()
+    instance_found = False
     for pattern in (command or '*').split():
         found = False
         for expanded_pattern in expand_syntax(pattern):
             for i in dispatchers.all_instances():
+                instance_found = True
                 if fnmatch(i.display_name, expanded_pattern):
                     found = True
                     if i not in selected:
                         selected.add(i)
                         yield i
-        if not found:
+        if instance_found and not found:
             print pattern, 'not found'
 
 def complete_shells(line, text, predicate=lambda i: True):
