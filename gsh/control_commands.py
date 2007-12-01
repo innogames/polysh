@@ -153,7 +153,7 @@ def do_add(command):
     Add one or many remote shells.
     """
     for host in command.split():
-        remote_dispatcher.remote_dispatcher(self.options, host)
+        remote_dispatcher.remote_dispatcher(host)
 
 def complete_purge(line, text):
     return complete_shells(line, text, lambda i: not i.enabled)

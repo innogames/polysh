@@ -39,17 +39,16 @@ STATE_TERMINATED = range(len(STATE_NAMES))
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
 
-    def __init__(self, options, hostname):
+    def __init__(self, hostname):
         self.pid, fd = pty.fork()
         if self.pid == 0:
             # Child
-            self.launch_ssh(options, hostname)
+            self.launch_ssh(hostname)
             sys.exit(1)
 
         # Parent
         buffered_dispatcher.__init__(self, fd)
         self.hostname = hostname
-        self.options = options
         self.debug = options.debug
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
@@ -60,9 +59,9 @@ class remote_dispatcher(buffered_dispatcher):
         self.change_name(hostname)
         self.init_string = self.configure_tty() + self.set_prompt()
         self.pending_rename = None
-        self.command = self.options.command
+        self.command = options.command
 
-    def launch_ssh(self, options, name):
+    def launch_ssh(self, name):
         """Launch the ssh command in the child process"""
         evaluated = options.ssh % {'host': name}
         if options.quick_sh:
@@ -74,7 +73,7 @@ class remote_dispatcher(buffered_dispatcher):
     def set_enabled(self, enabled):
         from gsh.dispatchers import update_max_display_name_length
         self.enabled = enabled
-        if self.options.interactive:
+        if options.interactive:
             # In non-interactive mode, remote processes leave as soon
             # as they are terminated, but we don't want to break the
             # indentation if all the remaining processes have short names.
@@ -101,14 +100,14 @@ class remote_dispatcher(buffered_dispatcher):
         self.write_buffer = ''
         self.active = False
         self.set_enabled(False)
-        if self.options.abort_error and self.state is STATE_NOT_STARTED:
+        if options.abort_error and self.state is STATE_NOT_STARTED:
             raise asyncore.ExitNow(1)
 
     def reconnect(self):
         """Relaunch and reconnect to this same remote process"""
         self.disconnect()
         self.close()
-        remote_dispatcher(self.options, self.hostname)
+        remote_dispatcher(self.hostname)
 
     def dispatch_termination(self):
         """Start the termination procedure on this remote process, using the
@@ -206,7 +205,7 @@ class remote_dispatcher(buffered_dispatcher):
             # For each line in the buffer
             line = self.read_buffer[:lf_pos + 1]
             if self.prompt in line:
-                if self.options.interactive:
+                if options.interactive:
                     self.change_state(STATE_IDLE)
                 elif self.command:
                     self.dispatch_write(self.command + '\n')

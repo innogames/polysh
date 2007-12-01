@@ -32,7 +32,7 @@ if sys.hexversion < 0x02040000:
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
 
-from gsh.remote_dispatcher import remote_dispatcher
+from gsh import remote_dispatcher
 from gsh import dispatchers
 from gsh.console import show_status, console_output
 from gsh.stdin import the_stdin_thread
@@ -178,10 +178,11 @@ def main():
     options.command = find_non_interactive_command(options.command)
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()
+    remote_dispatcher.options = options
 
     for arg in args:
         for host in expand_syntax(arg):
-            remote_dispatcher(options, host)
+            remote_dispatcher.remote_dispatcher(host)
 
     signal.signal(signal.SIGWINCH, lambda signum, frame:
                                             dispatchers.update_terminal_size())
