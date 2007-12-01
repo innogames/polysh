@@ -210,7 +210,8 @@ def complete(text, state):
     else:
         # Main shell completion from history
         l = len(text)
-        matches = [w for w in history_words if len(w) > l and w.startswith(text)]
+        matches = [w for w in history_words if len(w) > l and
+                                               w.startswith(text)]
     if state < len(matches):
         return matches[state] + ' '
 
