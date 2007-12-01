@@ -19,8 +19,6 @@
 import asyncore
 import cmd
 import os
-from readline import get_current_history_length, get_history_item
-from readline import add_history, clear_history
 import sys
 import tempfile
 from fnmatch import fnmatch
@@ -94,16 +92,6 @@ def interrupt_stdin_thread():
         os.dup2(dupped_stdin, 0) # Restore stdin
         os.close(dupped_stdin) # Cleanup
 
-def switch_readline_history(new_histo):
-    """Alternate between the command line history from the remote shells (gsh)
-    and the control shell"""
-    xhisto_idx = xrange(1, get_current_history_length() + 1)
-    prev_histo = map(get_history_item, xhisto_idx)
-    clear_history()
-    for line in new_histo:
-        add_history(line)
-    return prev_histo
-
 def complete_control_command(text, state):
     return singleton.modified_cmd_complete(text, state)
 
@@ -116,14 +104,12 @@ class control_shell(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.options = options
         self.prompt = '[ctrl]> '
-        self.history = []
 
     def launch(self):
         if not self.options.interactive:
             # A Ctrl-C was issued in a non-interactive gsh => exit
             raise asyncore.ExitNow(1)
         interrupt_stdin_thread()
-        gsh_histo = switch_readline_history(self.history)
         console_output('')
         try:
             while True:
@@ -134,7 +120,6 @@ class control_shell(cmd.Cmd):
                 else:
                     break
         finally:
-            self.history = switch_readline_history(gsh_histo)
             console_output('\r')
 
     def completenames(self, text, *ignored):
