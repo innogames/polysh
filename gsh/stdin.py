@@ -200,20 +200,28 @@ class socket_notification_reader(asyncore.dispatcher):
 # All the words that have been typed in gsh. Used by the completion mechanism.
 history_words = set()
 
+# When listing possible completions, the complete() function is called with
+# an increasing state parameter until it returns None. Cache the completion
+# list instead of regenerating it for each completion item.
+completion_results = None
+
 def complete(text, state):
     """On tab press, return the next possible completion"""
     from gsh.control_commands_helpers import complete_control_command
-    line = readline.get_line_buffer()
-    if line.startswith(':'):
-        # Control command completion
-        matches = complete_control_command(line, text)
-    else:
-        # Main shell completion from history
-        l = len(text)
-        matches = [w for w in history_words if len(w) > l and
-                                               w.startswith(text)]
-    if state < len(matches):
-        return matches[state] + ' '
+    global completion_results
+    if state == 0:
+        line = readline.get_line_buffer()
+        if line.startswith(':'):
+            # Control command completion
+            completion_results = complete_control_command(line, text)[:]
+        else:
+            # Main shell completion from history
+            l = len(text)
+            completion_results = [w for w in history_words if len(w) > l and
+                                                             w.startswith(text)]
+    if state < len(completion_results):
+        return completion_results[state] + ' '
+    completion_results = None
 
 def write_main_socket(c):
     """Synchronous write to the main socket, wait for ACK"""
