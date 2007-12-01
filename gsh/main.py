@@ -49,7 +49,8 @@ def kill_all():
             pass
 
 def parse_cmdline():
-    usage = '%s [OPTIONS] HOSTS...' % (sys.argv[0])
+    usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
+            'Control commands are prefixed by ":". Use :help for the list'
     parser = optparse.OptionParser(usage, version='gsh ' + VERSION)
     parser.add_option('--hosts-file', type='str', action='append',
                       dest='hosts_filenames', metavar='FILE', default=[],
