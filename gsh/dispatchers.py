@@ -82,7 +82,7 @@ def all_terminated():
     instances_found = False
     for i in all_instances():
         instances_found = True
-        if i.state is not remote_dispatcher.STATE_TERMINATED:
+        if i.active and i.state is not remote_dispatcher.STATE_TERMINATED:
             if i.enabled or not i.termination:
                 return False
     return instances_found
