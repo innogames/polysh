@@ -77,29 +77,26 @@ class stdin_dispatcher(asyncore.file_dispatcher):
         """Some data can be read on stdin"""
         while True:
             try:
+                set_stdin_blocking(False)
                 try:
-                    set_stdin_blocking(False)
-                    try:
-                        data = self.recv(4096)
-                    finally:
-                        set_stdin_blocking(True)
-                except OSError, e:
-                    if e.errno == errno.EAGAIN:
-                        # End of available data
-                        break
-                    else:
-                        raise
+                    data = self.recv(4096)
+                finally:
+                    set_stdin_blocking(True)
+            except OSError, e:
+                if e.errno == errno.EAGAIN:
+                    # End of available data
+                    break
                 else:
-                    if data:
-                        # Handle the just read data
-                        the_stdin_thread.input_buffer.add(data)
-                        process_input_buffer()
-                    else:
-                        # Closed?
-                        self.is_readable = False
-                        break
-            except KeyboardInterrupt:
-                pass
+                    raise
+            else:
+                if data:
+                    # Handle the just read data
+                    the_stdin_thread.input_buffer.add(data)
+                    process_input_buffer()
+                else:
+                    # Closed?
+                    self.is_readable = False
+                    break
 
 class input_buffer(object):
     """The shared input buffer between the main thread and the stdin thread"""

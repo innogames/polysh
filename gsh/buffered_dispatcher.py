@@ -40,8 +40,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         Returns True if it was an actual error"""
         try:
             raise
-        except KeyboardInterrupt:
-            pass
         except OSError:
             # I/O error, let the parent take action
             return True
@@ -76,8 +74,10 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         return new_data
 
     def readable(self):
-        """No need to ask data if our buffer is full"""
-        return len(self.read_buffer) < buffered_dispatcher.MAX_BUFFER_SIZE
+        """Writers have priority, and no need to ask data if our buffer is
+        already full"""
+        return not self.writable() and \
+               len(self.read_buffer) < buffered_dispatcher.MAX_BUFFER_SIZE
 
     def writable(self):
         """Do we have something to write?"""

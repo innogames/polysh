@@ -38,6 +38,7 @@ from gsh.console import show_status, console_output
 from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
 from gsh.version import VERSION
+from gsh import control_commands
 
 def kill_all():
     """When gsh quits, we kill all the remote shells we started"""
@@ -101,27 +102,30 @@ def find_non_interactive_command(command):
     return command or stdin
 
 def main_loop():
-    try:
-        while True:
-            try:
-                completed, total = dispatchers.count_completed_processes()
-                if completed == total:
-                    # Time to use raw_input() in the stdin thread
-                    the_stdin_thread.ready_event.set()
-                else:
-                    the_stdin_thread.ready_event.clear()
-                    # Otherwise, just print the status
-                    show_status(completed, total)
-                if dispatchers.all_terminated():
-                    # Clear the prompt
-                    console_output('')
-                    raise asyncore.ExitNow(0)
-                asyncore.loop(count=1, timeout=None, use_poll=True)
-                dispatchers.handle_unfinished_lines()
-            except KeyboardInterrupt:
-                pass
-    except asyncore.ExitNow, e:
-        sys.exit(e.args[0])
+    global interrupted
+    while True:
+        try:
+            if interrupted:
+                interrupted = False
+                waited_data = control_commands.do_send_ctrl('c')
+                for i in dispatchers.all_instances():
+                    i.read_buffer = ''
+            completed, total = dispatchers.count_completed_processes()
+            if completed == total:
+                # Time to use raw_input() in the stdin thread
+                the_stdin_thread.ready_event.set()
+            else:
+                the_stdin_thread.ready_event.clear()
+                # Otherwise, just print the status
+                show_status(completed, total)
+            if dispatchers.all_terminated():
+                # Clear the prompt
+                console_output('')
+                raise asyncore.ExitNow(0)
+            asyncore.loop(count=1, timeout=None, use_poll=True)
+            dispatchers.handle_unfinished_lines()
+        except asyncore.ExitNow, e:
+            sys.exit(e.args[0])
 
 def setprocname(name):
     # From comments on http://davyd.livejournal.com/166352.html
@@ -168,6 +172,11 @@ def _profile(continuation):
     stats.print_callees(50)
     os.remove(prof_file)
 
+# Set to True in the SIGINT handler
+# We use a signal handler instead of catching KeyboardInterrupt as a SIGINT
+# could be raised during the KeyboardInterrupt handling
+interrupted = False
+
 def main():
     """Launch gsh"""
     locale.setlocale(locale.LC_ALL, '')
@@ -176,6 +185,10 @@ def main():
 
     atexit.register(kill_all)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies
+    def sigint(sig, frame):
+        global interrupted
+        interrupted = True
+    signal.signal(signal.SIGINT, sigint)
     options.command = find_non_interactive_command(options.command)
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()
