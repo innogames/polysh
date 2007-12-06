@@ -85,7 +85,7 @@ def do_quit(command):
     raise asyncore.ExitNow(0)
 
 def complete_send_ctrl(line, text):
-    if len(line) > len(':send_control '):
+    if len(line) > len(':send_ctrl '):
         # Control letter already given in command line
         return complete_shells(line, text, lambda i: i.enabled)
     if text in ('c', 'd', 'z'):
