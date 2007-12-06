@@ -247,6 +247,7 @@ class stdin_thread(Thread):
         else:
             the_stdin_thread.ready_event.set()
 
+    # Beware of races
     def run(self):
         while True:
             while True:
