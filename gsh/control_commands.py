@@ -17,6 +17,8 @@
 # Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import asyncore
+import glob
+import os
 
 from gsh.control_commands_helpers import complete_shells, selected_shells
 from gsh.control_commands_helpers import list_control_commands
@@ -83,6 +85,19 @@ def do_quit(command):
     Quit gsh.
     """
     raise asyncore.ExitNow(0)
+
+def complete_chdir(line, text):
+    return [p + '/' for p in glob.glob(text + '*') if os.path.isdir(p)]
+
+def do_chdir(command):
+    """
+    Usage: chdir PATH
+    Change the current directory of gsh (not the remote shells).
+    """
+    try:
+        os.chdir(command)
+    except OSError, e:
+        print e
 
 def complete_send_ctrl(line, text):
     if len(line) > len(':send_ctrl '):
