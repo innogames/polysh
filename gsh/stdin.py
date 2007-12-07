@@ -210,7 +210,7 @@ def complete(text, state):
         line = readline.get_line_buffer()
         if line.startswith(':'):
             # Control command completion
-            completion_results = complete_control_command(line, text)[:]
+            completion_results = complete_control_command(line, text)
         else:
             # Main shell completion from history
             l = len(text)
