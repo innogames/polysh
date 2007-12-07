@@ -35,7 +35,7 @@ if sys.hexversion < 0x02040000:
 from gsh import remote_dispatcher
 from gsh import dispatchers
 from gsh.console import show_status, console_output
-from gsh.stdin import the_stdin_thread
+from gsh.stdin import the_stdin_thread, ignore_sigchld
 from gsh.host_syntax import expand_syntax
 from gsh.version import VERSION
 from gsh import control_commands
@@ -186,7 +186,7 @@ def main():
     options, args = parse_cmdline()
 
     atexit.register(kill_all)
-    signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies
+    ignore_sigchld(True) # Don't create zombies
     def handler(sig, frame):
         global next_signal
         next_signal = sig

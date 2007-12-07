@@ -22,7 +22,9 @@ import errno
 import fcntl
 import os
 import readline # Just to say we want to use it with raw_input
+import signal
 import socket
+import subprocess
 import sys
 from threading import Thread, Event, Lock
 
@@ -123,6 +125,22 @@ class input_buffer(object):
         finally:
             self.lock.release()
 
+def ignore_sigchld(ignore):
+    """Typically we don't want to create zombie. But when executing a user
+    command (!command) the subprocess module relies on zombies not being
+    automatically reclaimed"""
+    if ignore:
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+        # Reclaim previously created zombies
+        try:
+            while os.waitpid(-1, os.WNOHANG) != (0, 0):
+                pass
+        except OSError, e:
+            if e.errno != errno.ECHILD:
+                raise
+    else:
+        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+
 def process_input_buffer():
     """Send the content of the input buffer to all remote processes, this must
     be called in the main thread"""
@@ -133,6 +151,16 @@ def process_input_buffer():
 
     if data.startswith(':'):
         handle_control_command(data[1:-1])
+        return
+
+    if data.startswith('!'):
+        ignore_sigchld(False)
+        retcode = subprocess.call(data[1:], shell=True)
+        ignore_sigchld(True)
+        if retcode > 0:
+            console_output('Child returned %d\n' % retcode)
+        elif retcode < 0:
+            console_output('Child was terminated by signal %d\n' % -retcode)
         return
 
     for r in dispatchers.all_instances():
