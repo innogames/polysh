@@ -102,12 +102,15 @@ def find_non_interactive_command(command):
     return command or stdin
 
 def main_loop():
-    global interrupted
+    global next_signal
     while True:
         try:
-            if interrupted:
-                interrupted = False
-                waited_data = control_commands.do_send_ctrl('c')
+            if next_signal:
+                current_signal = next_signal
+                next_signal = None
+                sig2chr = {signal.SIGINT: 'c', signal.SIGTSTP: 'z'}
+                ctrl = sig2chr[current_signal]
+                waited_data = control_commands.do_send_ctrl(ctrl)
                 for i in dispatchers.all_instances():
                     i.read_buffer = ''
             completed, total = dispatchers.count_completed_processes()
@@ -172,10 +175,9 @@ def _profile(continuation):
     stats.print_callees(50)
     os.remove(prof_file)
 
-# Set to True in the SIGINT handler
-# We use a signal handler instead of catching KeyboardInterrupt as a SIGINT
-# could be raised during the KeyboardInterrupt handling
-interrupted = False
+# We handle signals in the main loop, this way we can be signaled while
+# handling a signal.
+next_signal = None
 
 def main():
     """Launch gsh"""
@@ -185,10 +187,11 @@ def main():
 
     atexit.register(kill_all)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN) # Don't create zombies
-    def sigint(sig, frame):
-        global interrupted
-        interrupted = True
-    signal.signal(signal.SIGINT, sigint)
+    def handler(sig, frame):
+        global next_signal
+        next_signal = sig
+    signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGTSTP, handler)
     options.command = find_non_interactive_command(options.command)
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()
