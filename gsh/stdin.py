@@ -242,10 +242,10 @@ def complete(text, state):
         else:
             # Main shell completion from history
             l = len(text)
-            completion_results = [w for w in history_words if len(w) > l and
-                                                             w.startswith(text)]
+            completion_results = [w + ' ' for w in history_words if len(w) > l \
+                                                         and w.startswith(text)]
     if state < len(completion_results):
-        return completion_results[state] + ' '
+        return completion_results[state]
     completion_results = None
 
 def write_main_socket(c):

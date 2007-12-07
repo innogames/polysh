@@ -27,8 +27,8 @@ from gsh import dispatchers
 from gsh import remote_dispatcher
 
 def complete_help(line, text):
-    return [cmd for cmd in list_control_commands() if cmd.startswith(text) and
-                                                    ' ' + cmd + ' ' not in line]
+    return [cmd + ' ' for cmd in list_control_commands() if \
+                           cmd.startswith(text) and ' ' + cmd + ' ' not in line]
 
 def do_help(command):
     """
@@ -105,7 +105,7 @@ def complete_send_ctrl(line, text):
         return complete_shells(line, text, lambda i: i.enabled)
     if text in ('c', 'd', 'z'):
         return [text + ' ']
-    return ['c', 'd', 'z']
+    return ['c ', 'd ', 'z ']
 
 def do_send_ctrl(command):
     """
@@ -206,7 +206,7 @@ def complete_set_debug(line, text):
         return complete_shells(line, text)
     if text.lower() in ('y', 'n'):
         return [text + ' ']
-    return ['y', 'n']
+    return ['y ', 'n ']
 
 def do_set_debug(command):
     """

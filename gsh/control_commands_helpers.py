@@ -54,7 +54,7 @@ def selected_shells(command):
 
 def complete_shells(line, text, predicate=lambda i: True):
     """Return the shell names to include in the completion"""
-    res = [i.display_name for i in dispatchers.all_instances() if \
+    res = [i.display_name + ' ' for i in dispatchers.all_instances() if \
                 i.display_name.startswith(text) and \
                 predicate(i) and \
                 ' ' + i.display_name + ' ' not in line]
@@ -97,7 +97,7 @@ def complete_control_command(line, text):
         # Completing control command name
         cmds = list_control_commands()
         prefix = text[1:]
-        matches = [':' + cmd for cmd in cmds if cmd.startswith(prefix)]
+        matches = [':' + cmd + ' ' for cmd in cmds if cmd.startswith(prefix)]
     else:
         # Completing control command parameters
         cmd = line.split()[0][1:]
