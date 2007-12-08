@@ -252,6 +252,7 @@ class stdin_thread(Thread):
                 if self.interrupt_asked:
                     # This seems to be needed if Ctrl-C is hit when some
                     # text is in the line buffer
+                    cmd = None
                     raise EOFError
                 words = [w for w in cmd.split() if len(w) > 1]
                 history_words.update(words)
