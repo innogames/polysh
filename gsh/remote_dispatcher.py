@@ -35,6 +35,15 @@ STATE_IDLE,                \
 STATE_RUNNING,             \
 STATE_TERMINATED = range(len(STATE_NAMES))
 
+# Count the total number of remote_dispatcher.handle_read() invocations
+nr_handle_read = 0
+
+def main_loop_iteration(timeout=None):
+    """Return the number of remote_dispatcher.handle_read() calls made by this
+    iteration"""
+    prev_nr_read = nr_handle_read
+    asyncore.loop(count=1, timeout=timeout, use_poll=True)
+    return nr_handle_read - prev_nr_read
 
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
@@ -190,6 +199,8 @@ class remote_dispatcher(buffered_dispatcher):
         machine"""
         if not self.active:
             return
+        global nr_handle_read
+        nr_handle_read += 1
         new_data = buffered_dispatcher.handle_read(self)
         if self.debug:
             self.print_debug('==> ' + new_data)

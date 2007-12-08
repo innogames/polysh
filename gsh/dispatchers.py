@@ -64,7 +64,7 @@ def handle_unfinished_lines():
         return
 
     begin = time.time()
-    asyncore.loop(count=1, timeout=0.2, use_poll=True)
+    remote_dispatcher.main_loop_iteration(timeout=0.2)
     duration = time.time() - begin
     if duration >= 0.15:
         for r in all_instances():

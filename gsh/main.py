@@ -125,7 +125,7 @@ def main_loop():
                 # Clear the prompt
                 console_output('')
                 raise asyncore.ExitNow(0)
-            asyncore.loop(count=1, timeout=None, use_poll=True)
+            remote_dispatcher.main_loop_iteration()
             dispatchers.handle_unfinished_lines()
         except asyncore.ExitNow, e:
             sys.exit(e.args[0])
