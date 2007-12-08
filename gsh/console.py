@@ -23,9 +23,6 @@ import sys
 # clear it with ' ' characters
 last_status_length = None
 
-# The prompt is displayed only when started from a tty
-stdout_is_terminal = sys.stdout.isatty()
-
 def safe_write(output, buf):
     """We can get a SIGWINCH when printing, which will cause write to raise
     an EINTR. That's not a reason to stop printing."""
@@ -39,7 +36,8 @@ def safe_write(output, buf):
 
 def console_output(msg, output=sys.stdout):
     """Use instead of print, to clear the status information before printing"""
-    if stdout_is_terminal:
+    from gsh.remote_dispatcher import options
+    if options.interactive:
         from gsh.stdin import the_stdin_thread
         the_stdin_thread.no_raw_input()
         global last_status_length
@@ -47,16 +45,6 @@ def console_output(msg, output=sys.stdout):
             safe_write(output, '\r' + last_status_length * ' ' + '\r')
             last_status_length = 0
     safe_write(output, msg)
-
-def show_status(completed, total):
-    """The status is '[available shells/alive shells]>'"""
-    if stdout_is_terminal:
-        status = 'waiting [%d/%d]> ' % (completed, total)
-        console_output(status)
-        global last_status_length
-        last_status_length = len(status)
-        # We flush because there is no '\n'
-        sys.stdout.flush()
 
 def set_last_status_length(length):
     """The length of the prefix to be cleared when printing something"""

@@ -34,7 +34,7 @@ if sys.hexversion < 0x02040000:
 
 from gsh import remote_dispatcher
 from gsh import dispatchers
-from gsh.console import show_status, console_output
+from gsh.console import console_output
 from gsh.stdin import the_stdin_thread, ignore_sigchld
 from gsh.host_syntax import expand_syntax
 from gsh.version import VERSION
@@ -123,7 +123,8 @@ def main_loop():
             current_status = dispatchers.count_awaited_processes()
             if current_status != last_status:
                 console_output('')
-            the_stdin_thread.want_raw_input()
+            if remote_dispatcher.options.interactive:
+                the_stdin_thread.want_raw_input()
             last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
