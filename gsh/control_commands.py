@@ -23,6 +23,7 @@ import os
 from gsh.control_commands_helpers import complete_shells, selected_shells
 from gsh.control_commands_helpers import list_control_commands
 from gsh.control_commands_helpers import get_control_command, toggle_shells
+from gsh.control_commands_helpers import expand_local_path
 from gsh import dispatchers
 from gsh import remote_dispatcher
 
@@ -87,7 +88,8 @@ def do_quit(command):
     raise asyncore.ExitNow(0)
 
 def complete_chdir(line, text):
-    return [p + '/' for p in glob.glob(text + '*') if os.path.isdir(p)]
+    return [p + '/' for p in glob.glob(expand_local_path(text) + '*') if
+                                                               os.path.isdir(p)]
 
 def do_chdir(command):
     """
@@ -95,7 +97,7 @@ def do_chdir(command):
     Change the current directory of gsh (not the remote shells).
     """
     try:
-        os.chdir(command)
+        os.chdir(expand_local_path(command))
     except OSError, e:
         print e
 

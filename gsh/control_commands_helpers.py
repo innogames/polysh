@@ -60,6 +60,9 @@ def complete_shells(line, text, predicate=lambda i: True):
                 ' ' + i.display_name + ' ' not in line]
     return res
 
+def expand_local_path(path):
+    return os.path.expanduser(os.path.expandvars(path) or '~')
+
 #
 # This file descriptor is used to interrupt readline in raw_input().
 # /dev/null is not enough as it does not get out of a 'Ctrl-R' reverse-i-search.
