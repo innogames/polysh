@@ -19,7 +19,6 @@
 import asyncore
 import os
 import sys
-import tempfile
 from fnmatch import fnmatch
 import readline
 
@@ -62,28 +61,6 @@ def complete_shells(line, text, predicate=lambda i: True):
 
 def expand_local_path(path):
     return os.path.expanduser(os.path.expandvars(path) or '~')
-
-#
-# This file descriptor is used to interrupt readline in raw_input().
-# /dev/null is not enough as it does not get out of a 'Ctrl-R' reverse-i-search.
-# A Ctrl-C seems to make raw_input() return in all cases, and avoids printing
-# a newline
-tempfile_fd, tempfile_name = tempfile.mkstemp()
-os.remove(tempfile_name)
-os.write(tempfile_fd, chr(3))
-
-def interrupt_stdin_thread():
-    """The stdin thread may be in raw_input(), get out of it"""
-    if the_stdin_thread.ready_event.isSet():
-        dupped_stdin = os.dup(0) # Backup the stdin fd
-        assert not the_stdin_thread.wants_control_shell
-        the_stdin_thread.wants_control_shell = True # Not user triggered
-        os.lseek(tempfile_fd, 0, 0) # Rewind in the temp file
-        os.dup2(tempfile_fd, 0) # This will make raw_input() return
-        the_stdin_thread.interrupted_event.wait() # Wait for this return
-        the_stdin_thread.wants_control_shell = False
-        os.dup2(dupped_stdin, 0) # Restore stdin
-        os.close(dupped_stdin) # Cleanup
 
 def list_control_commands():
     import gsh.control_commands

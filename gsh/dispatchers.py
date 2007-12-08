@@ -41,30 +41,17 @@ def make_unique_name(name):
         candidate_name = '%s#%d' % (name, i)
     return candidate_name
 
-def count_completed_processes():
-    """Return a tuple with the number of ready processes and the total number"""
-    completed_processes = 0
+def count_awaited_processes():
+    """Return a tuple with the number of awaited processes and the total
+    number"""
+    awaited = 0
     total = 0
     for i in all_instances():
         if i.enabled:
             total += 1
-            if i.state is remote_dispatcher.STATE_IDLE:
-                completed_processes += 1
-    return completed_processes, total
-
-def handle_unfinished_lines():
-    """Typically we print only lines with a '\n', but if some buffers keep an
-    unfinished line for some time we'll add an artificial '\n'"""
-    for r in all_instances():
-        if r.read_buffer and r.read_buffer[0] != chr(27):
-            break
-    else:
-        # No unfinished lines
-        return
-
-    if not remote_dispatcher.main_loop_iteration(timeout=0.2):
-        for r in all_instances():
-            r.print_unfinished_line()
+            if i.state is not remote_dispatcher.STATE_IDLE:
+                awaited += 1
+    return awaited, total
 
 def dispatch_termination_to_all():
     """Start the termination procedure in all remote shells"""

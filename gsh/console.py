@@ -40,6 +40,8 @@ def safe_write(output, buf):
 def console_output(msg, output=sys.stdout):
     """Use instead of print, to clear the status information before printing"""
     if stdout_is_terminal:
+        from gsh.stdin import the_stdin_thread
+        the_stdin_thread.no_raw_input()
         global last_status_length
         if last_status_length:
             safe_write(output, '\r' + last_status_length * ' ' + '\r')

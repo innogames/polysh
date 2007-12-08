@@ -103,6 +103,7 @@ def find_non_interactive_command(command):
 
 def main_loop():
     global next_signal
+    last_status = None
     while True:
         try:
             if next_signal:
@@ -113,20 +114,22 @@ def main_loop():
                 waited_data = control_commands.do_send_ctrl(ctrl)
                 for i in dispatchers.all_instances():
                     i.read_buffer = ''
-            completed, total = dispatchers.count_completed_processes()
-            if completed == total:
-                # Time to use raw_input() in the stdin thread
-                the_stdin_thread.ready_event.set()
-            else:
-                the_stdin_thread.ready_event.clear()
-                # Otherwise, just print the status
-                show_status(completed, total)
+            while dispatchers.count_awaited_processes()[0] and \
+                  remote_dispatcher.main_loop_iteration(timeout=0.2):
+                pass
+            # Now it's quiet
+            for r in dispatchers.all_instances():
+                r.print_unfinished_line()
+            current_status = dispatchers.count_awaited_processes()
+            if current_status != last_status:
+                console_output('')
+            the_stdin_thread.want_raw_input()
+            last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
                 console_output('')
                 raise asyncore.ExitNow(0)
             remote_dispatcher.main_loop_iteration()
-            dispatchers.handle_unfinished_lines()
         except asyncore.ExitNow, e:
             sys.exit(e.args[0])
 

@@ -17,88 +17,18 @@
 # Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
 
 import asyncore
-import atexit
 import errno
-import fcntl
 import os
 import readline # Just to say we want to use it with raw_input
 import signal
 import socket
 import subprocess
 import sys
+import tempfile
 from threading import Thread, Event, Lock
 
 from gsh import dispatchers, remote_dispatcher
 from gsh.console import console_output, set_last_status_length
-
-# Handling of stdin is certainly the most complex part of gsh
-
-stdin_fcntl_flags = fcntl.fcntl(0, fcntl.F_GETFL, 0)
-
-def set_stdin_blocking(blocking):
-    """We set O_NONBLOCK on stdin only when we read from it"""
-    if blocking:
-        flags = stdin_fcntl_flags & ~os.O_NONBLOCK
-    else:
-        flags = stdin_fcntl_flags | os.O_NONBLOCK
-    fcntl.fcntl(0, fcntl.F_SETFL, flags)
-
-class stdin_dispatcher(asyncore.file_dispatcher):
-    """The stdin reader in the main thread => no fancy editing"""
-    def __init__(self):
-        asyncore.file_dispatcher.__init__(self, 0)
-        self.is_readable = True
-        def restore_stdin_flags():
-            try:
-                fcntl.fcntl(0, fcntl.F_SETFL, stdin_fcntl_flags)
-            except IOError, e:
-                if e.errno != errno.EBADF:
-                    # stdin may have been closed, otherwise propagate
-                    raise e
-        atexit.register(restore_stdin_flags)
-        set_stdin_blocking(True)
-
-    def readable(self):
-        """We set it to be readable only when the stdin thread is not in
-        raw_input()"""
-        return self.is_readable
-
-    def handle_expt(self):
-        # Emulate the select with poll as in: asyncore.loop(use_poll=True)
-        self.handle_read()
-
-    def writable(self):
-        """We don't write to stdin"""
-        return False
-
-    def handle_close(self):
-        """Ctrl-D was received but the remote processes were not ready"""
-        dispatchers.dispatch_termination_to_all()
-
-    def handle_read(self):
-        """Some data can be read on stdin"""
-        while True:
-            try:
-                set_stdin_blocking(False)
-                try:
-                    data = self.recv(4096)
-                finally:
-                    set_stdin_blocking(True)
-            except OSError, e:
-                if e.errno == errno.EAGAIN:
-                    # End of available data
-                    break
-                else:
-                    raise
-            else:
-                if data:
-                    # Handle the just read data
-                    the_stdin_thread.input_buffer.add(data)
-                    process_input_buffer()
-                else:
-                    # Closed?
-                    self.is_readable = False
-                    break
 
 class input_buffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
@@ -179,9 +109,6 @@ def process_input_buffer():
 # The stdin thread uses a synchronous (with ACK) socket to communicate with the
 # main thread, which is most of the time waiting in the poll() loop.
 # Socket character protocol:
-# s: entering in raw_input, the main loop should not read stdin
-# e: leaving raw_input, the main loop can read stdin
-# q: Ctrl-D was pressed, exiting
 # d: there is new data to send
 # A: ACK, same reply for every message, communications are synchronous, so the
 # stdin thread sends a character to the socket, the main thread processes it,
@@ -189,17 +116,11 @@ def process_input_buffer():
 
 class socket_notification_reader(asyncore.dispatcher):
     """The socket reader in the main thread"""
-    def __init__(self, the_stdin_dispatcher):
+    def __init__(self):
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
-        self.the_stdin_dispatcher = the_stdin_dispatcher
 
     def _do(self, c):
-        if c in ('s', 'e'):
-            self.the_stdin_dispatcher.is_readable = c == 'e'
-            console_output('\r')
-        elif c == 'q':
-            dispatchers.dispatch_termination_to_all()
-        elif c == 'd':
+        if c == 'd':
             process_input_buffer()
         else:
             raise Exception, 'Unknown code: %s' % (c)
@@ -253,6 +174,28 @@ def write_main_socket(c):
     the_stdin_thread.socket_write.send(c)
     the_stdin_thread.socket_write.recv(1)
 
+#
+# This file descriptor is used to interrupt readline in raw_input().
+# /dev/null is not enough as it does not get out of a 'Ctrl-R' reverse-i-search.
+# A Ctrl-C seems to make raw_input() return in all cases, and avoids printing
+# a newline
+tempfile_fd, tempfile_name = tempfile.mkstemp()
+os.remove(tempfile_name)
+os.write(tempfile_fd, chr(3))
+
+def interrupt_stdin_thread():
+    """The stdin thread may be in raw_input(), get out of it"""
+    dupped_stdin = os.dup(0) # Backup the stdin fd
+    assert not the_stdin_thread.interrupt_asked # Sanity check
+    the_stdin_thread.interrupt_asked = True # Not user triggered
+    os.lseek(tempfile_fd, 0, 0) # Rewind in the temp file
+    os.dup2(tempfile_fd, 0) # This will make raw_input() return
+    the_stdin_thread.out_of_raw_input.wait() # Wait for this return
+    the_stdin_thread.interrupt_asked = False # Restore sanity
+    os.dup2(dupped_stdin, 0) # Restore stdin
+    os.close(dupped_stdin) # Cleanup
+
+
 class stdin_thread(Thread):
     """The stdin thread, used to call raw_input()"""
     def __init__(self):
@@ -261,61 +204,63 @@ class stdin_thread(Thread):
     @staticmethod
     def activate(interactive):
         """Activate the thread at initialization time"""
-        the_stdin_thread.ready_event = Event()
         the_stdin_thread.input_buffer = input_buffer()
         if interactive:
-            the_stdin_thread.interrupted_event = Event()
+            the_stdin_thread.raw_input_wanted = Event()
+            the_stdin_thread.in_raw_input = Event()
+            the_stdin_thread.out_of_raw_input = Event()
+            the_stdin_thread.out_of_raw_input.set()
             s1, s2 = socket.socketpair()
             the_stdin_thread.socket_read, the_stdin_thread.socket_write = s1, s2
-            the_stdin_thread.wants_control_shell = False
+            the_stdin_thread.interrupt_asked = False
             the_stdin_thread.setDaemon(True)
             the_stdin_thread.start()
-            the_stdin_dispatcher = stdin_dispatcher()
-            socket_notification_reader(the_stdin_dispatcher)
-        else:
-            the_stdin_thread.ready_event.set()
+            socket_notification_reader()
+
+    def want_raw_input(self):
+        self.raw_input_wanted.set()
+        self.in_raw_input.wait()
+        self.raw_input_wanted.clear()
+
+    def no_raw_input(self):
+        interrupt_stdin_thread()
+        self.out_of_raw_input.wait()
 
     # Beware of races
     def run(self):
         while True:
-            while True:
-                self.ready_event.wait()
-                nr, total = dispatchers.count_completed_processes()
-                if nr == total:
-                    break
-            # The remote processes are ready, the thread can call raw_input
-            self.interrupted_event.clear()
+            self.raw_input_wanted.wait()
+            self.out_of_raw_input.set()
             try:
-                try:
-                    write_main_socket('s')
-                    readline.set_completer(complete)
-                    readline.parse_and_bind('tab: complete')
-                    readline.set_completer_delims(' \t\n')
-                    prompt = 'ready (%d)> ' % (nr)
-                    set_last_status_length(len(prompt))
-                    cmd = raw_input(prompt)
-                    if self.wants_control_shell:
-                        # This seems to be needed if Ctrl-C is hit when some
-                        # text is in the line buffer
-                        raise EOFError
-                    words = [w for w in cmd.split() if len(w) > 1]
-                    history_words.update(words)
-                    if len(history_words) > 10000:
-                        del history_words[:-10000]
-                finally:
-                    if not self.wants_control_shell:
-                        write_main_socket('e')
-            except EOFError:
-                if self.wants_control_shell:
-                    self.ready_event.clear()
-                    # Ok, we are no more in raw_input(), tell it to the
-                    # main thread
-                    self.interrupted_event.set()
+                readline.set_completer(complete)
+                readline.parse_and_bind('tab: complete')
+                readline.set_completer_delims(' \t\n')
+                nr, total = dispatchers.count_awaited_processes()
+                if nr:
+                    prompt = 'waiting (%d/%d)> ' % (nr, total)
                 else:
-                    write_main_socket('q')
-                    return
-            else:
-                self.ready_event.clear()
+                    prompt = 'ready (%d)> ' % total
+                set_last_status_length(len(prompt))
+                self.in_raw_input.set()
+                self.out_of_raw_input.clear()
+                cmd = None
+                try:
+                    cmd = raw_input(prompt)
+                finally:
+                    self.in_raw_input.clear()
+                    self.out_of_raw_input.set()
+                if self.interrupt_asked:
+                    # This seems to be needed if Ctrl-C is hit when some
+                    # text is in the line buffer
+                    raise EOFError
+                words = [w for w in cmd.split() if len(w) > 1]
+                history_words.update(words)
+                if len(history_words) > 10000:
+                    del history_words[:-10000]
+            except EOFError:
+                if not self.interrupt_asked:
+                    cmd = ':quit'
+            if cmd is not None:
                 self.input_buffer.add(cmd + '\n')
                 write_main_socket('d')
 
