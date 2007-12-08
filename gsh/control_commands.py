@@ -102,7 +102,7 @@ def do_chdir(command):
         print e
 
 def complete_send_ctrl(line, text):
-    if len(line) > len(':send_ctrl ?'):
+    if len(line[:-1].split()) >= 2:
         # Control letter already given in command line
         return complete_shells(line, text, lambda i: i.enabled)
     if text in ('c', 'd', 'z'):
@@ -203,8 +203,8 @@ def do_rename(command):
             i.rename(command)
 
 def complete_set_debug(line, text):
-    if len(line) > len(':set_debug ?'):
-        # Control letter already given in command line
+    if len(line[:-1].split()) >= 2:
+        # Debug value already given in command line
         return complete_shells(line, text)
     if text.lower() in ('y', 'n'):
         return [text + ' ']
