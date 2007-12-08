@@ -20,7 +20,6 @@ import asyncore
 import fcntl
 import struct
 import termios
-import time
 
 from gsh import remote_dispatcher
 from gsh.terminal_size import terminal_size
@@ -63,10 +62,7 @@ def handle_unfinished_lines():
         # No unfinished lines
         return
 
-    begin = time.time()
-    remote_dispatcher.main_loop_iteration(timeout=0.2)
-    duration = time.time() - begin
-    if duration >= 0.15:
+    if not remote_dispatcher.main_loop_iteration(timeout=0.2):
         for r in all_instances():
             r.print_unfinished_line()
 
