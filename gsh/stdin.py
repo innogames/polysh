@@ -190,6 +190,7 @@ def interrupt_stdin_thread():
     the_stdin_thread.interrupt_asked = True # Not user triggered
     os.lseek(tempfile_fd, 0, 0) # Rewind in the temp file
     os.dup2(tempfile_fd, 0) # This will make raw_input() return
+    os.kill(os.getpid(), signal.SIGWINCH) # Try harder to wake up raw_input()
     the_stdin_thread.out_of_raw_input.wait() # Wait for this return
     the_stdin_thread.interrupt_asked = False # Restore sanity
     os.dup2(dupped_stdin, 0) # Restore stdin
