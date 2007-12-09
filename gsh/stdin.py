@@ -215,10 +215,11 @@ class stdin_thread(Thread):
             the_stdin_thread.interrupt_asked = False
             the_stdin_thread.setDaemon(True)
             the_stdin_thread.start()
-            socket_notification_reader()
+            the_stdin_thread.socket_notification = socket_notification_reader()
 
     def want_raw_input(self):
         self.raw_input_wanted.set()
+        self.socket_notification.handle_read()
         self.in_raw_input.wait()
         self.raw_input_wanted.clear()
 
