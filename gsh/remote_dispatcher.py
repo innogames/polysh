@@ -159,8 +159,7 @@ class remote_dispatcher(buffered_dispatcher):
     def handle_error(self):
         """An exception may or may not lead to a disconnection"""
         if buffered_dispatcher.handle_error(self):
-            console_output('Error talking to %s\n ' % (self.display_name),
-                           sys.stderr)
+            console_output('Error talking to %s\n' % self.display_name)
             self.disconnect()
 
     def print_lines(self, lines):

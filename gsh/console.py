@@ -34,7 +34,7 @@ def safe_write(output, buf):
             if e.errno != errno.EINTR:
                 raise
 
-def console_output(msg, output=sys.stdout):
+def console_output(msg):
     """Use instead of print, to clear the status information before printing"""
     from gsh.remote_dispatcher import options
     if options.interactive:
@@ -42,11 +42,12 @@ def console_output(msg, output=sys.stdout):
         the_stdin_thread.no_raw_input()
         global last_status_length
         if last_status_length:
-            safe_write(output, '\r' + last_status_length * ' ' + '\r')
+            safe_write(sys.stdout, '\r' + last_status_length * ' ' + '\r')
             last_status_length = 0
-    safe_write(output, msg)
+    safe_write(sys.stdout, msg)
 
 def set_last_status_length(length):
     """The length of the prefix to be cleared when printing something"""
     global last_status_length
     last_status_length = length
+

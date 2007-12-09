@@ -99,8 +99,7 @@ def process_input_buffer():
         except asyncore.ExitNow, e:
             raise e
         except Exception, msg:
-            console_output('%s for %s, disconnecting\n' % (msg, r.display_name),
-                           output=sys.stderr)
+            console_output('%s for %s, disconnecting\n' % (msg, r.display_name))
             r.disconnect()
         else:
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
