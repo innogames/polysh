@@ -172,7 +172,13 @@ def complete(text, state):
 def write_main_socket(c):
     """Synchronous write to the main socket, wait for ACK"""
     the_stdin_thread.socket_write.send(c)
-    the_stdin_thread.socket_write.recv(1)
+    while True:
+        try:
+            the_stdin_thread.socket_write.recv(1)
+        except socket.error, e:
+            assert e[0] == errno.EINTR
+        else:
+            break
 
 #
 # This file descriptor is used to interrupt readline in raw_input().
@@ -183,6 +189,20 @@ tempfile_fd, tempfile_name = tempfile.mkstemp()
 os.remove(tempfile_name)
 os.write(tempfile_fd, chr(3))
 
+def get_stdin_pid():
+    '''Try to get the PID of the stdin thread, otherwise get the whole process
+    ID'''
+    try:
+        tasks = os.listdir('/proc/self/task')
+    except OSError, e:
+        if e.errno != errno.ENOENT:
+            raise
+        return os.getpid()
+    else:
+        tasks.remove(str(os.getpid()))
+        assert len(tasks) == 1
+        return int(tasks[0])
+
 def interrupt_stdin_thread():
     """The stdin thread may be in raw_input(), get out of it"""
     dupped_stdin = os.dup(0) # Backup the stdin fd
@@ -190,7 +210,8 @@ def interrupt_stdin_thread():
     the_stdin_thread.interrupt_asked = True # Not user triggered
     os.lseek(tempfile_fd, 0, 0) # Rewind in the temp file
     os.dup2(tempfile_fd, 0) # This will make raw_input() return
-    os.kill(os.getpid(), signal.SIGWINCH) # Try harder to wake up raw_input()
+    pid = get_stdin_pid()
+    os.kill(pid, signal.SIGWINCH) # Try harder to wake up raw_input()
     the_stdin_thread.out_of_raw_input.wait() # Wait for this return
     the_stdin_thread.interrupt_asked = False # Restore sanity
     os.dup2(dupped_stdin, 0) # Restore stdin
