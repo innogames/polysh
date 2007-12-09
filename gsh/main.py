@@ -196,6 +196,7 @@ def main():
         next_signal = sig
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGTSTP, handler)
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     options.command = find_non_interactive_command(options.command)
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()
