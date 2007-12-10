@@ -37,6 +37,5 @@ class TestNonInteractive(unittest.TestCase):
         child.sendintr()
         child.expect(pexpect.EOF)
         child.close()
-        self.assertEqual(child.exitstatus, 1)
 
 TESTS=(TestNonInteractive,)

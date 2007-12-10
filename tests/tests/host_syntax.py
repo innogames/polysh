@@ -22,18 +22,14 @@ from gsh_tests import launch_gsh
 
 class TestHostSyntax(unittest.TestCase):
     def assertHostSyntax(self, to_expand, expanded):
-        child = launch_gsh([to_expand])
+        child = launch_gsh([to_expand, 'localhost'])
         child.expect('ready')
-        child.sendintr()
-        child.expect('\[ctrl\]> ')
-        child.sendline('list')
+        child.sendline(':list')
         with_spaces = [e + ' ' for e in expanded]
         for i in xrange(len(expanded)):
             found = child.expect(with_spaces)
             del with_spaces[found]
-        child.expect('total: %d' % (len(expanded)))
-        child.expect('\[ctrl\]> ')
-        child.sendeof()
+        child.expect('total: %d' % (len(expanded) + 1))
         child.expect('ready')
         child.sendeof()
         child.expect(pexpect.EOF)

@@ -29,22 +29,17 @@ class TestBasic(unittest.TestCase):
             child.expect('ready \(%d\)> ' % (nr_localhost))
             return child
 
-        def stop_child(child):
-            child.sendeof()
-            child.expect(pexpect.EOF)
-
         def test_eof():
             child = start_child()
-            stop_child(child)
+            child.sendeof()
+            child.expect(pexpect.EOF)
 
         def test_exit():
             child = start_child()
             child.sendline('exit')
             for i in xrange(nr_localhost):
                 child.expect('Error talking to localhost[#0-9]*')
-            child.sendline('')
-            child.expect('ready \(0\)> ')
-            stop_child(child)
+            child.expect(pexpect.EOF)
 
         test_eof()
         test_exit()
