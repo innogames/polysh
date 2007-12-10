@@ -130,7 +130,9 @@ def main_loop():
                 # Clear the prompt
                 console_output('')
                 raise asyncore.ExitNow(0)
-            remote_dispatcher.main_loop_iteration()
+            if not next_signal:
+                # possible race here with the signal handler
+                remote_dispatcher.main_loop_iteration()
         except asyncore.ExitNow, e:
             sys.exit(e.args[0])
 
