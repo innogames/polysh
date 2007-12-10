@@ -248,7 +248,6 @@ class stdin_thread(Thread):
 
     def no_raw_input(self):
         interrupt_stdin_thread()
-        self.out_of_raw_input.wait()
 
     # Beware of races
     def run(self):
