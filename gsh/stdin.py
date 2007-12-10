@@ -255,37 +255,32 @@ class stdin_thread(Thread):
         while True:
             self.raw_input_wanted.wait()
             self.out_of_raw_input.set()
+            readline.set_completer(complete)
+            readline.parse_and_bind('tab: complete')
+            readline.set_completer_delims(' \t\n')
+            nr, total = dispatchers.count_awaited_processes()
+            if nr:
+                prompt = 'waiting (%d/%d)> ' % (nr, total)
+            else:
+                prompt = 'ready (%d)> ' % total
+            set_last_status_length(len(prompt))
+            self.in_raw_input.set()
+            self.out_of_raw_input.clear()
+            cmd = None
             try:
-                readline.set_completer(complete)
-                readline.parse_and_bind('tab: complete')
-                readline.set_completer_delims(' \t\n')
-                nr, total = dispatchers.count_awaited_processes()
-                if nr:
-                    prompt = 'waiting (%d/%d)> ' % (nr, total)
-                else:
-                    prompt = 'ready (%d)> ' % total
-                set_last_status_length(len(prompt))
-                self.in_raw_input.set()
-                self.out_of_raw_input.clear()
+                cmd = raw_input(prompt)
+            except EOFError:
+                if not self.interrupt_asked:
+                    cmd = ':quit'
+            if self.interrupt_asked:
                 cmd = None
-                try:
-                    cmd = raw_input(prompt)
-                finally:
-                    self.in_raw_input.clear()
-                    self.out_of_raw_input.set()
-                if self.interrupt_asked:
-                    # This seems to be needed if Ctrl-C is hit when some
-                    # text is in the line buffer
-                    cmd = None
-                    raise EOFError
+            self.in_raw_input.clear()
+            self.out_of_raw_input.set()
+            if cmd is not None:
                 words = [w for w in cmd.split() if len(w) > 1]
                 history_words.update(words)
                 if len(history_words) > 10000:
                     del history_words[:-10000]
-            except EOFError:
-                if not self.interrupt_asked:
-                    cmd = ':quit'
-            if cmd is not None:
                 self.input_buffer.add(cmd + '\n')
                 write_main_socket('d')
 
