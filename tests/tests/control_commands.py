@@ -20,7 +20,7 @@ import unittest
 import pexpect
 from gsh_tests import launch_gsh
 
-class TestControlShell(unittest.TestCase):
+class TestControlCommands(unittest.TestCase):
     def testControl(self):
         child = launch_gsh(['--quick-sh', 'localhost'])
         child.expect('ready \(1\)> ')
@@ -81,4 +81,4 @@ class TestControlShell(unittest.TestCase):
         child.sendeof()
         child.expect(pexpect.EOF)
 
-TESTS = (TestControlShell,)
+TESTS = (TestControlCommands,)
