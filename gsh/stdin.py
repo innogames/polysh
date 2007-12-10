@@ -188,19 +188,21 @@ tempfile_fd, tempfile_name = tempfile.mkstemp()
 os.remove(tempfile_name)
 os.write(tempfile_fd, chr(3))
 
-def get_stdin_pid():
+def get_stdin_pid(cached_result=None):
     '''Try to get the PID of the stdin thread, otherwise get the whole process
     ID'''
-    try:
-        tasks = os.listdir('/proc/self/task')
-    except OSError, e:
-        if e.errno != errno.ENOENT:
-            raise
-        return os.getpid()
-    else:
-        tasks.remove(str(os.getpid()))
-        assert len(tasks) == 1
-        return int(tasks[0])
+    if cached_result is None:
+        try:
+            tasks = os.listdir('/proc/self/task')
+        except OSError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            cached_result = os.getpid()
+        else:
+            tasks.remove(str(os.getpid()))
+            assert len(tasks) == 1
+            cached_result = int(tasks[0])
+    return cached_result
 
 def interrupt_stdin_thread():
     """The stdin thread may be in raw_input(), get out of it"""
