@@ -134,7 +134,8 @@ class remote_dispatcher(buffered_dispatcher):
     def configure_tty(self):
         """We don't want \n to be replaced with \r\n, and we disable the echo"""
         attr = termios.tcgetattr(self.fd)
-        attr[1] &= ~termios.ECHO & ~termios.ONLCR
+        attr[1] &= ~termios.ONLCR # oflag
+        attr[3] &= ~termios.ECHO # lflag
         termios.tcsetattr(self.fd, termios.TCSANOW, attr)
         # unsetopt zle prevents Zsh from resetting the tty
         return 'unsetopt zle 2> /dev/null;stty -echo -onlcr;'
