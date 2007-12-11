@@ -29,12 +29,17 @@ from gsh import remote_dispatcher
 from gsh import stdin
 
 def complete_help(line, text):
-    return [cmd + ' ' for cmd in list_control_commands() if \
+    colon = text.startswith(':')
+    text = text.lstrip(':')
+    res = [cmd + ' ' for cmd in list_control_commands() if \
                            cmd.startswith(text) and ' ' + cmd + ' ' not in line]
+    if colon:
+        res = [':' + cmd for cmd in res]
+    return res
 
 def do_help(command):
     """
-    Usage: help [COMMAND]
+    Usage: :help [COMMAND]
     List control commands or show their documentations.
     """
     command = command.strip()
@@ -42,7 +47,7 @@ def do_help(command):
         texts = []
         for name in command.split():
             try:
-                cmd = get_control_command(name)
+                cmd = get_control_command(name.lstrip(':'))
             except AttributeError:
                 print 'Unknown control command:', name
             else:
@@ -55,7 +60,7 @@ def do_help(command):
         help_lines = []
         for i in xrange(len(names)):
             name = names[i]
-            txt = (max_name_len - len(name)) * ' ' + name + ' - '
+            txt = (max_name_len - len(name)) * ' ' + ':' + name + ' - '
             doc = get_control_command(name).__doc__
             txt += doc.split('\n')[2].strip()
             print txt
@@ -65,7 +70,7 @@ def complete_list(line, text):
 
 def do_list(command):
     """
-    Usage: list [SHELLS...]
+    Usage: :list [SHELLS...]
     List remote shells and their states.
     The special characters * ? and [] work as expected.
     """
@@ -83,7 +88,7 @@ def do_list(command):
 
 def do_quit(command):
     """
-    Usage: quit
+    Usage: :quit
     Quit gsh.
     """
     raise asyncore.ExitNow(0)
@@ -94,7 +99,7 @@ def complete_chdir(line, text):
 
 def do_chdir(command):
     """
-    Usage: chdir PATH
+    Usage: :chdir PATH
     Change the current directory of gsh (not the remote shells).
     """
     try:
@@ -112,7 +117,7 @@ def complete_send_ctrl(line, text):
 
 def do_send_ctrl(command):
     """
-    Usage: send_ctrl LETTER [SHELLS...]
+    Usage: :send_ctrl LETTER [SHELLS...]
     Send a control character to remote shells.
     The first argument is the control character to send: c, d or z.
     The remaining optional arguments are the destination shells.
@@ -136,7 +141,7 @@ def complete_reset_prompt(line, text):
 
 def do_reset_prompt(command):
     """
-    Usage: reset_prompt [SHELLS...]
+    Usage: :reset_prompt [SHELLS...]
     Change the prompt to be recognized by gsh.
     The special characters * ? and [] work as expected.
     """
@@ -148,7 +153,7 @@ def complete_enable(line, text):
 
 def do_enable(command):
     """
-    Usage: enable [SHELLS...]
+    Usage: :enable [SHELLS...]
     Enable sending commands to remote shells.
     The special characters * ? and [] work as expected.
     """
@@ -159,7 +164,7 @@ def complete_disable(line, text):
 
 def do_disable(command):
     """
-    Usage: disable [SHELLS...]
+    Usage: :disable [SHELLS...]
     Disable sending commands to remote shells.
     The special characters * ? and [] work as expected.
     """
@@ -170,7 +175,7 @@ def complete_reconnect(line, text):
 
 def do_reconnect(command):
     """
-    Usage: reconnect [SHELLS...]
+    Usage: :reconnect [SHELLS...]
     Try to reconnect to disconnected remote shells.
     The special characters * ? and [] work as expected.
     """
@@ -180,7 +185,7 @@ def do_reconnect(command):
 
 def do_add(command):
     """
-    Usage: add NAMES...
+    Usage: :add NAMES...
     Add one or many remote shells.
     """
     for host in command.split():
@@ -191,7 +196,7 @@ def complete_purge(line, text):
 
 def do_purge(command):
     """
-    Usage: purge [SHELLS...]
+    Usage: :purge [SHELLS...]
     Delete disabled remote shells.
     This helps to have a shorter list.
     The special characters * ? and [] work as expected.
@@ -206,7 +211,7 @@ def do_purge(command):
 
 def do_rename(command):
     """
-    Usage: rename [NEW_NAME]
+    Usage: :rename [NEW_NAME]
     Rename all enabled remote shells with the argument.
     The argument will be shell expanded on the remote processes. With no
     argument, the original hostname will be restored as the displayed name.
@@ -225,7 +230,7 @@ def complete_set_debug(line, text):
 
 def do_hide_password(command):
     """
-    Usage: hide_password
+    Usage: :hide_password
     Do not echo the next typed line.
     This is useful when entering password. If debugging is enabled, it will be
     disabled to avoid displaying a password
@@ -241,7 +246,7 @@ def do_hide_password(command):
 
 def do_set_debug(command):
     """
-    Usage: set_debug y|n [SHELLS...]
+    Usage: :set_debug y|n [SHELLS...]
     Enable or disable debugging output for remote shells.
     The first argument is 'y' to enable the debugging output, 'n' to
     disable it.
