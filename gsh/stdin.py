@@ -25,6 +25,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import termios
 from threading import Thread, Event, Lock
 
 from gsh import dispatchers, remote_dispatcher
@@ -218,6 +219,18 @@ def interrupt_stdin_thread():
     os.dup2(dupped_stdin, 0) # Restore stdin
     os.close(dupped_stdin) # Cleanup
 
+echo_enabled = True
+def set_echo(echo):
+    global echo_enabled
+    if echo != echo_enabled:
+        fd = sys.stdin.fileno()
+        attr = termios.tcgetattr(fd)
+        if echo:
+            attr[3] |= termios.ECHO
+        else:
+            attr[3] &= ~termios.ECHO
+        termios.tcsetattr(fd, termios.TCSANOW, attr)
+        echo_enabled = echo
 
 class stdin_thread(Thread):
     """The stdin thread, used to call raw_input()"""
@@ -275,11 +288,17 @@ class stdin_thread(Thread):
                 cmd = None
             self.in_raw_input.clear()
             self.out_of_raw_input.set()
+            if cmd:
+                if echo_enabled:
+                    words = [w for w in cmd.split() if len(w) > 1]
+                    history_words.update(words)
+                    if len(history_words) > 10000:
+                        del history_words[:-10000]
+                else:
+                    last = readline.get_current_history_length() - 1
+                    readline.remove_history_item(last)
+            set_echo(True)
             if cmd is not None:
-                words = [w for w in cmd.split() if len(w) > 1]
-                history_words.update(words)
-                if len(history_words) > 10000:
-                    del history_words[:-10000]
                 self.input_buffer.add(cmd + '\n')
                 write_main_socket('d')
 

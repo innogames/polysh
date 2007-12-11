@@ -26,6 +26,7 @@ from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
 from gsh import dispatchers
 from gsh import remote_dispatcher
+from gsh import stdin
 
 def complete_help(line, text):
     return [cmd + ' ' for cmd in list_control_commands() if \
@@ -221,6 +222,22 @@ def complete_set_debug(line, text):
     if text.lower() in ('y', 'n'):
         return [text + ' ']
     return ['y ', 'n ']
+
+def do_hide_password(command):
+    """
+    Usage: hide_password
+    Do not echo the next typed line.
+    This is useful when entering password. If debugging is enabled, it will be
+    disabled to avoid displaying a password
+    """
+    warned = False
+    for i in dispatchers.all_instances():
+        if i.enabled and i.debug:
+            i.debug = False
+            if not warned:
+                print 'Debugging disabled to avoid displaying passwords'
+                warned = True
+    stdin.set_echo(False)
 
 def do_set_debug(command):
     """
