@@ -67,6 +67,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.display_name = ''
         self.change_name(hostname)
         self.init_string = self.configure_tty() + self.set_prompt()
+        self.init_string_sent = False
         self.pending_rename = None
         self.command = options.command
 
@@ -252,9 +253,9 @@ class remote_dispatcher(buffered_dispatcher):
             if self.handle_read_fast_case(self.read_buffer):
                 return
             lf_pos = self.read_buffer.find('\n')
-        if self.state is STATE_NOT_STARTED and self.init_string:
+        if self.state is STATE_NOT_STARTED and not self.init_string_sent:
             self.dispatch_write(self.init_string)
-            self.init_string = None
+            self.init_string_sent = True
 
     def print_unfinished_line(self):
         """The unfinished line stayed long enough in the buffer to be printed"""

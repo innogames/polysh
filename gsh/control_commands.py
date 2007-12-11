@@ -130,6 +130,18 @@ def do_send_ctrl(command):
         if i.enabled:
             i.dispatch_write(control_letter)
 
+def complete_reset_prompt(line, text):
+    return complete_shells(line, text, lambda i: i.enabled)
+
+def do_reset_prompt(command):
+    """
+    Usage: reset_prompt [SHELLS...]
+    Make the prompt gsh aware in all or the specified shells.
+    The special characters * ? and [] work as expected.
+    """
+    for i in selected_shells(command):
+        i.dispatch_write(i.init_string)
+
 def complete_enable(line, text):
     return complete_shells(line, text, lambda i: i.active and not i.enabled)
 
