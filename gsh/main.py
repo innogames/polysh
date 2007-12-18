@@ -135,6 +135,7 @@ def main_loop():
                 # possible race here with the signal handler
                 remote_dispatcher.main_loop_iteration()
         except asyncore.ExitNow, e:
+            console_output('')
             sys.exit(e.args[0])
 
 def setprocname(name):
