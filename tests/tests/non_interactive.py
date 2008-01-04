@@ -26,11 +26,6 @@ class TestNonInteractive(unittest.TestCase):
         child.expect('localhost: text')
         child.expect(pexpect.EOF)
 
-    def testCommandQuick(self):
-        child = launch_gsh(['--command=echo text', '--quick-sh', 'localhost'])
-        child.expect('localhost: text')
-        child.expect(pexpect.EOF)
-
     def testCommandIntr(self):
         child = launch_gsh(['--command=echo text; cat', 'localhost'])
         child.expect('localhost: text')

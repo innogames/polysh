@@ -74,9 +74,7 @@ class remote_dispatcher(buffered_dispatcher):
     def launch_ssh(self, name):
         """Launch the ssh command in the child process"""
         evaluated = options.ssh % {'host': name}
-        if options.quick_sh:
-            evaluated = '%s -t %s sh' % (evaluated, name)
-        elif evaluated == options.ssh:
+        if evaluated == options.ssh:
             evaluated = '%s %s' % (evaluated, name)
         os.execlp('/bin/sh', 'sh', '-c', evaluated)
 

@@ -26,10 +26,7 @@ Read hostnames from given file, one per line. Hostnames are given on the command
 Command to execute on the remote shells. This starts \fIgsh\fR in non\-interactive mode. It will start the remote shells, send the command, print the output and exit when the command is completed on all remote shells. This is the same as piping a command on the standard input.
 .TP 
 \fB\-\-ssh=SSH\fR
-Ssh command to use [ssh]. By default, \fIgsh\fR spawns remote shells using the ssh command, but another shell command can be specified here. For example, with \-\-ssh='usleep $((RANDOM*50)); exec ssh' a delay will be introduced to avoid all hosts accessing a NFS server at the same time. If the hostname should not be added at the end of the command, the macro %(host)s can be inserted where the hostname should be placed.
-.TP 
-\fB\-\-quick\-sh\fR
-Do not launch a full ssh session. It has been observed that the main slowdown factor is the launching of the shell on the remote host, particularly if it is a heavy\-weight one like Zsh. This option is a synonym of \-\-ssh='ssh \-t %(host)s sh', if the login shell is not sh this option should make remote shells start faster.
+Ssh command to use [ssh]. By default, \fIgsh\fR spawns remote shells using the ssh command, but another shell command can be specified here. For example, with \-\-ssh='usleep $((RANDOM*50)); exec ssh' a delay will be introduced to avoid all hosts accessing a NFS server at the same time. If the hostname should not be added at the end of the command, the macro %(host)s can be inserted where the hostname should be placed. Also, make sure the command you use launchs a pty, this may need the -t option for ssh.
 .TP 
 \fB\-\-abort\-errors\fR
 Abort if some shell fails to initialize [ignore]. By default, \fIgsh\fR just logs an error when it cannot succesfully open a remote shell. With this option, it exits with a failure.

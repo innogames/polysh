@@ -21,8 +21,8 @@ import pexpect
 from gsh_tests import launch_gsh
 
 class TestBasic(unittest.TestCase):
-    def localhost(self, nr_localhost, extra=[]):
-        args = extra + nr_localhost * ['localhost']
+    def localhost(self, nr_localhost):
+        args = nr_localhost * ['localhost']
 
         def start_child():
             child = launch_gsh(args)
@@ -52,14 +52,5 @@ class TestBasic(unittest.TestCase):
 
     def testLocalhostLocalhostLocalhost(self):
         self.localhost(3)
-
-    def testQuickLocalhost(self):
-        self.localhost(1, extra=['--quick-sh'])
-
-    def testQuickLocalhostLocalhost(self):
-        self.localhost(2, extra=['--quick-sh'])
-
-    def testQuickLocalhostLocalhostLocalhost(self):
-        self.localhost(3, extra=['--quick-sh'])
 
 TESTS = (TestBasic,)

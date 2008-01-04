@@ -31,7 +31,7 @@ class TestCommandLine(unittest.TestCase):
         print >> tmp, '# Ignore me'
         print >> tmp, 'localhost.localdomain'
         tmp.close()
-        child = launch_gsh(['--quick-sh', '--hosts-file=%s' % (tmp_name)])
+        child = launch_gsh(['--hosts-file=%s' % (tmp_name)])
         child.expect('ready \(3\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)

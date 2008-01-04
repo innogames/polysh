@@ -2,6 +2,7 @@
 ~~~
 
 o Removed --log-dir=LOG_DIR option as it is less useful than expected
+o Removed --quick-sh as it is now the default
 
 
 0.2
