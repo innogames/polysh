@@ -3,6 +3,14 @@
 
 o Removed --log-dir=LOG_DIR option as it is less useful than expected
 o Removed --quick-sh as it is now the default
+o Replaced the control shell with colon prefixed commands
+o The prompt uses readline even when not all remote shells are ready
+o Ctrl-C and Ctrl-Z sent to gsh are forwaded to the remote shells
+o Shell commands prefixed by an exclamation mark are run locally
+o Added the :chdir control command to change the local directory
+o Added the :hide_password control command, to use with su(1) for example
+o Added the :reset_prompt control command, for use when launching a shell
+o Common SSH key problems are detected and some help is printed
 
 
 0.2
