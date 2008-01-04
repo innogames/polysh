@@ -265,3 +265,20 @@ def do_set_debug(command):
     for i in selected_shells(' '.join(splitted[1:])):
         i.debug = debug
 
+def main():
+    """
+    Output a help text of each control command suitable for the man page
+    """
+    names = list_control_commands()
+    for name in list_control_commands():
+        print '<TP>'
+        unstripped = get_control_command(name).__doc__.split('\n')
+        lines = [l.strip() for l in unstripped]
+        usage = lines[1].strip()
+        print '<fB>%s<fR>' % usage[7:]
+        help = ' '.join(lines[2:]).replace('gsh', '<fI>gsh<fR>').strip()
+        print help
+
+if __name__ == '__main__':
+    main()
+
