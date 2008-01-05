@@ -14,7 +14,7 @@
 #
 # See the COPYING file for license information.
 #
-# Copyright (c) 2006, 2007 Guillaume Chazarain <guichaz@yahoo.fr>
+# Copyright (c) 2006, 2007, 2008 Guillaume Chazarain <guichaz@yahoo.fr>
 
 # Requires python 2.4
 
