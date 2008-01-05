@@ -16,7 +16,43 @@
 #
 # Copyright (c) 2008 Guillaume Chazarain <guichaz@yahoo.fr>
 
+import os
 import readline
+
+def complete_local_absolute_path(path):
+    dirname, basename = os.path.split(path)
+    if not dirname.endswith('/'):
+        dirname += '/'
+    paths = [dirname + p for p in os.listdir(dirname) if p.startswith(basename)]
+    def get_suffix(p):
+        if os.path.isdir(p):
+            return '/'
+        return ''
+    paths = [p + get_suffix(p) for p in paths]
+    return paths
+
+def remove_dupes(words):
+    added = set()
+    results = list()
+    for w in words:
+        stripped = w.rstrip('/ ')
+        if stripped not in added:
+            added.add(stripped)
+            results.append(w)
+    return results
+
+def read_commands_in_path():
+    commands = set()
+
+    for path in (os.getenv('PATH') or '').split(':'):
+        if path:
+            try:
+                listing = os.listdir(path)
+            except OSError:
+                pass
+            else:
+                commands |= set(listing)
+    return list(commands)
 
 # All the words that have been typed in gsh. Used by the completion mechanism.
 history_words = set()
@@ -25,6 +61,9 @@ history_words = set()
 # an increasing state parameter until it returns None. Cache the completion
 # list instead of regenerating it for each completion item.
 completion_results = None
+
+# Commands in $PATH, used for the completion of the first word
+user_commands_in_path = read_commands_in_path()
 
 def complete(text, state):
     """On tab press, return the next possible completion"""
@@ -36,10 +75,20 @@ def complete(text, state):
             # Control command completion
             completion_results = complete_control_command(line, text)
         else:
-            # Main shell completion from history
+            completion_results = []
+            # Complete absolute paths
+            if text.startswith('/'):
+                completion_results += complete_local_absolute_path(text)
+            # Complete from history
             l = len(text)
-            completion_results = [w + ' ' for w in history_words if len(w) > l \
-                                                         and w.startswith(text)]
+            completion_results += [w + ' ' for w in history_words if \
+                                              len(w) > l and w.startswith(text)]
+            if readline.get_begidx() == 0:
+                # Completing first word from $PATH
+                completion_results += [w + ' ' for w in user_commands_in_path \
+                                           if len(w) > l and w.startswith(text)]
+            completion_results = remove_dupes(completion_results)
+
     if state < len(completion_results):
         return completion_results[state]
     completion_results = None
