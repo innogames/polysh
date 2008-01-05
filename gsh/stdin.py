@@ -30,6 +30,7 @@ from threading import Thread, Event, Lock
 
 from gsh import dispatchers, remote_dispatcher
 from gsh.console import console_output, set_last_status_length
+from gsh import completion
 
 class input_buffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
@@ -143,32 +144,6 @@ class socket_notification_reader(asyncore.dispatcher):
         """Our writes are blocking"""
         return False
 
-# All the words that have been typed in gsh. Used by the completion mechanism.
-history_words = set()
-
-# When listing possible completions, the complete() function is called with
-# an increasing state parameter until it returns None. Cache the completion
-# list instead of regenerating it for each completion item.
-completion_results = None
-
-def complete(text, state):
-    """On tab press, return the next possible completion"""
-    from gsh.control_commands_helpers import complete_control_command
-    global completion_results
-    if state == 0:
-        line = readline.get_line_buffer()
-        if line.startswith(':'):
-            # Control command completion
-            completion_results = complete_control_command(line, text)
-        else:
-            # Main shell completion from history
-            l = len(text)
-            completion_results = [w + ' ' for w in history_words if len(w) > l \
-                                                         and w.startswith(text)]
-    if state < len(completion_results):
-        return completion_results[state]
-    completion_results = None
-
 def write_main_socket(c):
     """Synchronous write to the main socket, wait for ACK"""
     the_stdin_thread.socket_write.send(c)
@@ -267,9 +242,7 @@ class stdin_thread(Thread):
         while True:
             self.raw_input_wanted.wait()
             self.out_of_raw_input.set()
-            readline.set_completer(complete)
-            readline.parse_and_bind('tab: complete')
-            readline.set_completer_delims(' \t\n')
+            completion.install_completion_handler()
             nr, total = dispatchers.count_awaited_processes()
             if nr:
                 prompt = 'waiting (%d/%d)> ' % (nr, total)
@@ -290,13 +263,9 @@ class stdin_thread(Thread):
             self.out_of_raw_input.set()
             if cmd:
                 if echo_enabled:
-                    words = [w for w in cmd.split() if len(w) > 1]
-                    history_words.update(words)
-                    if len(history_words) > 10000:
-                        del history_words[:-10000]
+                    completion.add_to_history(cmd)
                 else:
-                    last = readline.get_current_history_length() - 1
-                    readline.remove_history_item(last)
+                    completion.remove_last_history_item()
             set_echo(True)
             if cmd is not None:
                 self.input_buffer.add(cmd + '\n')
