@@ -220,14 +220,6 @@ def do_rename(command):
         if i.enabled:
             i.rename(command)
 
-def complete_set_debug(line, text):
-    if len(line[:-1].split()) >= 2:
-        # Debug value already given in command line
-        return complete_shells(line, text)
-    if text.lower() in ('y', 'n'):
-        return [text + ' ']
-    return ['y ', 'n ']
-
 def do_hide_password(command):
     """
     Usage: :hide_password
@@ -243,6 +235,14 @@ def do_hide_password(command):
                 print 'Debugging disabled to avoid displaying passwords'
                 warned = True
     stdin.set_echo(False)
+
+def complete_set_debug(line, text):
+    if len(line[:-1].split()) >= 2:
+        # Debug value already given in command line
+        return complete_shells(line, text)
+    if text.lower() in ('y', 'n'):
+        return [text + ' ']
+    return ['y ', 'n ']
 
 def do_set_debug(command):
     """
