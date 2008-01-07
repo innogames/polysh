@@ -75,6 +75,11 @@ def complete(text, state):
             # Control command completion
             completion_results = complete_control_command(line, text)
         else:
+            if line.startswith('!'):
+                dropped_exclam = True
+                text = text[1:]
+            else:
+                dropped_exclam = False
             completion_results = []
             # Complete absolute paths
             if text.startswith('/'):
@@ -88,6 +93,8 @@ def complete(text, state):
                 completion_results += [w + ' ' for w in user_commands_in_path \
                                            if len(w) > l and w.startswith(text)]
             completion_results = remove_dupes(completion_results)
+            if dropped_exclam:
+                completion_results = ['!' + r for r in completion_results]
 
     if state < len(completion_results):
         return completion_results[state]
