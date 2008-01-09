@@ -235,7 +235,8 @@ class stdin_thread(Thread):
         self.raw_input_wanted.clear()
 
     def no_raw_input(self):
-        interrupt_stdin_thread()
+        if not self.out_of_raw_input.isSet():
+            interrupt_stdin_thread()
 
     # Beware of races
     def run(self):
