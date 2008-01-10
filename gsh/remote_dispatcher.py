@@ -26,6 +26,7 @@ import termios
 
 from gsh.buffered_dispatcher import buffered_dispatcher
 from gsh.console import console_output
+from gsh import file_transfer
 
 # Either the remote shell is expecting a command or one is already running
 STATE_NAMES = ['not_started', 'idle', 'running', 'terminated']
@@ -69,6 +70,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.init_string = self.configure_tty() + self.set_prompt()
         self.init_string_sent = False
         self.pending_rename = None
+        self.file_transfer_cookie = None
         self.command = options.command
 
     def launch_ssh(self, name):
@@ -181,7 +183,8 @@ class remote_dispatcher(buffered_dispatcher):
         line"""
         if self.prompt in data or self.state is not STATE_RUNNING or \
            self.termination and (self.term1 in data or self.term2 in data) or \
-           self.pending_rename and self.pending_rename in data:
+           self.pending_rename and self.pending_rename in data or \
+           self.file_transfer_cookie and self.file_transfer_cookie in data:
             # Slow case :-(
             return False
 
@@ -231,6 +234,8 @@ class remote_dispatcher(buffered_dispatcher):
                 pass
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
+            elif self.file_transfer_cookie and self.file_transfer_cookie in line:
+                file_transfer.received_cookie(self, line)
             elif self.state in (STATE_IDLE, STATE_RUNNING):
                 self.print_lines(line)
             elif self.state is STATE_NOT_STARTED:

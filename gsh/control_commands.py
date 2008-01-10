@@ -27,6 +27,7 @@ from gsh.control_commands_helpers import expand_local_path
 from gsh import dispatchers
 from gsh import remote_dispatcher
 from gsh import stdin
+from gsh import file_transfer
 
 def complete_help(line, text):
     colon = text.startswith(':')
@@ -264,6 +265,30 @@ def do_set_debug(command):
     debug = letter == 'y'
     for i in selected_shells(' '.join(splitted[1:])):
         i.debug = debug
+
+def complete_replicate(line, text):
+    if ':' not in line[len(':replicate'):]:
+        return [c[:-1] + ':' for c in complete_shells(line, text)]
+
+def do_replicate(command):
+    """
+    Usage: :replicate SHELL:path
+    Copy a path from one remote shell to all others
+    """
+    if ':' not in command:
+        print 'Usage: :replicate SHELL:path'
+        return
+    shell_name, path = command.split(':', 1)
+    for shell in dispatchers.all_instances():
+        if shell.display_name == shell_name:
+            if not shell.enabled:
+                print shell_name, 'is not enabled'
+                return
+            break
+    else:
+        print shell_name, 'not found'
+        return
+    file_transfer.replicate(shell, path)
 
 def main():
     """
