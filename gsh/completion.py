@@ -20,6 +20,8 @@ import os
 import readline
 
 def complete_local_absolute_path(path):
+    if not path.startswith('/'):
+        return []
     dirname, basename = os.path.split(path)
     if not dirname.endswith('/'):
         dirname += '/'
@@ -82,8 +84,7 @@ def complete(text, state):
                 dropped_exclam = False
             completion_results = []
             # Complete absolute paths
-            if text.startswith('/'):
-                completion_results += complete_local_absolute_path(text)
+            completion_results += complete_local_absolute_path(text)
             # Complete from history
             l = len(text)
             completion_results += [w + ' ' for w in history_words if \

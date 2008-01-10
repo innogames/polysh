@@ -24,6 +24,7 @@ from gsh.control_commands_helpers import complete_shells, selected_shells
 from gsh.control_commands_helpers import list_control_commands
 from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
+from gsh.completion import complete_local_absolute_path
 from gsh import dispatchers
 from gsh import remote_dispatcher
 from gsh import stdin
@@ -267,8 +268,10 @@ def do_set_debug(command):
         i.debug = debug
 
 def complete_replicate(line, text):
-    if ':' not in line[len(':replicate'):]:
+    if ':' not in text:
         return [c[:-1] + ':' for c in complete_shells(line, text)]
+    shell, path = text.split(':')
+    return [shell + ':' + p for p in complete_local_absolute_path(path)]
 
 def do_replicate(command):
     """
