@@ -74,10 +74,8 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         return new_data
 
     def readable(self):
-        """Writers have priority, and no need to ask data if our buffer is
-        already full"""
-        return not self.writable() and \
-               len(self.read_buffer) < buffered_dispatcher.MAX_BUFFER_SIZE
+        """No need to ask data if our buffer is already full"""
+        return len(self.read_buffer) < buffered_dispatcher.MAX_BUFFER_SIZE
 
     def writable(self):
         """Do we have something to write?"""
