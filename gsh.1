@@ -53,6 +53,9 @@ Disable sending commands to remote shells. The special characters * ? and [] wor
 \fB:enable [SHELLS...]\fR
 Enable sending commands to remote shells. The special characters * ? and [] work as expected.
 .TP 
+\fB:export_rank\fR
+Set GSH_RANK and GSH_NR_SHELLS on enabled remote shells. The GSH_RANK shell variable uniquely identifies each shell with a number between 0 and GSH_NR_SHELLS \- 1. GSH_NR_SHELLS is the total number of enabled shells.
+.TP 
 \fB:help [COMMAND]\fR
 List control commands or show their documentations.
 .TP 

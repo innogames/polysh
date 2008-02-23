@@ -293,6 +293,24 @@ def do_replicate(command):
         return
     file_transfer.replicate(shell, path)
 
+def do_export_rank(command):
+    """
+    Usage: :export_rank
+    Set GSH_RANK and GSH_NR_SHELLS on enabled remote shells.
+    The GSH_RANK shell variable uniquely identifies each shell with a number
+    between 0 and GSH_NR_SHELLS - 1. GSH_NR_SHELLS is the total number of
+    enabled shells.
+    """
+    rank = 0
+    for shell in dispatchers.all_instances():
+        if shell.enabled:
+            shell.dispatch_write('export GSH_RANK=%d\n' % rank)
+            rank += 1
+
+    for shell in dispatchers.all_instances():
+        if shell.enabled:
+            shell.dispatch_write('export GSH_NR_SHELLS=%d\n' % rank)
+
 def main():
     """
     Output a help text of each control command suitable for the man page
