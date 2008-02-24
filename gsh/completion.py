@@ -14,7 +14,7 @@
 #
 # See the COPYING file for license information.
 #
-# Copyright (c) 2008 Guillaume Chazarain <guichaz@yahoo.fr>
+# Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
 
 import os
 import readline
