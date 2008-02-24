@@ -16,16 +16,12 @@
 #
 # Copyright (c) 2006, 2007, 2008 Guillaume Chazarain <guichaz@yahoo.fr>
 
-import asyncore
 import os
-import sys
 from fnmatch import fnmatch
 import readline
 
-from gsh.console import console_output
-from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
-from gsh import dispatchers, remote_dispatcher
+from gsh import dispatchers
 
 def toggle_shells(command, enable):
     """Enable or disable the specified shells"""

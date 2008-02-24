@@ -59,7 +59,6 @@ def do_help(command):
     else:
         names = list_control_commands()
         max_name_len = max(map(len, names))
-        help_lines = []
         for i in xrange(len(names)):
             name = names[i]
             txt = (max_name_len - len(name)) * ' ' + ':' + name + ' - '
@@ -315,15 +314,14 @@ def main():
     """
     Output a help text of each control command suitable for the man page
     """
-    names = list_control_commands()
     for name in list_control_commands():
         print '<TP>'
         unstripped = get_control_command(name).__doc__.split('\n')
         lines = [l.strip() for l in unstripped]
         usage = lines[1].strip()
         print '<fB>%s<fR>' % usage[7:]
-        help = ' '.join(lines[2:]).replace('gsh', '<fI>gsh<fR>').strip()
-        print help
+        help_text = ' '.join(lines[2:]).replace('gsh', '<fI>gsh<fR>').strip()
+        print help_text
 
 if __name__ == '__main__':
     main()
