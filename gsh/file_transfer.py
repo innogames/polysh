@@ -67,15 +67,16 @@ def replicate(shell, path):
         return
     receiver = get_previous_shell(shell)
     for i in dispatchers.all_instances():
-        if i.enabled:
-            cookie1 = '[gsh file transfer ' + str(random.random())[2:]
-            cookie2 = str(random.random())[2:] + ']'
-            i.file_transfer_cookie = cookie1 + cookie2
-            if i == shell:
-                i.dispatch_command(CMD_SEND % (nr_peers, path, cookie1, cookie2))
-            elif i != receiver:
-                i.dispatch_command(CMD_FORWARD % (nr_peers, cookie1, cookie2))
-            else:
-                i.dispatch_command(CMD_RECEIVE % (nr_peers, cookie1, cookie2))
-            i.change_state(remote_dispatcher.STATE_RUNNING)
+        if not i.enabled:
+            continue
+        cookie1 = '[gsh file transfer ' + str(random.random())[2:]
+        cookie2 = str(random.random())[2:] + ']'
+        i.file_transfer_cookie = cookie1 + cookie2
+        if i == shell:
+            i.dispatch_command(CMD_SEND % (nr_peers, path, cookie1, cookie2))
+        elif i != receiver:
+            i.dispatch_command(CMD_FORWARD % (nr_peers, cookie1, cookie2))
+        else:
+            i.dispatch_command(CMD_RECEIVE % (nr_peers, cookie1, cookie2))
+        i.change_state(remote_dispatcher.STATE_RUNNING)
 
