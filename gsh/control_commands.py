@@ -147,7 +147,7 @@ def do_reset_prompt(command):
     The special characters * ? and [] work as expected.
     """
     for i in selected_shells(command):
-        i.dispatch_write(i.init_string)
+        i.dispatch_command(i.init_string)
 
 def complete_enable(line, text):
     return complete_shells(line, text, lambda i: i.active and not i.enabled)
@@ -303,12 +303,12 @@ def do_export_rank(command):
     rank = 0
     for shell in dispatchers.all_instances():
         if shell.enabled:
-            shell.dispatch_write('export GSH_RANK=%d\n' % rank)
+            shell.dispatch_command('export GSH_RANK=%d\n' % rank)
             rank += 1
 
     for shell in dispatchers.all_instances():
         if shell.enabled:
-            shell.dispatch_write('export GSH_NR_SHELLS=%d\n' % rank)
+            shell.dispatch_command('export GSH_NR_SHELLS=%d\n' % rank)
 
 def main():
     """

@@ -126,7 +126,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.term1 = '[gsh termination ' + str(random.random())[2:]
             self.term2 = str(random.random())[2:] + ']'
             self.termination = self.term1 + self.term2
-            self.dispatch_write('/bin/echo "%s""%s"\n' %
+            self.dispatch_command('/bin/echo "%s""%s"\n' %
                                                        (self.term1, self.term2))
             if self.state is not STATE_NOT_STARTED:
                 self.change_state(STATE_RUNNING)
@@ -221,9 +221,8 @@ class remote_dispatcher(buffered_dispatcher):
                 if options.interactive:
                     self.change_state(STATE_IDLE)
                 elif self.command:
-                    self.dispatch_write(self.command + '\n')
+                    self.dispatch_command(self.command + '\n')
                     self.command = None
-                    self.change_state(STATE_RUNNING)
                 else:
                     self.dispatch_termination()
             elif self.termination and self.termination in line:
@@ -308,6 +307,11 @@ class remote_dispatcher(buffered_dispatcher):
         """There is new stuff to write when possible"""
         if self.active and self.enabled:
             buffered_dispatcher.dispatch_write(self, buf)
+            return True
+
+    def dispatch_command(self, command):
+        if self.dispatch_write(command):
+            self.change_state(STATE_RUNNING)
 
     def change_name(self, name):
         """Change the name of the shell, possibly updating the maximum name
@@ -327,9 +331,8 @@ class remote_dispatcher(buffered_dispatcher):
             pending_rename1 = str(random.random())[2:] + ','
             pending_rename2 = str(random.random())[2:] + ':'
             self.pending_rename = pending_rename1 + pending_rename2
-            self.dispatch_write('/bin/echo "%s""%s" %s\n' %
+            self.dispatch_command('/bin/echo "%s""%s" %s\n' %
                                     (pending_rename1, pending_rename2, string))
-            self.change_state(STATE_RUNNING)
         else:
             self.change_name(self.hostname)
 

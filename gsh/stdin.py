@@ -97,7 +97,7 @@ def process_input_buffer():
 
     for r in dispatchers.all_instances():
         try:
-            r.dispatch_write(data)
+            r.dispatch_command(data)
         except asyncore.ExitNow, e:
             raise e
         except Exception, msg:
