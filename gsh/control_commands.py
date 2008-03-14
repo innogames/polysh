@@ -225,8 +225,8 @@ def do_hide_password(command):
     """
     Usage: :hide_password
     Do not echo the next typed line.
-    This is useful when entering password. If debugging is enabled, it will be
-    disabled to avoid displaying a password
+    This is useful when entering password. If debugging or logging is enabled,
+    it will be disabled to avoid displaying a password.
     """
     warned = False
     for i in dispatchers.all_instances():
@@ -236,6 +236,10 @@ def do_hide_password(command):
                 print 'Debugging disabled to avoid displaying passwords'
                 warned = True
     stdin.set_echo(False)
+
+    if remote_dispatcher.options.log_file:
+        print 'Logging disabled to avoid writing passwords'
+        remote_dispatcher.options.log_file = None
 
 def complete_set_debug(line, text):
     if len(line[:-1].split()) >= 2:
