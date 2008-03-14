@@ -46,6 +46,10 @@ def main_loop_iteration(timeout=None):
     asyncore.loop(count=1, timeout=timeout, use_poll=True)
     return nr_handle_read - prev_nr_read
 
+def log(msg):
+    if options.log_file:
+        options.log_file.write(msg)
+
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
 
