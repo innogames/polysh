@@ -194,15 +194,19 @@ def main():
 
     atexit.register(kill_all)
     ignore_sigchld(True) # Don't create zombies
-    def handler(sig, frame):
-        global next_signal
-        next_signal = sig
-    signal.signal(signal.SIGINT, handler)
-    signal.signal(signal.SIGTSTP, handler)
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     options.command = find_non_interactive_command(options.command)
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()
+    if options.interactive:
+        def handler(sig, frame):
+            global next_signal
+            next_signal = sig
+        signal.signal(signal.SIGINT, handler)
+        signal.signal(signal.SIGTSTP, handler)
+    else:
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     remote_dispatcher.options = options
 
     for arg in args:
