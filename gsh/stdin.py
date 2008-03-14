@@ -81,6 +81,9 @@ def process_input_buffer():
     if not data:
         return
 
+    if remote_dispatcher.options.log_file:
+        remote_dispatcher.options.log_file.write('> ' + data)
+
     if data.startswith(':'):
         handle_control_command(data[1:-1])
         return

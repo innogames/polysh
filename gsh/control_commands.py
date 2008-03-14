@@ -310,6 +310,26 @@ def do_export_rank(command):
         if shell.enabled:
             shell.dispatch_command('export GSH_NR_SHELLS=%d\n' % rank)
 
+def complete_log_output(line, text):
+    return [p for p in glob.glob(expand_local_path(text or './') + '*')]
+
+def do_log_output(command):
+    """
+    Usage: :log_output [PATH]
+    Duplicate every console output into the given local file.
+    If PATH is not given, restore the default behaviour of not logging the
+    output.
+    """
+    if command:
+        try:
+            remote_dispatcher.options.log_file = file(command, 'a')
+        except IOError, e:
+            print e
+            command = None
+    if not command:
+        remote_dispatcher.options.log_file = None
+        print 'Logging disabled'
+
 def main():
     """
     Output a help text of each control command suitable for the man page

@@ -62,6 +62,8 @@ def parse_cmdline():
     parser.add_option('--ssh', type='str', dest='ssh',
                       default='ssh -t %(host)s sh', metavar='SSH',
                       help='ssh command to use [ssh -t %(host)s sh]')
+    parser.add_option('--log-file', type='str', dest='log_file',
+                      help='file to log each machine conversation [none]')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
                       help='abort if some shell fails to initialize [ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
@@ -82,6 +84,13 @@ def parse_cmdline():
             hosts_file.close()
         except IOError, e:
             parser.error(e)
+
+    if options.log_file:
+        try:
+            options.log_file = file(options.log_file, 'a')
+        except IOError, e:
+            print e
+            sys.exit(1)
 
     if not args:
         parser.error('no hosts given')

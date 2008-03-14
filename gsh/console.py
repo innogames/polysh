@@ -37,6 +37,8 @@ def safe_write(output, buf):
 def console_output(msg):
     """Use instead of print, to clear the status information before printing"""
     from gsh.remote_dispatcher import options
+    if options.log_file:
+        options.log_file.write(msg)
     if options.interactive:
         from gsh.stdin import the_stdin_thread
         the_stdin_thread.no_raw_input()

@@ -2,6 +2,7 @@
 ~~~
 
 o Removed --log-dir=LOG_DIR option as it is less useful than expected
+o Added a --log-file=LOG_FILE option aggregating all remote shells
 o Removed --quick-sh as it is now the default
 o Replaced the control shell with colon prefixed commands
 o The prompt uses readline even when not all remote shells are ready
