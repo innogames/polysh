@@ -20,6 +20,8 @@ import random
 
 import pity
 
+from gsh.console import console_output
+
 CMD_PREFIX = 'python -c "`echo "' + pity.ENCODED + '"|' + \
                          'tr , \\\\\\n|' + \
                          'openssl base64 -d`" '
@@ -63,7 +65,7 @@ def replicate(shell, path):
     from gsh import remote_dispatcher
     nr_peers = len([i for i in dispatchers.all_instances() if i.enabled])
     if nr_peers <= 1:
-        print 'No other remote shell to replicate files to'
+        console_output('No other remote shell to replicate files to\n')
         return
     receiver = get_previous_shell(shell)
     for i in dispatchers.all_instances():

@@ -21,6 +21,7 @@ from fnmatch import fnmatch
 import readline
 
 from gsh.host_syntax import expand_syntax
+from gsh.console import console_output
 from gsh import dispatchers
 
 def toggle_shells(command, enable):
@@ -45,7 +46,7 @@ def selected_shells(command):
                         selected.add(i)
                         yield i
         if instance_found and not found:
-            print pattern, 'not found'
+            console_output('%s not found\n' % pattern)
 
 def complete_shells(line, text, predicate=lambda i: True):
     """Return the shell names to include in the completion"""
@@ -87,7 +88,7 @@ def handle_control_command(line):
     try:
         cmd_func = get_control_command(cmd_name)
     except AttributeError:
-        print 'Unknown control command:', cmd_name
+        console_output('Unknown control command: %s\n' % cmd_name)
     else:
         parameters = line[len(cmd_name) + 1:]
         cmd_func(parameters)

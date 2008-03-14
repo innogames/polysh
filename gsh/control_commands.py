@@ -25,6 +25,7 @@ from gsh.control_commands_helpers import list_control_commands
 from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
 from gsh.completion import complete_local_absolute_path
+from gsh.console import console_output
 from gsh import dispatchers
 from gsh import remote_dispatcher
 from gsh import stdin
@@ -51,11 +52,13 @@ def do_help(command):
             try:
                 cmd = get_control_command(name.lstrip(':'))
             except AttributeError:
-                print 'Unknown control command:', name
+                console_output('Unknown control command: %s\n' % name)
             else:
                 doc = [d.strip() for d in cmd.__doc__.split('\n') if d.strip()]
                 texts.append('\n'.join(doc))
-        print '\n\n'.join(texts)
+        if texts:
+            console_output('\n\n'.join(texts))
+            console_output('\n')
     else:
         names = list_control_commands()
         max_name_len = max(map(len, names))
@@ -63,8 +66,8 @@ def do_help(command):
             name = names[i]
             txt = (max_name_len - len(name)) * ' ' + ':' + name + ' - '
             doc = get_control_command(name).__doc__
-            txt += doc.split('\n')[2].strip()
-            print txt
+            txt += doc.split('\n')[2].strip() + '\n'
+            console_output(txt)
 
 def complete_list(line, text):
     return complete_shells(line, text)
@@ -84,8 +87,8 @@ def do_list(command):
         else:
             nr_dead += 1
     dispatchers.format_info(instances)
-    print '%s\n\n%d active shells, %d dead shells, total: %d' % \
-           ('\n'.join(instances), nr_active, nr_dead, nr_active + nr_dead)
+    console_output('%s\n\n%d active shells, %d dead shells, total: %d\n' % \
+           ('\n'.join(instances), nr_active, nr_dead, nr_active + nr_dead))
 
 def do_quit(command):
     """
@@ -106,7 +109,7 @@ def do_chdir(command):
     try:
         os.chdir(expand_local_path(command))
     except OSError, e:
-        print e
+        console_output('%s\n' % str(e))
 
 def complete_send_ctrl(line, text):
     if len(line[:-1].split()) >= 2:
@@ -126,11 +129,11 @@ def do_send_ctrl(command):
     """
     splitted = command.split()
     if not splitted:
-        print 'Expected at least a letter'
+        console_output('Expected at least a letter\n')
         return
     letter = splitted[0]
     if len(letter) != 1:
-        print 'Expected a single letter, got:', letter
+        console_output('Expected a single letter, got: %s\n' % letter)
         return
     control_letter = chr(ord(letter.lower()) - ord('a') + 1)
     for i in selected_shells(' '.join(splitted[1:])):
@@ -233,12 +236,13 @@ def do_hide_password(command):
         if i.enabled and i.debug:
             i.debug = False
             if not warned:
-                print 'Debugging disabled to avoid displaying passwords'
+                console_output('Debugging disabled to avoid displaying '
+                               'passwords\n')
                 warned = True
     stdin.set_echo(False)
 
     if remote_dispatcher.options.log_file:
-        print 'Logging disabled to avoid writing passwords'
+        console_output('Logging disabled to avoid writing passwords\n')
         remote_dispatcher.options.log_file = None
 
 def complete_set_debug(line, text):
@@ -260,11 +264,11 @@ def do_set_debug(command):
     """
     splitted = command.split()
     if not splitted:
-        print 'Expected at least a letter'
+        console_output('Expected at least a letter\n')
         return
     letter = splitted[0].lower()
     if letter not in ('y', 'n'):
-        print "Expected 'y' or 'n', got:", splitted[0]
+        console_output("Expected 'y' or 'n', got: %s\n" % splitted[0])
         return
     debug = letter == 'y'
     for i in selected_shells(' '.join(splitted[1:])):
@@ -282,17 +286,17 @@ def do_replicate(command):
     Copy a path from one remote shell to all others
     """
     if ':' not in command:
-        print 'Usage: :replicate SHELL:path'
+        console_output('Usage: :replicate SHELL:path\n')
         return
     shell_name, path = command.split(':', 1)
     for shell in dispatchers.all_instances():
         if shell.display_name == shell_name:
             if not shell.enabled:
-                print shell_name, 'is not enabled'
+                console_output('%s is not enabled\n' % shell_name)
                 return
             break
     else:
-        print shell_name, 'not found'
+        console_output('%s not found\n' % shell_name)
         return
     file_transfer.replicate(shell, path)
 
@@ -328,11 +332,11 @@ def do_log_output(command):
         try:
             remote_dispatcher.options.log_file = file(command, 'a')
         except IOError, e:
-            print e
+            console_output('%s\n' % str(e))
             command = None
     if not command:
         remote_dispatcher.options.log_file = None
-        print 'Logging disabled'
+        console_output('Logging disabled\n')
 
 def main():
     """
