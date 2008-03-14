@@ -119,6 +119,8 @@ def main_loop():
                 next_signal = None
                 sig2chr = {signal.SIGINT: 'c', signal.SIGTSTP: 'z'}
                 ctrl = sig2chr[current_signal]
+                if remote_dispatcher.options.log_file:
+                    remote_dispatcher.options.log_file.write('> ^%c\n' % ctrl.upper())
                 waited_data = control_commands.do_send_ctrl(ctrl)
                 for i in dispatchers.all_instances():
                     i.read_buffer = ''
