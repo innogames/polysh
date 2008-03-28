@@ -84,6 +84,8 @@ def complete_control_command(line, text):
     return matches
 
 def handle_control_command(line):
+    if not line:
+        return
     cmd_name = line.split()[0]
     try:
         cmd_func = get_control_command(cmd_name)
