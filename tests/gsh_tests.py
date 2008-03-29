@@ -42,7 +42,7 @@ def parse_cmdline():
     parser.add_option('--coverage', '-c', action='store_true', dest='coverage',
                       default=False, help='include coverage tests')
     parser.add_option('--log', type='str', dest='log',
-                      help='log all pexpect I/O')
+                      help='log all pexpect I/O and gsh debug info')
     options, args = parser.parse_args()
     if args:
         parser.error()
@@ -81,6 +81,7 @@ def launch_gsh(args):
         args = ['./coverage.py', '-x', '-p'] + args
     if options.log:
         logfile = open(options.log, 'a', 0644)
+        args += ['--debug']
         print >> logfile, 'Launching:', str(args)
     else:
         logfile = None
