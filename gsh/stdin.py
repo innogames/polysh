@@ -261,8 +261,6 @@ class stdin_thread(Thread):
             except EOFError:
                 if not self.interrupt_asked:
                     cmd = ':quit'
-            if self.interrupt_asked:
-                cmd = None
             self.in_raw_input.clear()
             self.out_of_raw_input.set()
             if cmd:
