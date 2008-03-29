@@ -39,7 +39,7 @@ def import_tests():
 
 def parse_cmdline():
     parser = optparse.OptionParser()
-    parser.add_option('--coverage', '-c', action='store_true', dest='coverage',
+    parser.add_option('--coverage', action='store_true', dest='coverage',
                       default=False, help='include coverage tests')
     parser.add_option('--log', type='str', dest='log',
                       help='log all pexpect I/O and gsh debug info')
