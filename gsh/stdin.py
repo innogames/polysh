@@ -213,6 +213,7 @@ class stdin_thread(Thread):
     """The stdin thread, used to call raw_input()"""
     def __init__(self):
         Thread.__init__(self, name='stdin thread')
+        completion.install_completion_handler()
 
     @staticmethod
     def activate(interactive):
@@ -245,7 +246,6 @@ class stdin_thread(Thread):
         while True:
             self.raw_input_wanted.wait()
             self.out_of_raw_input.set()
-            completion.install_completion_handler()
             nr, total = dispatchers.count_awaited_processes()
             if nr:
                 prompt = 'waiting (%d/%d)> ' % (nr, total)
