@@ -232,6 +232,13 @@ class stdin_thread(Thread):
             the_stdin_thread.socket_notification = socket_notification_reader()
 
     def want_raw_input(self):
+        nr, total = dispatchers.count_awaited_processes()
+        if nr:
+            prompt = 'waiting (%d/%d)> ' % (nr, total)
+        else:
+            prompt = 'ready (%d)> ' % total
+        self.prompt = prompt
+        set_last_status_length(len(prompt))
         self.raw_input_wanted.set()
         self.socket_notification.handle_read()
         self.in_raw_input.wait()
@@ -246,17 +253,11 @@ class stdin_thread(Thread):
         while True:
             self.raw_input_wanted.wait()
             self.out_of_raw_input.set()
-            nr, total = dispatchers.count_awaited_processes()
-            if nr:
-                prompt = 'waiting (%d/%d)> ' % (nr, total)
-            else:
-                prompt = 'ready (%d)> ' % total
-            set_last_status_length(len(prompt))
             self.in_raw_input.set()
             self.out_of_raw_input.clear()
             cmd = None
             try:
-                cmd = raw_input(prompt)
+                cmd = raw_input(self.prompt)
             except EOFError:
                 if not self.interrupt_asked:
                     cmd = ':quit'
