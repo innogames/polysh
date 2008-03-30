@@ -102,7 +102,7 @@ def launch_gsh(args):
         print >> logfile, 'Launching:', str(args)
     else:
         logfile = None
-    return pexpect.spawn(args[0], args=args[1:], timeout=5, logfile=logfile)
+    return pexpect.spawn(args[0], args=args[1:], logfile=logfile)
 
 if __name__ == '__main__':
     main()
