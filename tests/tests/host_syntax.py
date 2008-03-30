@@ -25,7 +25,7 @@ class TestHostSyntax(unittest.TestCase):
         child = launch_gsh([to_expand, 'localhost'])
         child.expect('ready')
         child.sendline(':list')
-        with_spaces = [e + ' ' for e in expanded]
+        with_spaces = [e.replace('.', '\\.') + ' ' for e in expanded]
         for i in xrange(len(expanded)):
             found = child.expect(with_spaces)
             del with_spaces[found]
@@ -35,19 +35,21 @@ class TestHostSyntax(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testHostSyntax(self):
-        self.assertHostSyntax('host<1-10>',
-                              ['host1', 'host2', 'host3', 'host4', 'host5',
-                               'host6', 'host7', 'host8', 'host9', 'host10'])
-        self.assertHostSyntax('host<10-1>',
-                              ['host1', 'host2', 'host3', 'host4', 'host5',
-                               'host6', 'host7', 'host8', 'host9', 'host10'])
-        self.assertHostSyntax('host<01-10>',
-                              ['host01', 'host02', 'host03', 'host04',
-                               'host05', 'host06', 'host07', 'host08',
-                               'host09', 'host10'])
-        self.assertHostSyntax('host<1-4>-<01-03>',
-                              ['host1-01', 'host1-02', 'host1-03', 'host2-01',
-                               'host2-02', 'host2-03', 'host3-01', 'host3-02',
-                               'host3-03', 'host4-01', 'host4-02', 'host4-03'])
+        self.assertHostSyntax('0.0.0.<1-10>',
+                              ['0.0.0.1', '0.0.0.2', '0.0.0.3', '0.0.0.4',
+                               '0.0.0.5', '0.0.0.6', '0.0.0.7', '0.0.0.8',
+                               '0.0.0.9', '0.0.0.10'])
+        self.assertHostSyntax('0.0.0.<10-1>',
+                              ['0.0.0.1', '0.0.0.2', '0.0.0.3', '0.0.0.4',
+                               '0.0.0.5', '0.0.0.6', '0.0.0.7', '0.0.0.8',
+                               '0.0.0.9', '0.0.0.10'])
+        self.assertHostSyntax('0.0.0.<01-10>',
+                              ['0.0.0.01', '0.0.0.02', '0.0.0.03', '0.0.0.04',
+                               '0.0.0.05', '0.0.0.06', '0.0.0.07', '0.0.0.08',
+                               '0.0.0.09', '0.0.0.10'])
+        self.assertHostSyntax('0.0.<1-4>.<01-03>',
+                              ['0.0.1.01', '0.0.1.02', '0.0.1.03', '0.0.2.01',
+                               '0.0.2.02', '0.0.2.03', '0.0.3.01', '0.0.3.02',
+                               '0.0.3.03', '0.0.4.01', '0.0.4.02', '0.0.4.03'])
 
 TESTS = (TestHostSyntax,)
