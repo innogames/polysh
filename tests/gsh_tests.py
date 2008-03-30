@@ -26,27 +26,41 @@ import pexpect
 
 import coverage
 
-ALL_TESTS = unittest.TestSuite()
+TESTS = unittest.TestSuite()
 
-def import_tests():
+def iter_over_all_tests():
     py_files = [p for p in os.listdir('tests') if p.endswith('.py')]
     tests = list(set([p[:p.index('.')] for p in py_files]))
     for name in tests:
         module = getattr(__import__('tests.' + name), name)
-        for test in module.TESTS:
-            suite = unittest.defaultTestLoader.loadTestsFromTestCase(test)
-            ALL_TESTS.addTest(suite)
+        for test_class in module.TESTS:
+            suite = unittest.defaultTestLoader.loadTestsFromTestCase(test_class)
+            for test_method in suite:
+                yield test_method
+
+def import_all_tests():
+    for test in iter_over_all_tests():
+        TESTS.addTest(test)
+
+def import_specified_tests(names):
+    for test in iter_over_all_tests():
+        test_name = test._testMethodName
+        if test_name in names:
+            names.remove(test_name)
+            TESTS.addTest(test)
+    if names:
+        print 'Cannot find tests:', names
+        sys.exit(1)
 
 def parse_cmdline():
-    parser = optparse.OptionParser()
+    usage='Usage: %s [OPTIONS...] [TESTS...]' % sys.argv[0]
+    parser = optparse.OptionParser(usage=usage)
     parser.add_option('--coverage', action='store_true', dest='coverage',
                       default=False, help='include coverage tests')
     parser.add_option('--log', type='str', dest='log',
                       help='log all pexpect I/O and gsh debug info')
     options, args = parser.parse_args()
-    if args:
-        parser.error()
-    return options
+    return options, args
 
 def remove_coverage_files():
     for filename in os.listdir('.'):
@@ -64,19 +78,22 @@ def end_coverage():
     coverage.the_coverage.usecache = coverage.the_coverage.cache = None
 
 def main():
-    options = parse_cmdline()
+    options, args = parse_cmdline()
     if options.coverage:
         remove_coverage_files()
-    import_tests()
+    if args:
+        import_specified_tests(args)
+    else:
+        import_all_tests()
     try:
-        unittest.main(argv=[sys.argv[0], '-v'], defaultTest='ALL_TESTS')
+        unittest.main(argv=[sys.argv[0], '-v'], defaultTest='TESTS')
     finally:
         if options.coverage:
             end_coverage()
 
 def launch_gsh(args):
     args = ['../gsh.py'] + args
-    options = parse_cmdline()
+    options, unused_args = parse_cmdline()
     if options.coverage:
         args = ['./coverage.py', '-x', '-p'] + args
     if options.log:
