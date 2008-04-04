@@ -44,7 +44,7 @@ def import_all_tests():
 
 def import_specified_tests(names):
     for test in iter_over_all_tests():
-        test_name = test._testMethodName
+        test_name = test.id().split('.')[-1]
         if test_name in names:
             names.remove(test_name)
             TESTS.addTest(test)
