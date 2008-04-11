@@ -215,7 +215,11 @@ def main():
         signal.signal(signal.SIGINT, handler)
         signal.signal(signal.SIGTSTP, handler)
     else:
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
+      def handler(sig, frame):
+        signal.signal(sig, signal.SIG_DFL)
+        kill_all()
+        os.kill(0, sig)
+      signal.signal(signal.SIGINT, handler)
 
     remote_dispatcher.options = options
 
