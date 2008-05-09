@@ -121,8 +121,6 @@ def main_loop():
                 ctrl = sig2chr[current_signal]
                 remote_dispatcher.log('> ^%c\n' % ctrl.upper())
                 waited_data = control_commands.do_send_ctrl(ctrl)
-                for i in dispatchers.all_instances():
-                    i.read_buffer = ''
                 console_output('')
             while dispatchers.count_awaited_processes()[0] and \
                   remote_dispatcher.main_loop_iteration(timeout=0.2):
