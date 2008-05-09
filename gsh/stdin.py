@@ -270,7 +270,7 @@ class stdin_thread(Thread):
                 if self.interrupt_asked:
                     cmd = readline.get_line_buffer()
                 else:
-                    cmd = ':quit'
+                    cmd = chr(4) # Ctrl-D
             if self.interrupt_asked:
                 self.prepend_text = cmd
                 cmd = None

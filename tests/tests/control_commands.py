@@ -122,6 +122,7 @@ class TestControlCommands(unittest.TestCase):
         testEcho('back to no logging')
         child.sendline(':log_output /tmp/gsh_test.lo\t')
         testEcho('appended to the log')
+        child.sendline(':log_output')
         child.sendeof()
         child.expect(pexpect.EOF)
 
@@ -133,7 +134,7 @@ localhost: still logging
 > :log_output
 > echo appended to the log
 localhost: appended to the log
-> :quit
+> :log_output
 """.strip()
         actual_log = ''.join(file('/tmp/gsh_test.log').readlines()).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)

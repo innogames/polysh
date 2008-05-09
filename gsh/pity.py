@@ -23,6 +23,7 @@ import popen2
 import random
 import signal
 import socket
+import string
 import sys
 import termios
 import threading
@@ -40,18 +41,23 @@ def human_unit(size):
     return str(size) + ' ' + UNITS[0]
 
 
-class bandwidth_monitor(object):
+def rstrip_char(string, char):
+    while string and string[-1] == char:
+        string = string[:-1]
+    return string
+
+class bandwidth_monitor:
     def __init__(self, nr_peers):
         self.nr_peers = nr_peers
         self.thread = threading.Thread(target=self.run_thread)
-        self.thread.setDaemon(True)
+        self.thread.setDaemon(1)
         self.main_done = threading.Event()
         self.thread_done = threading.Event()
         self.size = 0
         self.thread.start()
 
     def add_transferred_size(self, size):
-        self.size += size
+        self.size = self.size + size
 
     def finish(self):
         self.main_done.set()
@@ -79,21 +85,30 @@ class bandwidth_monitor(object):
         print 'Done transferring %d bytes' % (self.size)
         self.thread_done.set()
 
-class Transmitter(asyncore.file_dispatcher):
+class silent_file_dispatcher(asyncore.file_dispatcher):
+    def __init__(self, fd):
+        asyncore.file_dispatcher.__init__(self, fd)
+        self.fd = fd
+
+    def log(self, message):
+        # python 1.5 spams the console, do nothing
+        pass
+
+class Transmitter(silent_file_dispatcher):
     def __init__(self, output_fd, forwarder):
-        asyncore.file_dispatcher.__init__(self, output_fd)
+        silent_file_dispatcher.__init__(self, output_fd)
         self.forwarder = forwarder
         self.buffer = ''
-        self.finished = False
+        self.finished = 0
 
     def readable(self):
-        return False
+        return 0
 
     def writable(self):
         return self.buffer != ''
 
     def setFinished(self):
-        self.finished = True
+        self.finished = 1
         if not self.writable():
             try:
                 self.close()
@@ -101,7 +116,7 @@ class Transmitter(asyncore.file_dispatcher):
                 pass
 
     def handle_write(self):
-        num_sent = self.send(self.buffer)
+        num_sent = os.write(self.fd, self.buffer)
         self.buffer = self.buffer[num_sent:]
         self.forwarder.refill_output_buffers()
         if self.finished and not self.writable():
@@ -111,14 +126,17 @@ class Transmitter(asyncore.file_dispatcher):
         return MAX_BUFFER_SIZE - len(self.buffer)
 
     def add_to_buffer(self, data):
-        self.buffer += data
+        self.buffer = self.buffer + data
         assert len(self.buffer) <= MAX_BUFFER_SIZE
 
-class Forwarder(asyncore.file_dispatcher):
+
+class Forwarder(silent_file_dispatcher):
     def __init__(self, nr_peers, fd_input, fd_outputs):
-        asyncore.file_dispatcher.__init__(self, fd_input)
+        silent_file_dispatcher.__init__(self, fd_input)
         self.buffer = ''
-        self.outputs = [Transmitter(fd, self) for fd in fd_outputs]
+        self.outputs = []
+        for fd in fd_outputs:
+            self.outputs.append(Transmitter(fd, self))
         self.bw = bandwidth_monitor(nr_peers)
 
     def handle_expt(self):
@@ -128,7 +146,7 @@ class Forwarder(asyncore.file_dispatcher):
         return len(self.buffer) < MAX_BUFFER_SIZE
 
     def writable(self):
-        return False
+        return 0
 
     def handle_close(self):
         try:
@@ -140,11 +158,14 @@ class Forwarder(asyncore.file_dispatcher):
 
     def handle_read(self):
         capacity = MAX_BUFFER_SIZE - len(self.buffer)
-        self.buffer += self.recv(capacity)
+        self.buffer = self.buffer + self.recv(capacity)
         self.refill_output_buffers()
 
     def refill_output_buffers(self):
-        capacity = min([t.buffer_remaining_capacity() for t in self.outputs])
+        remaining_capacities = []
+        for output in self.outputs:
+            remaining_capacities.append(output.buffer_remaining_capacity())
+        capacity = min(remaining_capacities)
         if not capacity:
             return
         data = self.buffer[:capacity]
@@ -154,7 +175,7 @@ class Forwarder(asyncore.file_dispatcher):
             t.add_to_buffer(data)
 
     def run(self):
-        asyncore.loop(timeout=None, use_poll=True)
+        asyncore.loop(timeout=None)
         self.bw.finish()
 
 def base64version():
@@ -167,17 +188,16 @@ def base64version():
     if path.endswith('.pyc'):
         # Read from the .py source file
         path = path[:-1]
-    source_lines = []
+    python_source = ''
     for line in file(path):
         hash_pos = line.find(chr(35))
         if hash_pos is not -1:
             line = line[:hash_pos]
-        line = line.rstrip()
+        line = string.rstrip(line)
         if line:
-            source_lines.append(line)
-    python_source = '\n'.join(source_lines)
-    encoded = base64.encodestring(python_source).rstrip('\n')
-    encoded = encoded.replace('\n', ',')
+            python_source = python_source + line + '\n'
+    encoded = rstrip_char(base64.encodestring(python_source), '\n')
+    encoded = string.replace(encoded, '\n', ',')
     return encoded
 
 ENCODED = base64version()
@@ -188,9 +208,9 @@ def init_listening_socket(gsh_prefix):
     s.listen(5)
     host = socket.gethostname()
     port = s.getsockname()[1]
-    prefix = ''.join(gsh_prefix)
+    prefix = string.join(gsh_prefix, '')
     if prefix:
-        prefix += ' '
+        prefix = prefix + ' '
     print '%s%s:%s' % (prefix, host, port)
     return s
 
@@ -198,17 +218,17 @@ def get_destination_socket():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     new_settings = termios.tcgetattr(fd)
-    new_settings[3] = new_settings[3] & ~termios.ICANON # lflags
+    new_settings[3] = new_settings[3] & ~2 # 3:lflags 2:ICANON
     new_settings[6][6] = '\000' # Set VMIN to zero for lookahead only
-    termios.tcsetattr(fd, termios.TCSADRAIN, new_settings)
+    termios.tcsetattr(fd, 1, new_settings) # 1:TCSADRAIN
     line = ''
-    while True:
+    while 1:
         c = os.read(sys.stdin.fileno(), 1)
         if c == '\n':
             break
-        line += c
-    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    split = line.split(':', 1)
+        line = line + c
+    termios.tcsetattr(fd, 1, old_settings) # 1:TCSADRAIN
+    split = string.split(line, ':', 1)
     host = split[0]
     port = int(split[1])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -216,7 +236,7 @@ def get_destination_socket():
     return s
 
 def shell_quote(s):
-    return "'" + s.replace("'", "'\\''") + "'"
+    return "'" + string.replace(s, "'", "'\\''") + "'"
 
 def silently_close_all(files):
     for f in files:
@@ -226,7 +246,8 @@ def silently_close_all(files):
             pass
 
 def do_send(nr_peers, path):
-    dirname, basename = os.path.split(path.rstrip('/'))
+    split = os.path.split(rstrip_char(path, '/'))
+    dirname, basename = split
     if dirname:
         os.chdir(dirname)
     if not basename:
