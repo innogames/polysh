@@ -230,6 +230,14 @@ class stdin_thread(Thread):
             the_stdin_thread.setDaemon(True)
             the_stdin_thread.start()
             the_stdin_thread.socket_notification = socket_notification_reader()
+            the_stdin_thread.prepend_text = None
+            readline.set_pre_input_hook(the_stdin_thread.prepend_previous_text)
+
+    def prepend_previous_text(self):
+        if self.prepend_text:
+            readline.insert_text(self.prepend_text)
+            readline.redisplay()
+            self.prepend_text = None
 
     def want_raw_input(self):
         nr, total = dispatchers.count_awaited_processes()
@@ -259,9 +267,12 @@ class stdin_thread(Thread):
             try:
                 cmd = raw_input(self.prompt)
             except EOFError:
-                if not self.interrupt_asked:
+                if self.interrupt_asked:
+                    cmd = readline.get_line_buffer()
+                else:
                     cmd = ':quit'
             if self.interrupt_asked:
+                self.prepend_text = cmd
                 cmd = None
             self.in_raw_input.clear()
             self.out_of_raw_input.set()
