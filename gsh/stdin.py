@@ -260,7 +260,7 @@ class stdin_thread(Thread):
                 cmd = raw_input(self.prompt)
             except EOFError:
                 if not self.interrupt_asked:
-                    cmd = ':quit'
+                    cmd = chr(4) # Ctrl-D
             if self.interrupt_asked:
                 cmd = None
             self.in_raw_input.clear()
