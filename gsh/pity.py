@@ -208,9 +208,9 @@ def get_destination_socket():
             break
         line += c
     termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    splitted = line.split(':', 1)
-    host = splitted[0]
-    port = int(splitted[1])
+    split = line.split(':', 1)
+    host = split[0]
+    port = int(split[1])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
     return s

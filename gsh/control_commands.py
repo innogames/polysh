@@ -127,16 +127,16 @@ def do_send_ctrl(command):
     The remaining optional arguments are the destination shells.
     The special characters * ? and [] work as expected.
     """
-    splitted = command.split()
-    if not splitted:
+    split = command.split()
+    if not split:
         console_output('Expected at least a letter\n')
         return
-    letter = splitted[0]
+    letter = split[0]
     if len(letter) != 1:
         console_output('Expected a single letter, got: %s\n' % letter)
         return
     control_letter = chr(ord(letter.lower()) - ord('a') + 1)
-    for i in selected_shells(' '.join(splitted[1:])):
+    for i in selected_shells(' '.join(split[1:])):
         if i.enabled:
             i.dispatch_write(control_letter)
 
@@ -262,16 +262,16 @@ def do_set_debug(command):
     The remaining optional arguments are the selected shells.
     The special characters * ? and [] work as expected.
     """
-    splitted = command.split()
-    if not splitted:
+    split = command.split()
+    if not split:
         console_output('Expected at least a letter\n')
         return
-    letter = splitted[0].lower()
+    letter = split[0].lower()
     if letter not in ('y', 'n'):
-        console_output("Expected 'y' or 'n', got: %s\n" % splitted[0])
+        console_output("Expected 'y' or 'n', got: %s\n" % split[0])
         return
     debug = letter == 'y'
-    for i in selected_shells(' '.join(splitted[1:])):
+    for i in selected_shells(' '.join(split[1:])):
         i.debug = debug
 
 def complete_replicate(line, text):
