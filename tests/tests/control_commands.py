@@ -16,6 +16,7 @@
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
+import os
 import unittest
 import pexpect
 from gsh_tests import launch_gsh
@@ -80,5 +81,62 @@ class TestControlCommands(unittest.TestCase):
         child.expect('ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
+
+    def testLocalCommand(self):
+        child = launch_gsh(['localhost'])
+        child.expect('ready \(1\)> ')
+        child.sendline('cat')
+        child.expect('waiting \(1/1\)> ')
+        child.sendline('!ech\t te""st')
+        child.expect('test')
+        child.sendline(':send_ctrl d')
+        child.expect('ready \(1\)> ')
+        child.sendline(':chdir /does/not/exist')
+        child.expect("\[Errno 2\] No such file or directory: '/does/not/exist'")
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def testLocalAbsPathCompletion(self):
+        child = launch_gsh(['localhost'])
+        child.expect('ready \(1\)> ')
+        child.sendline('echo /usr/shar\t/do\t')
+        child.expect('localhost: /usr/share/doc')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def testLogOutput(self):
+        child = launch_gsh(['localhost'])
+        def testEcho(msg):
+            child.expect('ready \(1\)> ')
+            child.sendline('echo %s' % msg)
+            child.expect('localhost: %s' % msg)
+        testEcho('not logging')
+        child.sendline(':log_output')
+        testEcho('still not logging')
+        child.sendline('!rm -f /tmp/gsh_test.log')
+        testEcho('still not logging')
+        child.sendline(':log_output /tmp/gsh_test.log')
+        testEcho('now logging')
+        testEcho('still logging')
+        child.sendline(':log_output')
+        testEcho('back to no logging')
+        child.sendline(':log_output /tmp/gsh_test.lo\t')
+        testEcho('appended to the log')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+        EXPECTED_LOG="""
+> echo now logging
+localhost: now logging
+> echo still logging
+localhost: still logging
+> :log_output
+> echo appended to the log
+localhost: appended to the log
+> :quit
+""".strip()
+        actual_log = ''.join(file('/tmp/gsh_test.log').readlines()).strip()
+        self.assertEqual(actual_log, EXPECTED_LOG)
+        os.remove('/tmp/gsh_test.log')
 
 TESTS = (TestControlCommands,)
