@@ -25,6 +25,7 @@ import optparse
 import os
 import signal
 import sys
+import termios
 
 if sys.hexversion < 0x02040000:
         print >> sys.stderr, 'Your python version is too old (%s)' % \
@@ -191,6 +192,11 @@ def _profile(continuation):
     stats.print_callees(50)
     os.remove(prof_file)
 
+def restore_tty_on_exit():
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
+
 # We handle signals in the main loop, this way we can be signaled while
 # handling a signal.
 next_signal = None
@@ -213,6 +219,7 @@ def main():
             next_signal = sig
         signal.signal(signal.SIGINT, handler)
         signal.signal(signal.SIGTSTP, handler)
+        restore_tty_on_exit()
     else:
       def handler(sig, frame):
         signal.signal(sig, signal.SIG_DFL)
