@@ -92,15 +92,15 @@ class TestControlCommands(unittest.TestCase):
         child.sendline(':send_ctrl d')
         child.expect('ready \(1\)> ')
         child.sendline(':chdir /does/not/exist')
-        child.expect("\[Errno 2\] No such file or directory: '/does/not/exist'")
+        child.expect("\[Errno 2\] .*: '/does/not/exist'")
         child.sendeof()
         child.expect(pexpect.EOF)
 
     def testLocalAbsPathCompletion(self):
         child = launch_gsh(['localhost'])
         child.expect('ready \(1\)> ')
-        child.sendline('echo /usr/shar\t/do\t')
-        child.expect('localhost: /usr/share/doc')
+        child.sendline('echo /dev/nul\t')
+        child.expect('localhost: /dev/null')
         child.sendeof()
         child.expect(pexpect.EOF)
 
