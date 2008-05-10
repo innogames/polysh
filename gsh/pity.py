@@ -47,8 +47,7 @@ def rstrip_char(string, char):
     return string
 
 class bandwidth_monitor:
-    def __init__(self, nr_peers):
-        self.nr_peers = nr_peers
+    def __init__(self):
         self.thread = threading.Thread(target=self.run_thread)
         self.thread.setDaemon(1)
         self.main_done = threading.Event()
@@ -67,7 +66,6 @@ class bandwidth_monitor:
         previous_size = 0
         previous_sampling_time = time.time()
         previous_bandwidth = 0
-        time.sleep(random.random() * self.nr_peers)
         while not self.main_done.isSet():
             current_size = self.size
             current_sampling_time = time.time()
@@ -81,7 +79,7 @@ class bandwidth_monitor:
             previous_size = current_size
             previous_sampling_time = current_sampling_time
             previous_bandwidth = current_bandwidth
-            self.main_done.wait(self.nr_peers / 2.0)
+            self.main_done.wait(1.0)
         print 'Done transferring %d bytes' % (self.size)
         self.thread_done.set()
 
@@ -134,10 +132,13 @@ class Forwarder(silent_file_dispatcher):
     def __init__(self, nr_peers, fd_input, fd_outputs):
         silent_file_dispatcher.__init__(self, fd_input)
         self.buffer = ''
+        self.bw = None
         self.outputs = []
         for fd in fd_outputs:
             self.outputs.append(Transmitter(fd, self))
-        self.bw = bandwidth_monitor(nr_peers)
+
+    def enable_bandwidth_monitor(self):
+        self.bw = bandwidth_monitor()
 
     def handle_expt(self):
         self.handle_close()
@@ -169,14 +170,16 @@ class Forwarder(silent_file_dispatcher):
         if not capacity:
             return
         data = self.buffer[:capacity]
-        self.bw.add_transferred_size(len(data))
+        if self.bw:
+            self.bw.add_transferred_size(len(data))
         self.buffer = self.buffer[capacity:]
         for t in self.outputs:
             t.add_to_buffer(data)
 
     def run(self):
         asyncore.loop(timeout=None)
-        self.bw.finish()
+        if self.bw:
+            self.bw.finish()
 
 def base64version():
     import base64
@@ -278,6 +281,9 @@ def do_receive(nr_peers, gsh_prefix):
     fd = stdin.fileno()
     conn, addr = listening_socket.accept()
     forw = Forwarder(nr_peers, conn.fileno(), [fd])
+    # Only the last item in the chain displays the progress information
+    # as it should be the last one to finish.
+    forw.enable_bandwidth_monitor()
     forw.run()
     silently_close_all([conn, stdin])
 
