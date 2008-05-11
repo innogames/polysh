@@ -41,11 +41,6 @@ def add(function, continous):
     GSH_CALLBACKS[trigger] = (function, continous)
     return GSH_COMMON_PREFIX + trigger1, trigger2
 
-#def del_callback(prefix_trigger1, trigger2):
-#    trigger1 = prefix_trigger1[len(GSH_COMMON_PREFIX):]
-#    trigger = trigger1 + trigger2
-#    del GSH_CALLBACKS(trigger)
-
 def contains(data):
     return GSH_COMMON_PREFIX in data
 
