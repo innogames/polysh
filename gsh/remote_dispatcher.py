@@ -68,7 +68,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
         self.state = STATE_NOT_STARTED
-        self.termination = None
         self.term_size = (-1, -1)
         self.display_name = ''
         self.change_name(hostname)
@@ -123,18 +122,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.disconnect()
         self.close()
         remote_dispatcher(self.hostname)
-
-    def dispatch_termination(self):
-        """Start the termination procedure on this remote process, using the
-        same trick as the prompt to hide it"""
-        if not self.termination:
-            self.term1 = '[gsh termination ' + str(random.random())[2:]
-            self.term2 = str(random.random())[2:] + ']'
-            self.termination = self.term1 + self.term2
-            self.dispatch_command('/bin/echo "%s""%s"\n' %
-                                                       (self.term1, self.term2))
-            if self.state is not STATE_NOT_STARTED:
-                self.change_state(STATE_RUNNING)
 
     def configure_tty(self):
         """We don't want \n to be replaced with \r\n, and we disable the echo"""
@@ -195,7 +182,6 @@ class remote_dispatcher(buffered_dispatcher):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
         if callbacks.contains(data) or self.state is not STATE_RUNNING or \
-           self.termination and (self.term1 in data or self.term2 in data) or \
            self.pending_rename and self.pending_rename in data or \
            self.file_transfer_cookie and self.file_transfer_cookie in data:
             # Slow case :-(
@@ -231,12 +217,6 @@ class remote_dispatcher(buffered_dispatcher):
             # For each line in the buffer
             line = self.read_buffer[:lf_pos + 1]
             if callbacks.process(line):
-                pass
-            elif self.termination and self.termination in line:
-                self.change_state(STATE_TERMINATED)
-                self.disconnect()
-            elif self.termination and self.term1 in line and self.term2 in line:
-                # Just ignore this line
                 pass
             elif self.pending_rename and self.pending_rename in line:
                 self.received_rename(line)
