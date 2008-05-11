@@ -17,7 +17,6 @@
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
-import asyncore
 import os
 import popen2
 import random
@@ -26,8 +25,9 @@ import socket
 import string
 import sys
 import termios
-import threading
 import time
+from threading import Event, Thread
+from Queue import Queue
 
 UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
 MAX_BUFFER_SIZE = 1024 * 1024
@@ -48,10 +48,10 @@ def rstrip_char(string, char):
 
 class bandwidth_monitor:
     def __init__(self):
-        self.thread = threading.Thread(target=self.run_thread)
+        self.thread = Thread(target=self.run_thread)
         self.thread.setDaemon(1)
-        self.main_done = threading.Event()
-        self.thread_done = threading.Event()
+        self.main_done = Event()
+        self.thread_done = Event()
         self.size = 0
         self.thread.start()
 
@@ -83,103 +83,51 @@ class bandwidth_monitor:
         print 'Done transferring %d bytes' % (self.size)
         self.thread_done.set()
 
-class silent_file_dispatcher(asyncore.file_dispatcher):
-    def __init__(self, fd):
-        asyncore.file_dispatcher.__init__(self, fd)
-        self.fd = fd
+MAX_QUEUE_SIZE = 4 * 1024 * 1024
+MAX_QUEUE_ITEM_SIZE = 64 * 1024
 
-    def log(self, message):
-        # python 1.5 spams the console, do nothing
-        pass
-
-class Transmitter(silent_file_dispatcher):
-    def __init__(self, output_fd, forwarder):
-        silent_file_dispatcher.__init__(self, output_fd)
-        self.forwarder = forwarder
-        self.buffer = ''
-        self.finished = 0
-
-    def readable(self):
-        return 0
-
-    def writable(self):
-        return self.buffer != ''
-
-    def setFinished(self):
-        self.finished = 1
-        if not self.writable():
-            try:
-                self.close()
-            except OSError:
-                pass
-
-    def handle_write(self):
-        num_sent = os.write(self.fd, self.buffer)
-        self.buffer = self.buffer[num_sent:]
-        self.forwarder.refill_output_buffers()
-        if self.finished and not self.writable():
-            self.close()
-
-    def buffer_remaining_capacity(self):
-        return MAX_BUFFER_SIZE - len(self.buffer)
-
-    def add_to_buffer(self, data):
-        self.buffer = self.buffer + data
-        assert len(self.buffer) <= MAX_BUFFER_SIZE
-
-
-class Forwarder(silent_file_dispatcher):
-    def __init__(self, nr_peers, fd_input, fd_outputs):
-        silent_file_dispatcher.__init__(self, fd_input)
-        self.buffer = ''
-        self.bw = None
-        self.outputs = []
-        for fd in fd_outputs:
-            self.outputs.append(Transmitter(fd, self))
-
-    def enable_bandwidth_monitor(self):
-        self.bw = bandwidth_monitor()
-
-    def handle_expt(self):
-        self.handle_close()
-
-    def readable(self):
-        return len(self.buffer) < MAX_BUFFER_SIZE
-
-    def writable(self):
-        return 0
-
-    def handle_close(self):
-        try:
-            self.close()
-        except OSError:
-            pass
-        for t in self.outputs:
-            t.setFinished()
-
-    def handle_read(self):
-        capacity = MAX_BUFFER_SIZE - len(self.buffer)
-        self.buffer = self.buffer + self.recv(capacity)
-        self.refill_output_buffers()
-
-    def refill_output_buffers(self):
-        remaining_capacities = []
-        for output in self.outputs:
-            remaining_capacities.append(output.buffer_remaining_capacity())
-        capacity = min(remaining_capacities)
-        if not capacity:
-            return
-        data = self.buffer[:capacity]
-        if self.bw:
-            self.bw.add_transferred_size(len(data))
-        self.buffer = self.buffer[capacity:]
-        for t in self.outputs:
-            t.add_to_buffer(data)
+class Forwarder(Thread):
+    def __init__(self, output):
+        Thread.__init__(self)
+        self.output = output
+        self.pending = Queue(MAX_QUEUE_SIZE / MAX_QUEUE_ITEM_SIZE)
+        self.start()
 
     def run(self):
-        asyncore.loop(timeout=None)
-        if self.bw:
-            self.bw.finish()
+        while True:
+            data = self.pending.get()
+            if data is None:
+                # EOF
+                self.output.close()
+                break
+            self.output.write(data)
+
+    def add_data(self, data):
+        self.pending.put(data)
+
+def forward(input_file, output_files, bandwidth=False):
+    forwarders = []
+    for output in output_files:
+        forwarders.append(Forwarder(output))
+    if bandwidth:
+        bw = bandwidth_monitor()
+
+    while True:
+        data = input_file.read(MAX_QUEUE_ITEM_SIZE)
+        if data:
+            if bandwidth:
+                bw.add_transferred_size(len(data))
+            for forwarder in forwarders:
+                forwarder.add_data(data)
+        else:
+            for forwarder in forwarders:
+                forwarder.add_data(None)
+            break
+    input_file.close()
+    for forwarder in forwarders:
+        forwarder.join()
+    if bandwidth:
+        bw.finish()
 
 def base64version():
     import base64
@@ -241,13 +189,6 @@ def get_destination_socket():
 def shell_quote(s):
     return "'" + string.replace(s, "'", "'\\''") + "'"
 
-def silently_close_all(files):
-    for f in files:
-        try:
-            f.close()
-        except IOError:
-            pass
-
 def do_send(nr_peers, path):
     split = os.path.split(rstrip_char(path, '/'))
     dirname, basename = split
@@ -257,35 +198,25 @@ def do_send(nr_peers, path):
         basename = '/'
     stdout, stdin = popen2.popen2('tar c %s' % shell_quote(basename))
     stdin.close()
-    fd = stdout.fileno()
     destination_socket = get_destination_socket()
-    forw = Forwarder(nr_peers, fd, [destination_socket.fileno()])
-    forw.run()
-    silently_close_all([stdout, destination_socket])
+    forward(stdout, [destination_socket.makefile()])
 
 def do_forward(nr_peers, gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
     stdout, stdin = popen2.popen2('tar x')
     stdout.close()
-    fd = stdin.fileno()
     conn, addr = listening_socket.accept()
     destination_socket = get_destination_socket()
-    forw = Forwarder(nr_peers, conn.fileno(), [destination_socket.fileno(), fd])
-    forw.run()
-    silently_close_all([conn, destination_socket, stdin])
+    forward(conn.makefile(), [destination_socket.makefile(), stdin])
 
 def do_receive(nr_peers, gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
     stdout, stdin = popen2.popen2('tar x')
     stdout.close()
-    fd = stdin.fileno()
     conn, addr = listening_socket.accept()
-    forw = Forwarder(nr_peers, conn.fileno(), [fd])
     # Only the last item in the chain displays the progress information
     # as it should be the last one to finish.
-    forw.enable_bandwidth_monitor()
-    forw.run()
-    silently_close_all([conn, stdin])
+    forward(conn.makefile(), [stdin], bandwidth=True)
 
 # Usage:
 #
