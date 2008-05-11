@@ -152,7 +152,8 @@ class remote_dispatcher(buffered_dispatcher):
             self.dispatch_command(self.command + '\n')
             self.command = None
         else:
-            self.dispatch_termination()
+            self.change_state(STATE_TERMINATED)
+            self.disconnect()
 
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
