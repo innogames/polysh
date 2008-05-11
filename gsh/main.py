@@ -121,7 +121,7 @@ def main_loop():
                 sig2chr = {signal.SIGINT: 'c', signal.SIGTSTP: 'z'}
                 ctrl = sig2chr[current_signal]
                 remote_dispatcher.log('> ^%c\n' % ctrl.upper())
-                waited_data = control_commands.do_send_ctrl(ctrl)
+                control_commands.do_send_ctrl(ctrl)
                 console_output('')
                 the_stdin_thread.prepend_text = None
             while dispatchers.count_awaited_processes()[0] and \

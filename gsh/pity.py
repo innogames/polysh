@@ -22,7 +22,6 @@
 
 import os
 import popen2
-import random
 import signal
 import socket
 import string
@@ -166,7 +165,7 @@ def get_destination():
 def shell_quote(s):
     return "'" + string.replace(s, "'", "'\\''") + "'"
 
-def do_send(nr_peers, path):
+def do_send(path):
     split = os.path.split(rstrip_char(path, '/'))
     dirname, basename = split
     if dirname:
@@ -177,14 +176,14 @@ def do_send(nr_peers, path):
     stdin.close()
     forward(stdout, [get_destination()])
 
-def do_forward(nr_peers, gsh_prefix):
+def do_forward(gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
     stdout, stdin = popen2.popen2('tar x')
     stdout.close()
     conn, addr = listening_socket.accept()
     forward(conn.makefile(), [get_destination(), stdin])
 
-def do_receive(nr_peers, gsh_prefix):
+def do_receive(gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
     stdout, stdin = popen2.popen2('tar x')
     stdout.close()
@@ -195,26 +194,25 @@ def do_receive(nr_peers, gsh_prefix):
 
 # Usage:
 #
-# pity.py NR_PEERS send PATH
+# pity.py send PATH
 # => reads host:port on stdin
 #
-# pity.py NR_PEERS forward [GSH1...]
+# pity.py forward [GSH1...]
 # => reads host:port on stdin and prints listening host:port on stdout
 # prefixed by GSH1...
 #
-# pity.py NR_PEERS receive [GSH1...]
+# pity.py receive [GSH1...]
 # => prints listening host:port on stdout prefixed by GSH1...
 #
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: os.kill(0, signal.SIGKILL))
-    nr_peers = int(sys.argv[1])
-    cmd = sys.argv[2]
-    if cmd == 'send' and len(sys.argv) >= 4:
-        do_send(nr_peers, sys.argv[3])
-    elif cmd == 'forward' and len(sys.argv) >= 3:
-        do_forward(nr_peers, sys.argv[3:])
-    elif cmd == 'receive' and len(sys.argv) >= 3:
-        do_receive(nr_peers, sys.argv[3:])
+    cmd = sys.argv[1]
+    if cmd == 'send' and len(sys.argv) >= 3:
+        do_send(sys.argv[2])
+    elif cmd == 'forward' and len(sys.argv) >= 2:
+        do_forward(sys.argv[2:])
+    elif cmd == 'receive' and len(sys.argv) >= 2:
+        do_receive(sys.argv[2:])
     else:
         print 'Unknown command:', sys.argv
         sys.exit(1)

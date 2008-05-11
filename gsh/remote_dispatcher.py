@@ -19,7 +19,6 @@
 import asyncore
 import os
 import pty
-import random
 import signal
 import sys
 import termios
