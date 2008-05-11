@@ -83,8 +83,8 @@ class bandwidth_monitor(Thread):
             self.main_done.wait(1.0)
         print 'Done transferring %d bytes' % (self.size)
 
-MAX_QUEUE_SIZE = 4 * 1024 * 1024
-MAX_QUEUE_ITEM_SIZE = 64 * 1024
+MAX_QUEUE_SIZE = 256 * 1024 * 1024
+MAX_QUEUE_ITEM_SIZE = 512 * 1024
 
 class Forwarder(Thread):
     def __init__(self, output):
