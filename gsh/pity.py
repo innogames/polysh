@@ -16,6 +16,9 @@
 # See the COPYING file for license information.
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
+#
+# This file should remain compatible with python-1.5.2
+#
 
 import os
 import popen2
