@@ -73,7 +73,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.change_name(hostname)
         self.init_string = self.configure_tty() + self.set_prompt()
         self.init_string_sent = False
-        self.pending_rename = None
         self.file_transfer_cookie = None
         self.command = options.command
 
@@ -182,7 +181,6 @@ class remote_dispatcher(buffered_dispatcher):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
         if callbacks.contains(data) or self.state is not STATE_RUNNING or \
-           self.pending_rename and self.pending_rename in data or \
            self.file_transfer_cookie and self.file_transfer_cookie in data:
             # Slow case :-(
             return False
@@ -218,8 +216,6 @@ class remote_dispatcher(buffered_dispatcher):
             line = self.read_buffer[:lf_pos + 1]
             if callbacks.process(line):
                 pass
-            elif self.pending_rename and self.pending_rename in line:
-                self.received_rename(line)
             elif self.file_transfer_cookie and self.file_transfer_cookie in line:
                 file_transfer.received_cookie(self, line)
             elif self.state in (STATE_IDLE, STATE_RUNNING):
@@ -314,19 +310,11 @@ class remote_dispatcher(buffered_dispatcher):
     def rename(self, string):
         """Send to the remote shell, its new name to be shell expanded"""
         if string:
-            pending_rename1 = str(random.random())[2:] + ','
-            pending_rename2 = str(random.random())[2:] + ':'
-            self.pending_rename = pending_rename1 + pending_rename2
-            self.dispatch_command('/bin/echo "%s""%s" %s\n' %
-                                    (pending_rename1, pending_rename2, string))
+            rename1, rename2 = callbacks.add('rename', self.change_name, False)
+            self.dispatch_command('/bin/echo "%s""%s"%s\n' %
+                                                     (rename1, rename2, string))
         else:
             self.change_name(self.hostname)
-
-    def received_rename(self, line):
-        """The shell expanded name has been received"""
-        new_name = line[len(self.pending_rename) + 1:-1]
-        self.change_name(new_name)
-        self.pending_rename = None
 
     def __str__(self):
         return self.display_name
