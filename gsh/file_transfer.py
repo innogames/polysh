@@ -19,6 +19,7 @@
 import base64
 import random
 
+from gsh import callbacks
 from gsh import pity
 from gsh.console import console_output
 
@@ -47,9 +48,7 @@ CMD_SEND = CMD_PREFIX + 'send "%s" "%s" "%s"\n'
 CMD_FORWARD = CMD_PREFIX + 'forward "%s" "%s"\n'
 CMD_RECEIVE = CMD_PREFIX + 'receive "%s" "%s"\n'
 
-def received_cookie(dispatcher, line):
-    host_port = line[len(dispatcher.file_transfer_cookie) + 1:]
-    dispatcher.file_transfer_cookie = None
+def file_transfer_cb(dispatcher, host_port):
     previous_shell = get_previous_shell(dispatcher)
     previous_shell.dispatch_write(host_port + '\n')
 
@@ -86,14 +85,13 @@ def replicate(shell, path):
     for i in dispatchers.all_instances():
         if not i.enabled:
             continue
-        cookie1 = '[gsh file transfer ' + str(random.random())[2:]
-        cookie2 = str(random.random())[2:] + ']'
-        i.file_transfer_cookie = cookie1 + cookie2
+        cb = lambda host_port, i=i: file_transfer_cb(i, host_port)
+        transfer1, transfer2 = callbacks.add('file transfer', cb, False)
         if i == shell:
-            i.dispatch_command(CMD_SEND % (path, cookie1, cookie2))
+            i.dispatch_command(CMD_SEND % (path, transfer1, transfer2))
         elif i != receiver:
-            i.dispatch_command(CMD_FORWARD % (cookie1, cookie2))
+            i.dispatch_command(CMD_FORWARD % (transfer1, transfer2))
         else:
-            i.dispatch_command(CMD_RECEIVE % (cookie1, cookie2))
+            i.dispatch_command(CMD_RECEIVE % (transfer1, transfer2))
         i.change_state(remote_dispatcher.STATE_RUNNING)
 

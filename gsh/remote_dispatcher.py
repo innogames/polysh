@@ -72,7 +72,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.change_name(hostname)
         self.init_string = self.configure_tty() + self.set_prompt()
         self.init_string_sent = False
-        self.file_transfer_cookie = None
         self.command = options.command
 
     def launch_ssh(self, name):
@@ -179,8 +178,7 @@ class remote_dispatcher(buffered_dispatcher):
     def handle_read_fast_case(self, data):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
-        if callbacks.contains(data) or self.state is not STATE_RUNNING or \
-           self.file_transfer_cookie and self.file_transfer_cookie in data:
+        if callbacks.contains(data) or self.state is not STATE_RUNNING:
             # Slow case :-(
             return False
 
@@ -215,8 +213,6 @@ class remote_dispatcher(buffered_dispatcher):
             line = self.read_buffer[:lf_pos + 1]
             if callbacks.process(line):
                 pass
-            elif self.file_transfer_cookie and self.file_transfer_cookie in line:
-                file_transfer.received_cookie(self, line)
             elif self.state in (STATE_IDLE, STATE_RUNNING):
                 self.print_lines(line)
             elif self.state is STATE_NOT_STARTED:

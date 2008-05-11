@@ -136,8 +136,6 @@ def init_listening_socket(gsh_prefix):
     host = socket.gethostname()
     port = s.getsockname()[1]
     prefix = string.join(gsh_prefix, '')
-    if prefix:
-        prefix = prefix + ' '
     print '%s%s:%s' % (prefix, host, port)
     return s
 
