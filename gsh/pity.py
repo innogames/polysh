@@ -46,23 +46,22 @@ def rstrip_char(string, char):
         string = string[:-1]
     return string
 
-class bandwidth_monitor:
+class bandwidth_monitor(Thread):
     def __init__(self):
-        self.thread = Thread(target=self.run_thread)
-        self.thread.setDaemon(1)
+        Thread.__init__(self)
+        self.setDaemon(1)
         self.main_done = Event()
-        self.thread_done = Event()
         self.size = 0
-        self.thread.start()
+        self.start()
 
     def add_transferred_size(self, size):
         self.size = self.size + size
 
     def finish(self):
         self.main_done.set()
-        self.thread_done.wait()
+        self.join()
 
-    def run_thread(self):
+    def run(self):
         previous_size = 0
         previous_sampling_time = time.time()
         previous_bandwidth = 0
@@ -81,7 +80,6 @@ class bandwidth_monitor:
             previous_bandwidth = current_bandwidth
             self.main_done.wait(1.0)
         print 'Done transferring %d bytes' % (self.size)
-        self.thread_done.set()
 
 MAX_QUEUE_SIZE = 4 * 1024 * 1024
 MAX_QUEUE_ITEM_SIZE = 64 * 1024
