@@ -63,6 +63,6 @@ def process(line):
     if not continous:
         del GSH_CALLBACKS[trigger]
 
-    callback(line[trigger_end:])
+    callback(line[trigger_end:].strip())
     return True
 
