@@ -34,8 +34,9 @@ GSH_COMMON_PREFIX = 'gsh-' + random_string() + ','
 # {'random_string()': (function, continuous)}
 GSH_CALLBACKS = {}
 
-def add(function, continous):
-    trigger1 = random_string() + '/'
+def add(name, function, continous):
+    clean_name = name.replace(':', '_').replace('.', '_')
+    trigger1 = clean_name + ':' + random_string() + '/'
     trigger2 = random_string() + '.'
     trigger = trigger1 + trigger2
     GSH_CALLBACKS[trigger] = (function, continous)
@@ -50,12 +51,11 @@ def process(line):
         return False
 
     trigger_start = start + len(GSH_COMMON_PREFIX)
-    trigger_length = RANDOM_LENGTH + 1 + RANDOM_LENGTH + 1
-    trigger_end = trigger_start + trigger_length
-    trigger = line[trigger_start:trigger_end]
-    if len(trigger) != trigger_length:
+    trigger_end = line.find('.', trigger_start) + 1
+    if trigger_end <= 0:
         return False
 
+    trigger = line[trigger_start:trigger_end]
     callback, continous = GSH_CALLBACKS.get(trigger, (None, True))
     if not callback:
         return False
