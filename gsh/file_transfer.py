@@ -16,13 +16,30 @@
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
+import base64
 import random
 
-import pity
-
+from gsh import pity
 from gsh.console import console_output
 
-CMD_PREFIX = 'python -c "`echo "' + pity.ENCODED + '"|' + \
+def base64version(module):
+    path = module.__file__
+    if path.endswith('.pyc'):
+        # Read from the .py source file
+        path = path[:-1]
+    python_lines = []
+    for line in file(path):
+        hash_pos = line.find(chr(35))
+        if hash_pos is not -1:
+            line = line[:hash_pos]
+        line = line.rstrip()
+        if line:
+            python_lines.append(line)
+    python_source = '\n'.join(python_lines)
+    encoded = base64.encodestring(python_source).rstrip('\n').replace('\n', ',')
+    return encoded
+
+CMD_PREFIX = 'python -c "`echo "' + base64version(pity) + '"|' + \
                          'tr , \\\\\\n|' + \
                          'openssl base64 -d`" '
 

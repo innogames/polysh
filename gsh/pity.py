@@ -127,30 +127,6 @@ def forward(input_file, output_files, bandwidth=False):
     if bandwidth:
         bw.finish()
 
-def base64version():
-    import base64
-    try:
-        path = __file__
-    except NameError:
-        # We are executing from the python command line, no file
-        return
-    if path.endswith('.pyc'):
-        # Read from the .py source file
-        path = path[:-1]
-    python_source = ''
-    for line in file(path):
-        hash_pos = line.find(chr(35))
-        if hash_pos is not -1:
-            line = line[:hash_pos]
-        line = string.rstrip(line)
-        if line:
-            python_source = python_source + line + '\n'
-    encoded = rstrip_char(base64.encodestring(python_source), '\n')
-    encoded = string.replace(encoded, '\n', ',')
-    return encoded
-
-ENCODED = base64version()
-
 def init_listening_socket(gsh_prefix):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('', 0))
