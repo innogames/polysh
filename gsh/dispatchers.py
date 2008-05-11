@@ -53,11 +53,6 @@ def count_awaited_processes():
                 awaited += 1
     return awaited, total
 
-def dispatch_termination_to_all():
-    """Start the termination procedure in all remote shells"""
-    for r in all_instances():
-        r.dispatch_termination()
-
 def all_terminated():
     """For each remote shell we determine if its terminated by checking if
     it is in the right state or if it requested termination but will never
