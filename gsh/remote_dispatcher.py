@@ -25,6 +25,7 @@ import sys
 import termios
 
 from gsh.buffered_dispatcher import buffered_dispatcher
+from gsh import callbacks
 from gsh.console import console_output
 from gsh import file_transfer
 
@@ -144,6 +145,15 @@ class remote_dispatcher(buffered_dispatcher):
         # unsetopt zle prevents Zsh from resetting the tty
         return 'unsetopt zle 2> /dev/null;stty -echo -onlcr;'
 
+    def seen_prompt_cb(self, unused):
+        if options.interactive:
+            self.change_state(STATE_IDLE)
+        elif self.command:
+            self.dispatch_command(self.command + '\n')
+            self.command = None
+        else:
+            self.dispatch_termination()
+
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
         by waiting for its prompt. The prompt is built in two parts for it not
@@ -151,9 +161,7 @@ class remote_dispatcher(buffered_dispatcher):
         # No right prompt
         command_line = 'RPS1=;RPROMPT=;'
         command_line += 'TERM=ansi;'
-        prompt1 = '[gsh prompt ' + str(random.random())[2:]
-        prompt2 = str(random.random())[2:] + ']'
-        self.prompt = prompt1 + prompt2
+        prompt1, prompt2 = callbacks.add(self.seen_prompt_cb, True)
         command_line += 'PS1="%s""%s\n"\n' % (prompt1, prompt2)
         return command_line
 
@@ -185,7 +193,7 @@ class remote_dispatcher(buffered_dispatcher):
     def handle_read_fast_case(self, data):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
-        if self.prompt in data or self.state is not STATE_RUNNING or \
+        if callbacks.contains(data) or self.state is not STATE_RUNNING or \
            self.termination and (self.term1 in data or self.term2 in data) or \
            self.pending_rename and self.pending_rename in data or \
            self.file_transfer_cookie and self.file_transfer_cookie in data:
@@ -221,14 +229,8 @@ class remote_dispatcher(buffered_dispatcher):
         while lf_pos >= 0:
             # For each line in the buffer
             line = self.read_buffer[:lf_pos + 1]
-            if self.prompt in line:
-                if options.interactive:
-                    self.change_state(STATE_IDLE)
-                elif self.command:
-                    self.dispatch_command(self.command + '\n')
-                    self.command = None
-                else:
-                    self.dispatch_termination()
+            if callbacks.process(line):
+                pass
             elif self.termination and self.termination in line:
                 self.change_state(STATE_TERMINATED)
                 self.disconnect()
