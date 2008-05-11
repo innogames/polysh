@@ -142,7 +142,7 @@ def init_listening_socket(gsh_prefix):
     print '%s%s:%s' % (prefix, host, port)
     return s
 
-def get_destination_socket():
+def get_destination():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     new_settings = termios.tcgetattr(fd)
@@ -161,7 +161,7 @@ def get_destination_socket():
     port = int(split[1])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
-    return s
+    return s.makefile()
 
 def shell_quote(s):
     return "'" + string.replace(s, "'", "'\\''") + "'"
@@ -175,16 +175,14 @@ def do_send(nr_peers, path):
         basename = '/'
     stdout, stdin = popen2.popen2('tar c %s' % shell_quote(basename))
     stdin.close()
-    destination_socket = get_destination_socket()
-    forward(stdout, [destination_socket.makefile()])
+    forward(stdout, [get_destination()])
 
 def do_forward(nr_peers, gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
     stdout, stdin = popen2.popen2('tar x')
     stdout.close()
     conn, addr = listening_socket.accept()
-    destination_socket = get_destination_socket()
-    forward(conn.makefile(), [destination_socket.makefile(), stdin])
+    forward(conn.makefile(), [get_destination(), stdin])
 
 def do_receive(nr_peers, gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
