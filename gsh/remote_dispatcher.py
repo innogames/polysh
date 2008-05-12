@@ -141,8 +141,7 @@ class remote_dispatcher(buffered_dispatcher):
 
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
-        by waiting for its prompt. The prompt is built in two parts for it not
-        to appear in its building"""
+        by waiting for its prompt."""
         # No right prompt
         command_line = 'RPS1=;RPROMPT=;'
         command_line += 'TERM=ansi;'
