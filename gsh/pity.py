@@ -32,7 +32,6 @@ from threading import Event, Thread
 from Queue import Queue
 
 UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
-MAX_BUFFER_SIZE = 1024 * 1024
 
 def human_unit(size):
     """Return a string of the form '12.34 MiB' given a size in bytes."""
