@@ -82,51 +82,38 @@ class bandwidth_monitor(Thread):
             self.main_done.wait(1.0)
         print 'Done transferring %d bytes' % (self.size)
 
+def write_fully(fd, data):
+    while data:
+        written = os.write(fd, data)
+        data = data[written:]
+
 MAX_QUEUE_SIZE = 256 * 1024 * 1024
-MAX_QUEUE_ITEM_SIZE = 512 * 1024
-
-class Forwarder(Thread):
-    def __init__(self, output):
-        Thread.__init__(self)
-        self.output = output
-        self.pending = Queue(MAX_QUEUE_SIZE / MAX_QUEUE_ITEM_SIZE)
-        self.start()
-
-    def run(self):
-        while 1:
-            data = self.pending.get()
-            if data is None:
-                # EOF
-                self.output.close()
-                break
-            self.output.write(data)
-
-    def add_data(self, data):
-        self.pending.put(data)
+MAX_QUEUE_ITEM_SIZE = 8 * 1024
 
 def forward(input_file, output_files, bandwidth=0):
-    forwarders = []
-    for output in output_files:
-        forwarders.append(Forwarder(output))
     if bandwidth:
         bw = bandwidth_monitor()
 
+    input_fd = input_file.fileno()
+    output_fds = []
+    for output_file in output_files:
+        output_fds.append(output_file.fileno())
+
     while 1:
-        data = input_file.read(MAX_QUEUE_ITEM_SIZE)
-        if data:
-            if bandwidth:
-                bw.add_transferred_size(len(data))
-            for forwarder in forwarders:
-                forwarder.add_data(data)
-        else:
-            for forwarder in forwarders:
-                forwarder.add_data(None)
+        data = os.read(input_fd, MAX_QUEUE_ITEM_SIZE)
+        if not data:
             break
-    input_file.close()
-    for forwarder in forwarders:
-        forwarder.join()
+        if bandwidth:
+            bw.add_transferred_size(len(data))
+        for output_fd in output_fds:
+            write_fully(output_fd, data)
+
     if bandwidth:
         bw.finish()
+
+    input_file.close()
+    for output_file in output_files:
+        output_file.close()
 
 def init_listening_socket(gsh_prefix):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
