@@ -158,7 +158,7 @@ def get_destination():
     port = int(split[1])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
-    return s.makefile()
+    return s.makefile('r+b')
 
 def shell_quote(s):
     return "'" + string.replace(s, "'", "'\\''") + "'"
