@@ -23,6 +23,12 @@ from gsh import callbacks
 from gsh import pity
 from gsh.console import console_output
 
+CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" '
+
+CMD_SEND = CMD_PREFIX + 'send "%s" "%s" "%s"\n'
+CMD_FORWARD = CMD_PREFIX + 'forward "%s" "%s"\n'
+CMD_RECEIVE = CMD_PREFIX + 'receive "%s" "%s"\n'
+
 def base64version(module):
     path = module.__file__
     if path.endswith('.pyc'):
@@ -39,14 +45,6 @@ def base64version(module):
     python_source = '\n'.join(python_lines)
     encoded = base64.encodestring(python_source).rstrip('\n').replace('\n', ',')
     return encoded
-
-CMD_PREFIX = 'python -c "`echo "' + base64version(pity) + '"|' + \
-                         'tr , \\\\\\n|' + \
-                         'openssl base64 -d`" '
-
-CMD_SEND = CMD_PREFIX + 'send "%s" "%s" "%s"\n'
-CMD_FORWARD = CMD_PREFIX + 'forward "%s" "%s"\n'
-CMD_RECEIVE = CMD_PREFIX + 'receive "%s" "%s"\n'
 
 def file_transfer_cb(dispatcher, host_port):
     previous_shell = get_previous_shell(dispatcher)
@@ -82,16 +80,17 @@ def replicate(shell, path):
         console_output('No other remote shell to replicate files to\n')
         return
     receiver = get_previous_shell(shell)
+    pity_py = base64version(pity)
     for i in dispatchers.all_instances():
         if not i.enabled:
             continue
         cb = lambda host_port, i=i: file_transfer_cb(i, host_port)
         transfer1, transfer2 = callbacks.add('file transfer', cb, False)
         if i == shell:
-            i.dispatch_command(CMD_SEND % (path, transfer1, transfer2))
+            i.dispatch_command(CMD_SEND % (pity_py, path, transfer1, transfer2))
         elif i != receiver:
-            i.dispatch_command(CMD_FORWARD % (transfer1, transfer2))
+            i.dispatch_command(CMD_FORWARD % (pity_py, transfer1, transfer2))
         else:
-            i.dispatch_command(CMD_RECEIVE % (transfer1, transfer2))
+            i.dispatch_command(CMD_RECEIVE % (pity_py, transfer1, transfer2))
         i.change_state(remote_dispatcher.STATE_RUNNING)
 
