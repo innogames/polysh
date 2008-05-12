@@ -178,7 +178,7 @@ class remote_dispatcher(buffered_dispatcher):
     def handle_read_fast_case(self, data):
         """If we are in a fast case we'll avoid the long processing of each
         line"""
-        if callbacks.contains(data) or self.state is not STATE_RUNNING:
+        if callbacks.any_in(data) or self.state is not STATE_RUNNING:
             # Slow case :-(
             return False
 

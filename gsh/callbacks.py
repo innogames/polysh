@@ -44,7 +44,7 @@ def add(name, function, continous):
     trigger2 = trigger[len(trigger1):]
     return trigger1, trigger2
 
-def contains(data):
+def any_in(data):
     return COMMON_PREFIX in data
 
 def process(line):
