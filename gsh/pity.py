@@ -94,7 +94,7 @@ class Forwarder(Thread):
         self.start()
 
     def run(self):
-        while True:
+        while 1:
             data = self.pending.get()
             if data is None:
                 # EOF
@@ -105,14 +105,14 @@ class Forwarder(Thread):
     def add_data(self, data):
         self.pending.put(data)
 
-def forward(input_file, output_files, bandwidth=False):
+def forward(input_file, output_files, bandwidth=0):
     forwarders = []
     for output in output_files:
         forwarders.append(Forwarder(output))
     if bandwidth:
         bw = bandwidth_monitor()
 
-    while True:
+    while 1:
         data = input_file.read(MAX_QUEUE_ITEM_SIZE)
         if data:
             if bandwidth:
@@ -188,7 +188,7 @@ def do_receive(gsh_prefix):
     conn, addr = listening_socket.accept()
     # Only the last item in the chain displays the progress information
     # as it should be the last one to finish.
-    forward(conn.makefile(), [stdin], bandwidth=True)
+    forward(conn.makefile(), [stdin], bandwidth=1)
 
 # Usage:
 #
