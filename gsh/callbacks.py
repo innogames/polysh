@@ -16,6 +16,16 @@
 #
 # Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
 
+# Gsh uses specially crafted strings to communicate out of band data with remote
+# shells. This includes detecting the shell prompt, and other events to detect.
+# These strings are built and sent in two parts, the remote shell should send
+# back the concatenation of these two strings to trigger the callback. This is
+# to insure that the sending of the trigger to the remote shell does not trigger
+# the callback.
+#
+# Example: The trigger FOOBAR could be split into FOO and BAR and sent as
+#          echo "FOO""BAR" so that the sent string does not contain FOOBAR.
+
 import random
 
 DIGITS_LETTERS = map(str, range(10))                     + \
