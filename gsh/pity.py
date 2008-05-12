@@ -37,7 +37,7 @@ MAX_BUFFER_SIZE = 1024 * 1024
 def human_unit(size):
     """Return a string of the form '12.34 MiB' given a size in bytes."""
     for i in xrange(len(UNITS) - 1, 0, -1):
-        base = 2 ** (10 * i)
+        base = 2.0 ** (10 * i)
         if 2 * base < size:
             return '%.2f %s' % ((float(size) / base), UNITS[i])
     return str(size) + ' ' + UNITS[0]
