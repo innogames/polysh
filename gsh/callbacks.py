@@ -22,47 +22,48 @@ DIGITS_LETTERS = map(str, range(10))                     + \
                  map(chr, range(ord('a'), ord('z') + 1)) + \
                  map(chr, range(ord('A'), ord('Z') + 1))
 
-RANDOM_LENGTH = 20
-
-def random_string():
+def random_string(length):
     def random_char():
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
-    return ''.join(map(lambda i: random_char(), xrange(RANDOM_LENGTH)))
+    return ''.join(map(lambda i: random_char(), xrange(length)))
 
-GSH_COMMON_PREFIX = 'gsh-' + random_string() + ','
+COMMON_PREFIX = 'gsh-%s:' % random_string(5)
+NR_GENERATED_TRIGGERS = 0
 
 # {'random_string()': (function, continuous)}
-GSH_CALLBACKS = {}
+CALLBACKS = {}
 
 def add(name, function, continous):
-    clean_name = name.replace(':', '_').replace('.', '_')
-    trigger1 = clean_name + ':' + random_string() + '/'
-    trigger2 = random_string() + '.'
-    trigger = trigger1 + trigger2
-    GSH_CALLBACKS[trigger] = (function, continous)
-    return GSH_COMMON_PREFIX + trigger1, trigger2
+    name = name.replace('/', '_')
+    global NR_GENERATED_TRIGGERS
+    nr = NR_GENERATED_TRIGGERS
+    NR_GENERATED_TRIGGERS += 1
+    trigger = '%s:%s:%s:%d/' % (COMMON_PREFIX, name, random_string(5), nr)
+    CALLBACKS[trigger] = (function, continous)
+    trigger1 = trigger[:len(COMMON_PREFIX)/2]
+    trigger2 = trigger[len(trigger1):]
+    return trigger1, trigger2
 
 def contains(data):
-    return GSH_COMMON_PREFIX in data
+    return COMMON_PREFIX in data
 
 def process(line):
-    start = line.find(GSH_COMMON_PREFIX)
+    start = line.find(COMMON_PREFIX)
     if start < 0:
         return False
 
-    trigger_start = start + len(GSH_COMMON_PREFIX)
-    trigger_end = line.find('.', trigger_start) + 1
-    if trigger_end <= 0:
+    end = line.find('/', start) + 1
+    if end <= 0:
         return False
 
-    trigger = line[trigger_start:trigger_end]
-    callback, continous = GSH_CALLBACKS.get(trigger, (None, True))
+    trigger = line[start:end]
+    callback, continous = CALLBACKS.get(trigger, (None, True))
     if not callback:
         return False
 
     if not continous:
-        del GSH_CALLBACKS[trigger]
+        del CALLBACKS[trigger]
 
-    callback(line[trigger_end:].strip())
+    callback(line[end:].strip())
     return True
 
