@@ -38,7 +38,7 @@ def add(name, function, continous):
     global NR_GENERATED_TRIGGERS
     nr = NR_GENERATED_TRIGGERS
     NR_GENERATED_TRIGGERS += 1
-    trigger = '%s:%s:%s:%d/' % (COMMON_PREFIX, name, random_string(5), nr)
+    trigger = '%s%s:%s:%d/' % (COMMON_PREFIX, name, random_string(5), nr)
     CALLBACKS[trigger] = (function, continous)
     trigger1 = trigger[:len(COMMON_PREFIX)/2]
     trigger2 = trigger[len(trigger1):]
