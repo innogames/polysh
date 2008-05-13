@@ -134,8 +134,10 @@ class socket_notification_reader(asyncore.dispatcher):
             try:
                 c = self.recv(1)
             except socket.error, why:
-                assert why[0] == errno.EWOULDBLOCK
-                return
+                if why[0] == errno.EWOULDBLOCK:
+                    return
+                else:
+                    raise
             else:
                 self._do(c)
                 self.socket.setblocking(True)
