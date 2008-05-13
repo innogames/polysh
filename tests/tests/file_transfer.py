@@ -47,7 +47,6 @@ class TestFileTransfer(unittest.TestCase):
         child.sendline('cd $GSH_RANK')
         child.expect('ready \(5\)> ')
         child.sendline(':replicate localhost:../local/file')
-        child.expect('B transferred at ')
         child.expect(': Done transferring 20981760 bytes')
         child.expect('ready \(5\)> ')
         child.sendline('sha1sum file > SHA1SUM')
