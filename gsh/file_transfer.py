@@ -17,6 +17,7 @@
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
 import base64
+import os
 import random
 
 from gsh import callbacks
@@ -29,15 +30,25 @@ CMD_SEND = CMD_PREFIX + 'send "%s" "%s" "%s"\n'
 CMD_FORWARD = CMD_PREFIX + 'forward "%s" "%s"\n'
 CMD_RECEIVE = CMD_PREFIX + 'receive "%s" "%s"\n'
 
-def base64version(module):
-    path = module.__file__
+def find_pity_dot_py():
+    path = pity.__file__
     if not path.endswith('.py'):
         # Read from the .py source file
         dot_py_start = path.find('.py')
         if dot_py_start >= 0:
             path = path[:dot_py_start+3]
+
+    if not os.path.isabs(path):
+        path = os.getcwd() + '/' + path
+
+    return path
+
+# Save the full path, in case we change directory
+PITY_PATH = find_pity_dot_py()
+
+def base64version():
     python_lines = []
-    for line in file(path):
+    for line in file(PITY_PATH):
         hash_pos = line.find(chr(35))
         if hash_pos < 0:
             line = line[:hash_pos]
@@ -82,7 +93,7 @@ def replicate(shell, path):
         console_output('No other remote shell to replicate files to\n')
         return
     receiver = get_previous_shell(shell)
-    pity_py = base64version(pity)
+    pity_py = base64version()
     for i in dispatchers.all_instances():
         if not i.enabled:
             continue
