@@ -77,7 +77,7 @@ def complete(text, state):
             # Control command completion
             completion_results = complete_control_command(line, text)
         else:
-            if line.startswith('!'):
+            if line.startswith('!') and text and line.startswith(text):
                 dropped_exclam = True
                 text = text[1:]
             else:
