@@ -89,7 +89,14 @@ def process_input_buffer():
 
     if data.startswith('!'):
         ignore_sigchld(False)
-        retcode = subprocess.call(data[1:], shell=True)
+        try:
+            retcode = subprocess.call(data[1:], shell=True)
+        except OSError, e:
+            if e.errno == errno.EINTR:
+                console_output('Child was interrupted\n')
+                retcode = 0
+            else:
+                raise
         ignore_sigchld(True)
         if retcode > 0:
             console_output('Child returned %d\n' % retcode)
