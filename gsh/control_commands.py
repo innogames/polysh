@@ -276,7 +276,8 @@ def do_set_debug(command):
 
 def complete_replicate(line, text):
     if ':' not in text:
-        return [c[:-1] + ':' for c in complete_shells(line, text)]
+        enabled_shells =  complete_shells(line, text, lambda i: i.enabled)
+        return [c[:-1] + ':' for c in enabled_shells]
     shell, path = text.split(':')
     return [shell + ':' + p for p in complete_local_absolute_path(path)]
 
