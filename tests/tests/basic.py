@@ -52,5 +52,3 @@ class TestBasic(unittest.TestCase):
 
     def testLocalhostLocalhostLocalhost(self):
         self.localhost(3)
-
-TESTS = (TestBasic,)

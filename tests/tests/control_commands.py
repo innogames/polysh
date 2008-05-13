@@ -139,5 +139,3 @@ localhost: appended to the log
         actual_log = ''.join(file('/tmp/gsh_test.log').readlines()).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)
         os.remove('/tmp/gsh_test.log')
-
-TESTS = (TestControlCommands,)

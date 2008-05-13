@@ -32,5 +32,3 @@ class TestNonInteractive(unittest.TestCase):
         child.sendintr()
         child.expect(pexpect.EOF)
         child.close()
-
-TESTS=(TestNonInteractive,)

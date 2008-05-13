@@ -33,8 +33,13 @@ def iter_over_all_tests():
     tests = list(set([p[:p.index('.')] for p in py_files]))
     for name in tests:
         module = getattr(__import__('tests.' + name), name)
-        for test_class in module.TESTS:
-            suite = unittest.defaultTestLoader.loadTestsFromTestCase(test_class)
+        for module_content in dir(module):
+            candidate = getattr(module, module_content)
+            if not isinstance(candidate, type):
+                continue
+            if not issubclass(candidate, unittest.TestCase):
+                continue
+            suite = unittest.defaultTestLoader.loadTestsFromTestCase(candidate)
             for test_method in suite:
                 yield test_method
 
