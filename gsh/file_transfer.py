@@ -31,9 +31,11 @@ CMD_RECEIVE = CMD_PREFIX + 'receive "%s" "%s"\n'
 
 def base64version(module):
     path = module.__file__
-    if path.endswith('.pyc'):
+    if not path.endswith('.py'):
         # Read from the .py source file
-        path = path[:-1]
+        dot_py_start = path.find('.py')
+        if dot_py_start >= 0:
+            path = path[:dot_py_start+3]
     python_lines = []
     for line in file(path):
         hash_pos = line.find(chr(35))
