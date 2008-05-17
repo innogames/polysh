@@ -145,6 +145,7 @@ class remote_dispatcher(buffered_dispatcher):
         # No right prompt
         command_line = 'RPS1=;RPROMPT=;'
         command_line += 'TERM=ansi;'
+        command_line += 'unset HISTFILE;'
         prompt1, prompt2 = callbacks.add('prompt', self.seen_prompt_cb, True)
         command_line += 'PS1="%s""%s\n"\n' % (prompt1, prompt2)
         return command_line
