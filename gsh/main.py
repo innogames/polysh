@@ -60,9 +60,9 @@ def parse_cmdline():
     parser.add_option('--command', type='str', dest='command', default=None,
                       help='command to execute on the remote shells',
                       metavar='CMD')
-    parser.add_option('--ssh', type='str', dest='ssh',
-                      default='ssh -t %(host)s sh', metavar='SSH',
-                      help='ssh command to use [ssh -t %(host)s sh]')
+    def_ssh = 'ssh -t %(host)s bash --noprofile'
+    parser.add_option('--ssh', type='str', dest='ssh', default=def_ssh,
+                      metavar='SSH', help='ssh command to use [%s]' % def_ssh)
     parser.add_option('--log-file', type='str', dest='log_file',
                       help='file to log each machine conversation [none]')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
