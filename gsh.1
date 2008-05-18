@@ -30,7 +30,7 @@ Read hostnames from given file, one per line. Hostnames are given on the command
 Command to execute on the remote shells. This starts \fIgsh\fR in non\-interactive mode. It will start the remote shells, send the command, print the output and exit when the command is completed on all remote shells. This is the same as piping a command on the standard input.
 .TP 
 \fB\-\-ssh=SSH\fR
-Ssh command to use [ssh]. By default, \fIgsh\fR spawns remote shells using the ssh command, but another shell command can be specified here. For example, with \-\-ssh='usleep $((RANDOM*50)); exec ssh' a delay will be introduced to avoid all hosts accessing a NFS server at the same time. If the hostname should not be added at the end of the command, the macro %(host)s can be inserted where the hostname should be placed. Also, make sure the command you use launchs a pty, this may need the \-t option for ssh.
+Ssh command to use [ssh -t %(host)s bash --noprofile]. By default, \fIgsh\fR spawns lightweight remote shells using the ssh command, but another shell command can be specified here. For example, with \-\-ssh='usleep $((RANDOM*50)); exec ssh' a delay will be introduced to avoid all hosts accessing a NFS server at the same time. If the hostname should not be added at the end of the command, the macro %(host)s can be inserted where the hostname should be placed. Also, make sure the command you use launchs a pty, this may need the \-t option for ssh.
 .TP 
 \fB\-\-log\-file=LOG_FILE\fR
 File to log each machine conversation [none]. If specified, \fIgsh\fR will log all executed commands and their output in the file. The logging destination can be dynamically changed with the :log_output control command.
