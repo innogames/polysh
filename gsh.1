@@ -43,55 +43,56 @@ Print debugging information. Use this option to see exactly what is transferred 
 .SH "CONTROL COMMANDS"
 Control commands are special purpose commands prefixed by a colon and directed at \fIgsh\fR itself instead of the remote shells. These commands are:
 
-.TP 
+\" BEGIN AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION
+.TP
 \fB:add NAMES...\fR
 Add one or many remote shells.
-.TP 
+.TP
 \fB:chdir PATH\fR
 Change the current directory of \fIgsh\fR (not the remote shells).
-.TP 
+.TP
 \fB:disable [SHELLS...]\fR
 Disable sending commands to remote shells. The special characters * ? and [] work as expected.
-.TP 
+.TP
 \fB:enable [SHELLS...]\fR
 Enable sending commands to remote shells. The special characters * ? and [] work as expected.
-.TP 
+.TP
 \fB:export_rank\fR
-Set GSH_RANK and GSH_NR_SHELLS on enabled remote shells. The GSH_RANK shell variable uniquely identifies each shell with a number between 0 and GSH_NR_SHELLS \- 1. GSH_NR_SHELLS is the total number of enabled shells.
-.TP 
+Set GSH_RANK and GSH_NR_SHELLS on enabled remote shells. The GSH_RANK shell variable uniquely identifies each shell with a number between 0 and GSH_NR_SHELLS - 1. GSH_NR_SHELLS is the total number of enabled shells.
+.TP
 \fB:help [COMMAND]\fR
 List control commands or show their documentations.
-.TP 
+.TP
 \fB:hide_password\fR
 Do not echo the next typed line. This is useful when entering password. If debugging or logging is enabled, it will be disabled to avoid displaying a password.
-.TP 
+.TP
 \fB:list [SHELLS...]\fR
 List remote shells and their states. The special characters * ? and [] work as expected.
-.TP 
+.TP
 \fB:log_output [PATH]\fR
 Duplicate every console output into the given local file. If PATH is not given, restore the default behaviour of not logging the output.
-.TP 
+.TP
 \fB:purge [SHELLS...]\fR
 Delete disabled remote shells. This helps to have a shorter list. The special characters * ? and [] work as expected.
-.TP 
+.TP
 \fB:quit\fR
 Quit \fIgsh\fR.
-.TP 
+.TP
 \fB:reconnect [SHELLS...]\fR
 Try to reconnect to disconnected remote shells. The special characters * ? and [] work as expected.
-.TP 
+.TP
 \fB:rename [NEW_NAME]\fR
 Rename all enabled remote shells with the argument. The argument will be shell expanded on the remote processes. With no argument, the original hostname will be restored as the displayed name.
-.TP 
+.TP
 \fB:replicate SHELL:path\fR
 Copy a path from one remote shell to all others
-.TP 
+.TP
 \fB:reset_prompt [SHELLS...]\fR
 Change the prompt to be recognized by \fIgsh\fR. The special characters * ? and [] work as expected.
-.TP 
+.TP
 \fB:send_ctrl LETTER [SHELLS...]\fR
 Send a control character to remote shells. The first argument is the control character to send: c, d or z. The remaining optional arguments are the destination shells. The special characters * ? and [] work as expected.
-.TP 
+.TP
 \fB:set_debug y|n [SHELLS...]\fR
 Enable or disable debugging output for remote shells. The first argument is 'y' to enable the debugging output, 'n' to disable it. The remaining optional arguments are the selected shells. The special characters * ? and [] work as expected.
 .SH "AUTHOR"

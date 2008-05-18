@@ -19,6 +19,9 @@
 import asyncore
 import glob
 import os
+import shutil
+import sys
+import tempfile
 
 from gsh.control_commands_helpers import complete_shells, selected_shells
 from gsh.control_commands_helpers import list_control_commands
@@ -342,15 +345,43 @@ def do_log_output(command):
 def main():
     """
     Output a help text of each control command suitable for the man page
+    Run from the gsh top directory: python -m gsh.control_commands
     """
+    try:
+        man_page = file('gsh.1', 'r')
+    except IOError, e:
+        print e
+        print 'Please run "python -m gsh.control_commands" from the gsh top' + \
+              ' directory'
+        sys.exit(1)
+
+    updated_man_page_fd, updated_man_page_path = tempfile.mkstemp()
+    updated_man_page = os.fdopen(updated_man_page_fd, 'w')
+
+    for line in man_page:
+        print >> updated_man_page, line,
+        if 'BEGIN AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
+            break
+
     for name in list_control_commands():
-        print '<TP>'
+        print >> updated_man_page, '.TP'
         unstripped = get_control_command(name).__doc__.split('\n')
         lines = [l.strip() for l in unstripped]
         usage = lines[1].strip()
-        print '<fB>%s<fR>' % usage[7:]
-        help_text = ' '.join(lines[2:]).replace('gsh', '<fI>gsh<fR>').strip()
-        print help_text
+        print >> updated_man_page, '\\fB%s\\fR' % usage[7:]
+        help_text = ' '.join(lines[2:]).replace('gsh', '\\fIgsh\\fR').strip()
+        print >> updated_man_page, help_text
+
+    for line in man_page:
+        if 'END AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
+            break
+
+    for line in man_page:
+        print >> updated_man_page, line,
+
+    man_page.close()
+    updated_man_page.close()
+    shutil.move(updated_man_page_path, 'gsh.1')
 
 if __name__ == '__main__':
     main()
