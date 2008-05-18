@@ -374,6 +374,7 @@ def main():
 
     for line in man_page:
         if 'END AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
+            print >> updated_man_page, line,
             break
 
     for line in man_page:
