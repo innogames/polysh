@@ -72,6 +72,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.change_name(hostname)
         self.init_string = self.configure_tty() + self.set_prompt()
         self.init_string_sent = False
+        self.read_in_state_not_started = ''
         self.command = options.command
 
     def launch_ssh(self, name):
@@ -98,6 +99,8 @@ class remote_dispatcher(buffered_dispatcher):
         if state is not self.state:
             if self.debug:
                 self.print_debug('state => %s' % (STATE_NAMES[state]))
+            if self.state == STATE_NOT_STARTED:
+                self.read_in_state_not_started = ''
             self.state = state
 
     def disconnect(self):
@@ -111,6 +114,9 @@ class remote_dispatcher(buffered_dispatcher):
         self.write_buffer = ''
         self.active = False
         self.set_enabled(False)
+        if self.read_in_state_not_started:
+            self.print_lines(self.read_in_state_not_started)
+            self.read_in_state_not_started = ''
         if options.abort_error and self.state is STATE_NOT_STARTED:
             raise asyncore.ExitNow(1)
 
@@ -216,6 +222,7 @@ class remote_dispatcher(buffered_dispatcher):
             elif self.state in (STATE_IDLE, STATE_RUNNING):
                 self.print_lines(line)
             elif self.state is STATE_NOT_STARTED:
+                self.read_in_state_not_started += line
                 if 'The authenticity of host' in line:
                     msg = line.strip('\n') + ' Closing connection.'
                     self.disconnect()

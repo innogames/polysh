@@ -342,6 +342,25 @@ def do_log_output(command):
         remote_dispatcher.options.log_file = None
         console_output('Logging disabled\n')
 
+def complete_print_read_buffer(line, text):
+    return complete_shells(line, text, lambda i: i.read_buffer or
+                                                 i.read_in_state_not_started)
+
+def do_print_read_buffer(command):
+    """
+    Usage: :print_read_buffer [SHELLS...]
+    Print the data read by remote shells.
+    The special characters * ? and [] work as expected.
+    """
+    for i in selected_shells(command):
+        if i.read_buffer:
+            i.print_lines(i.read_buffer)
+            i.read_buffer = ''
+
+        if i.read_in_state_not_started:
+            i.print_lines(i.read_in_state_not_started)
+            i.read_in_state_not_started = ''
+
 def main():
     """
     Output a help text of each control command suitable for the man page
