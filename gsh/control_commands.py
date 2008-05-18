@@ -126,7 +126,9 @@ def do_send_ctrl(command):
     """
     Usage: :send_ctrl LETTER [SHELLS...]
     Send a control character to remote shells.
-    The first argument is the control character to send: c, d or z.
+    The first argument is the control character to send like c, d or z.
+    Note that these three control characters can be sent simply by typing them
+    into gsh.
     The remaining optional arguments are the destination shells.
     The special characters * ? and [] work as expected.
     """
