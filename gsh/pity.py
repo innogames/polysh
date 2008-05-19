@@ -191,14 +191,18 @@ def do_receive(gsh_prefix):
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: os.kill(0, signal.SIGKILL))
     cmd = sys.argv[1]
-    if cmd == 'send' and len(sys.argv) >= 3:
-        do_send(sys.argv[2])
-    elif cmd == 'forward' and len(sys.argv) >= 2:
-        do_forward(sys.argv[2:])
-    elif cmd == 'receive' and len(sys.argv) >= 2:
-        do_receive(sys.argv[2:])
-    else:
-        print 'Unknown command:', sys.argv
+    try:
+        if cmd == 'send' and len(sys.argv) >= 3:
+            do_send(sys.argv[2])
+        elif cmd == 'forward' and len(sys.argv) >= 2:
+            do_forward(sys.argv[2:])
+        elif cmd == 'receive' and len(sys.argv) >= 2:
+            do_receive(sys.argv[2:])
+        else:
+            print 'Unknown command:', sys.argv
+            sys.exit(1)
+    except OSError, e:
+        print e
         sys.exit(1)
 
 if __name__ == '__main__':
