@@ -139,7 +139,10 @@ class remote_dispatcher(buffered_dispatcher):
         if options.interactive:
             self.change_state(STATE_IDLE)
         elif self.command:
+            p1, p2 = callbacks.add('real prompt ends', lambda d: None, True)
+            self.dispatch_command('PS1="%s""%s\n"\n' % (p1, p2))
             self.dispatch_command(self.command + '\n')
+            self.dispatch_command(self.init_string)
             self.command = None
         else:
             self.change_state(STATE_TERMINATED)
