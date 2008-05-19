@@ -247,7 +247,8 @@ class remote_dispatcher(buffered_dispatcher):
     def print_unfinished_line(self):
         """The unfinished line stayed long enough in the buffer to be printed"""
         if self.state is STATE_RUNNING:
-            self.print_lines(self.read_buffer)
+            if not callbacks.process(self.read_buffer):
+                self.print_lines(self.read_buffer)
             self.read_buffer = ''
 
     def writable(self):
