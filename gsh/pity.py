@@ -31,6 +31,10 @@ import time
 from threading import Event, Thread
 from Queue import Queue
 
+# Somewhat protect the stdin, be sure we read what has been sent by gsh, and
+# not some garbage entered by the user.
+STDIN_PREFIX = '!?#%!'
+
 UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
 
 def human_unit(size):
@@ -125,6 +129,18 @@ def init_listening_socket(gsh_prefix):
     print '%s%s:%s' % (prefix, host, port)
     return s
 
+def read_line():
+    line = ''
+    while 1:
+        c = os.read(sys.stdin.fileno(), 1)
+        if c == '\n':
+            break
+        line = line + c
+        if len(line) > 1024:
+            print 'Received input is too large'
+            sys.exit(1)
+    return line
+
 def get_destination():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
@@ -132,12 +148,13 @@ def get_destination():
     new_settings[3] = new_settings[3] & ~2 # 3:lflags 2:ICANON
     new_settings[6][6] = '\000' # Set VMIN to zero for lookahead only
     termios.tcsetattr(fd, 1, new_settings) # 1:TCSADRAIN
-    line = ''
-    while 1:
-        c = os.read(sys.stdin.fileno(), 1)
-        if c == '\n':
+    while True:
+        line = read_line()
+        start = string.find(line, STDIN_PREFIX)
+        if start >= 0:
+            line = line[start + len(STDIN_PREFIX):]
             break
-        line = line + c
+
     termios.tcsetattr(fd, 1, old_settings) # 1:TCSADRAIN
     split = string.split(line, ':', 1)
     host = split[0]

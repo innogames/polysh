@@ -61,7 +61,7 @@ def base64version():
 
 def file_transfer_cb(dispatcher, host_port):
     previous_shell = get_previous_shell(dispatcher)
-    previous_shell.dispatch_write(host_port + '\n')
+    previous_shell.dispatch_write(pity.STDIN_PREFIX + host_port + '\n')
 
 def get_infos():
     """Returns (first, last)"""
