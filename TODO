@@ -1,6 +1,5 @@
 o "(yes date | head -n 1000; echo ps) | ./gsh.py --ssh='bash;:' dummy" does not
 terminate because of the readline usage in bash.
-o restore logging & debugging after hide_password
 o :upload => dummy remote_dispatcher for /bin/sh, trigger tar c .. & pity.py replicate
 o pity: better Ctrl-C handling
 o pity: be sure to not read user submitted data on stdin, add a trigger around the input
