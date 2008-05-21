@@ -148,7 +148,7 @@ def get_destination():
     new_settings[3] = new_settings[3] & ~2 # 3:lflags 2:ICANON
     new_settings[6][6] = '\000' # Set VMIN to zero for lookahead only
     termios.tcsetattr(fd, 1, new_settings) # 1:TCSADRAIN
-    while True:
+    while 1:
         line = read_line()
         start = string.find(line, STDIN_PREFIX)
         if start >= 0:
