@@ -26,7 +26,6 @@ import termios
 from gsh.buffered_dispatcher import buffered_dispatcher
 from gsh import callbacks
 from gsh.console import console_output
-from gsh import file_transfer
 
 # Either the remote shell is expecting a command or one is already running
 STATE_NAMES = ['not_started', 'idle', 'running', 'terminated']
