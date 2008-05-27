@@ -296,6 +296,9 @@ def do_replicate(command):
         console_output('Usage: :replicate SHELL:REMOTE_PATH\n')
         return
     shell_name, path = command.split(':', 1)
+    if not path:
+        console_output('No remote path given\n')
+        return
     for shell in dispatchers.all_instances():
         if shell.display_name == shell_name:
             if not shell.enabled:
@@ -315,7 +318,10 @@ def do_upload(command):
     Usage: :upload LOCAL_PATH
     Upload the specified local path to enabled remote shells.
     """
-    file_transfer.upload(command)
+    if command:
+        file_transfer.upload(command)
+    else:
+        console_output('No local path given\n')
 
 def do_export_rank(command):
     """
