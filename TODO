@@ -1,3 +1,2 @@
 o "(yes date | head -n 1000; echo ps) | ./gsh.py --ssh='bash;:' dummy" does not
 terminate because of the readline usage in bash.
-o :upload => dummy remote_dispatcher for /bin/sh, trigger tar c .. & pity.py replicate
