@@ -289,11 +289,11 @@ def complete_replicate(line, text):
 
 def do_replicate(command):
     """
-    Usage: :replicate SHELL:path
+    Usage: :replicate SHELL:PATH
     Copy a path from one remote shell to all others
     """
     if ':' not in command:
-        console_output('Usage: :replicate SHELL:path\n')
+        console_output('Usage: :replicate SHELL:PATH\n')
         return
     shell_name, path = command.split(':', 1)
     for shell in dispatchers.all_instances():
