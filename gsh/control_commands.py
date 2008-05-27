@@ -106,7 +106,7 @@ def complete_chdir(line, text):
 
 def do_chdir(command):
     """
-    Usage: :chdir PATH
+    Usage: :chdir LOCAL_PATH
     Change the current directory of gsh (not the remote shells).
     """
     try:
@@ -289,11 +289,11 @@ def complete_replicate(line, text):
 
 def do_replicate(command):
     """
-    Usage: :replicate SHELL:PATH
+    Usage: :replicate SHELL:REMOTE_PATH
     Copy a path from one remote shell to all others
     """
     if ':' not in command:
-        console_output('Usage: :replicate SHELL:PATH\n')
+        console_output('Usage: :replicate SHELL:REMOTE_PATH\n')
         return
     shell_name, path = command.split(':', 1)
     for shell in dispatchers.all_instances():
@@ -330,9 +330,9 @@ def complete_log_output(line, text):
 
 def do_log_output(command):
     """
-    Usage: :log_output [PATH]
+    Usage: :log_output [LOCAL_PATH]
     Duplicate every console output into the given local file.
-    If PATH is not given, restore the default behaviour of not logging the
+    If LOCAL_PATH is not given, restore the default behaviour of not logging the
     output.
     """
     if command:

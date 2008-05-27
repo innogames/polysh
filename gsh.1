@@ -47,7 +47,7 @@ Control commands are special purpose commands prefixed by a colon and directed a
 \fB:add NAMES...\fR
 Add one or many remote shells.
 .TP
-\fB:chdir PATH\fR
+\fB:chdir LOCAL_PATH\fR
 Change the current directory of \fIgsh\fR (not the remote shells).
 .TP
 \fB:disable [SHELLS...]\fR
@@ -68,8 +68,8 @@ Do not echo the next typed line. This is useful when entering password. If debug
 \fB:list [SHELLS...]\fR
 List remote shells and their states. The special characters * ? and [] work as expected.
 .TP
-\fB:log_output [PATH]\fR
-Duplicate every console output into the given local file. If PATH is not given, restore the default behaviour of not logging the output.
+\fB:log_output [LOCAL_PATH]\fR
+Duplicate every console output into the given local file. If LOCAL_PATH is not given, restore the default behaviour of not logging the output.
 .TP
 \fB:print_read_buffer [SHELLS...]\fR
 Print the data read by remote shells. The special characters * ? and [] work as expected.
@@ -86,7 +86,7 @@ Try to reconnect to disconnected remote shells. The special characters * ? and [
 \fB:rename [NEW_NAME]\fR
 Rename all enabled remote shells with the argument. The argument will be shell expanded on the remote processes. With no argument, the original hostname will be restored as the displayed name.
 .TP
-\fB:replicate SHELL:PATH\fR
+\fB:replicate SHELL:REMOTE_PATH\fR
 Copy a path from one remote shell to all others
 .TP
 \fB:reset_prompt [SHELLS...]\fR
