@@ -24,6 +24,7 @@ from gsh import callbacks
 from gsh import pity
 from gsh.console import console_output
 from gsh import remote_dispatcher
+from gsh import dispatchers
 
 CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" '
 
@@ -66,7 +67,6 @@ def file_transfer_cb(dispatcher, host_port):
 
 def get_infos():
     """Returns (first, last)"""
-    from gsh import dispatchers
     first = None
     last = None
     for i in dispatchers.all_instances():
@@ -77,7 +77,6 @@ def get_infos():
     return first, last
 
 def get_previous_shell(shell):
-    from gsh import dispatchers
     shells = [i for i in dispatchers.all_instances() if i.enabled]
     current_pos = shells.index(shell)
     while True:
@@ -87,7 +86,6 @@ def get_previous_shell(shell):
             return prev_shell
 
 def replicate(shell, path):
-    from gsh import dispatchers
     nr_peers = len([i for i in dispatchers.all_instances() if i.enabled])
     if nr_peers <= 1:
         console_output('No other remote shell to replicate files to\n')
