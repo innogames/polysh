@@ -33,7 +33,7 @@ Command to execute on the remote shells. This starts \fIgsh\fR in non\-interacti
 Ssh command to use [ssh -t %(host)s bash --noprofile]. By default, \fIgsh\fR spawns lightweight remote shells using the ssh command, but another shell command can be specified here. For example, with \-\-ssh='usleep $((RANDOM*50)); exec ssh' a delay will be introduced to avoid all hosts accessing a NFS server at the same time. If the hostname should not be added at the end of the command, the macro %(host)s can be inserted where the hostname should be placed. Also, make sure the command you use launchs a pty, this may need the \-t option for ssh.
 .TP 
 \fB\-\-log\-file=LOG_FILE\fR
-File to log each machine conversation [none]. If specified, \fIgsh\fR will log all executed commands and their output in the file. The logging destination can be dynamically changed with the :log_output control command.
+File to log each machine conversation [none]. If specified, \fIgsh\fR will log all executed commands and their output in the file. The logging destination can be dynamically changed with the :set_log control command.
 .TP 
 \fB\-\-abort\-errors\fR
 Abort if some shell fails to initialize [ignore]. By default, \fIgsh\fR just logs an error when it cannot succesfully open a remote shell. With this option, it exits with a failure.
@@ -68,9 +68,6 @@ Do not echo the next typed line. This is useful when entering password. If debug
 \fB:list [SHELLS...]\fR
 List remote shells and their states. The special characters * ? and [] work as expected.
 .TP
-\fB:log_output [LOCAL_PATH]\fR
-Duplicate every console output into the given local file. If LOCAL_PATH is not given, restore the default behaviour of not logging the output.
-.TP
 \fB:print_read_buffer [SHELLS...]\fR
 Print the data read by remote shells. The special characters * ? and [] work as expected.
 .TP
@@ -97,6 +94,9 @@ Send a control character to remote shells. The first argument is the control cha
 .TP
 \fB:set_debug y|n [SHELLS...]\fR
 Enable or disable debugging output for remote shells. The first argument is 'y' to enable the debugging output, 'n' to disable it. The remaining optional arguments are the selected shells. The special characters * ? and [] work as expected.
+.TP
+\fB:set_log [LOCAL_PATH]\fR
+Duplicate every console input/output into the given local file. If LOCAL_PATH is not given, restore the default behaviour of not logging.
 \" END AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION
 .SH "AUTHOR"
 Guillaume Chazarain <guichaz@gmail.com>

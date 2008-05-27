@@ -111,18 +111,18 @@ class TestControlCommands(unittest.TestCase):
             child.sendline('echo %s' % msg)
             child.expect('localhost: %s' % msg)
         testEcho('not logging')
-        child.sendline(':log_output')
+        child.sendline(':set_log')
         testEcho('still not logging')
         child.sendline('!rm -f /tmp/gsh_test.log')
         testEcho('still not logging')
-        child.sendline(':log_output /tmp/gsh_test.log')
+        child.sendline(':set_log /tmp/gsh_test.log')
         testEcho('now logging')
         testEcho('still logging')
-        child.sendline(':log_output')
+        child.sendline(':set_log')
         testEcho('back to no logging')
-        child.sendline(':log_output /tmp/gsh_test.lo\t')
+        child.sendline(':set_log /tmp/gsh_test.lo\t')
         testEcho('appended to the log')
-        child.sendline(':log_output')
+        child.sendline(':set_log')
         child.sendeof()
         child.expect(pexpect.EOF)
 
@@ -131,10 +131,10 @@ class TestControlCommands(unittest.TestCase):
 localhost: now logging
 > echo still logging
 localhost: still logging
-> :log_output
+> :set_log
 > echo appended to the log
 localhost: appended to the log
-> :log_output
+> :set_log
 """.strip()
         actual_log = ''.join(file('/tmp/gsh_test.log').readlines()).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)

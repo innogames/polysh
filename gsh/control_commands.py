@@ -325,15 +325,14 @@ def do_export_rank(command):
         if shell.enabled:
             shell.dispatch_command('export GSH_NR_SHELLS=%d\n' % rank)
 
-def complete_log_output(line, text):
+def complete_set_log(line, text):
     return [p for p in glob.glob(expand_local_path(text or './') + '*')]
 
-def do_log_output(command):
+def do_set_log(command):
     """
-    Usage: :log_output [LOCAL_PATH]
-    Duplicate every console output into the given local file.
-    If LOCAL_PATH is not given, restore the default behaviour of not logging the
-    output.
+    Usage: :set_log [LOCAL_PATH]
+    Duplicate every console input/output into the given local file.
+    If LOCAL_PATH is not given, restore the default behaviour of not logging.
     """
     if command:
         try:
