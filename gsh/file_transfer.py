@@ -23,6 +23,7 @@ import random
 from gsh import callbacks
 from gsh import pity
 from gsh.console import console_output
+from gsh import remote_dispatcher
 
 CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" '
 
@@ -87,7 +88,6 @@ def get_previous_shell(shell):
 
 def replicate(shell, path):
     from gsh import dispatchers
-    from gsh import remote_dispatcher
     nr_peers = len([i for i in dispatchers.all_instances() if i.enabled])
     if nr_peers <= 1:
         console_output('No other remote shell to replicate files to\n')
@@ -106,4 +106,28 @@ def replicate(shell, path):
         else:
             i.dispatch_command(CMD_RECEIVE % (pity_py, transfer1, transfer2))
         i.change_state(remote_dispatcher.STATE_RUNNING)
+
+class local_uploader(remote_dispatcher.remote_dispatcher):
+    def __init__(self, path_to_upload):
+        remote_dispatcher.remote_dispatcher.__init__(self, '.')
+        self.path_to_upload = path_to_upload
+        self.upload_started = False
+
+    def launch_ssh(self, name):
+        os.execl('/bin/sh', 'sh')
+
+    def change_state(self, state):
+        remote_dispatcher.remote_dispatcher.change_state(self, state)
+        if state != remote_dispatcher.STATE_IDLE:
+            return
+
+        if not self.upload_started:
+            replicate(self, self.path_to_upload)
+            self.upload_started = True
+        else:
+            self.disconnect()
+            self.close()
+
+def upload(local_path):
+    local_shell = local_uploader(local_path)
 

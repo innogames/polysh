@@ -11,7 +11,7 @@ o Shell commands prefixed by an exclamation mark are run locally
 o Added the :chdir control command to change the local directory
 o Added the :hide_password control command, to use with su(1) for example
 o Added the :reset_prompt control command, for use when launching a shell
-o Added the :replicate control command to do some file transfer between shells
+o Added the :replicate and :upload control commands to do some file transfer
 o Added the :export_rank control command to uniquely identify each shell
 o Added the :print_read_buffer control command to see what gsh just read
 o Common SSH key problems are detected and some help is printed

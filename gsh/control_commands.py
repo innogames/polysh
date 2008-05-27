@@ -307,6 +307,16 @@ def do_replicate(command):
         return
     file_transfer.replicate(shell, path)
 
+def complete_upload(line, text):
+    return glob.glob(expand_local_path(text) + '*')
+
+def do_upload(command):
+    """
+    Usage: :upload LOCAL_PATH
+    Upload the specified local path to enabled remote shells.
+    """
+    file_transfer.upload(command)
+
 def do_export_rank(command):
     """
     Usage: :export_rank
