@@ -67,7 +67,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testReconnect(self):
-        child = launch_gsh(['localhost', 'localhost'])
+        child = launch_gsh(['localhost'] * 2)
         child.expect('ready \(2\)> ')
         child.sendline(':disable localhost')
         child.sendline('exit')
