@@ -106,6 +106,9 @@ class TestControlCommands(unittest.TestCase):
         child.expect('ready \(1\)> ')
         child.sendline(':chdir /does/not/exist')
         child.expect("\[Errno 2\] .*: '/does/not/exist'")
+        child.sendline(':chdir /usr/sbi\t/does/not/exist')
+        child.expect('/usr/sbin')
+        child.expect('ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
 
