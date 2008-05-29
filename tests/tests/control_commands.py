@@ -205,7 +205,7 @@ localhost: appended to the log
         child.sendline(':pur\t\t')
         child.expect('ready \(2\)> ')
         child.sendline(':list')
-        child.sendline('total: 2')
+        child.expect('total: 2')
         child.sendeof()
         child.expect(pexpect.EOF)
 
