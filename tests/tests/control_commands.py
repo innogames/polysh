@@ -25,6 +25,11 @@ class TestControlCommands(unittest.TestCase):
     def testControl(self):
         child = launch_gsh(['localhost'])
         child.expect('ready \(1\)> ')
+        child.sendline(':')
+        child.expect('ready \(1\)> ')
+        child.sendline(':unknown')
+        child.expect('Unknown control command: unknown')
+        child.expect('ready \(1\)> ')
         child.sendline('cat')
         child.expect('waiting \(1/1\)> ')
         child.sendline(':send_ctrl \tz\t\t')
