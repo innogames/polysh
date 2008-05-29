@@ -53,6 +53,8 @@ class TestControlCommands(unittest.TestCase):
         child.sendline(':enable local\t')
         child.sendline(':list')
         child.expect('1 active shells, 0 dead shells, total: 1')
+        child.sendline(':list local\t')
+        child.expect('1 active shells, 0 dead shells, total: 1')
         child.sendline(':send_ctrl c')
         child.expect('ready \(1\)> ')
         child.sendline(':quit')
