@@ -101,6 +101,9 @@ class TestControlCommands(unittest.TestCase):
         child.expect('ready \(1\)> ')
         child.sendline('echo /dev/nul\t')
         child.expect('localhost: /dev/null')
+        child.expect('ready \(1\)> ')
+        child.sendline('echo /sbi\t')
+        child.expect('localhost: /sbin/')
         child.sendeof()
         child.expect(pexpect.EOF)
 
