@@ -65,17 +65,6 @@ def file_transfer_cb(dispatcher, host_port):
     previous_shell = get_previous_shell(dispatcher)
     previous_shell.dispatch_write(pity.STDIN_PREFIX + host_port + '\n')
 
-def get_infos():
-    """Returns (first, last)"""
-    first = None
-    last = None
-    for i in dispatchers.all_instances():
-        if i.enabled:
-            if not first:
-                first = i
-            last = i
-    return first, last
-
 def get_previous_shell(shell):
     shells = [i for i in dispatchers.all_instances() if i.enabled]
     current_pos = shells.index(shell)
