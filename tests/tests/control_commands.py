@@ -139,3 +139,19 @@ localhost: appended to the log
         actual_log = ''.join(file('/tmp/gsh_test.log').readlines()).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)
         os.remove('/tmp/gsh_test.log')
+
+    def testHidePassword(self):
+        child = launch_gsh(['localhost'])
+        child.expect('ready \(1\)> ')
+        child.sendline('# passwordnotprotected')
+        child.expect('ready \(1\)> ')
+        child.sendline(':hide_password')
+        child.expect('ready \(1\)> ')
+        child.sendline('# passwordprotected')
+        child.expect('ready \(1\)> ')
+        child.sendline('echo password\t')
+        child.expect('passwordnotprotected')
+        child.expect('ready \(1\)> ')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
