@@ -369,10 +369,6 @@ def do_print_read_buffer(command):
     The special characters * ? and [] work as expected.
     """
     for i in selected_shells(command):
-        if i.read_buffer:
-            i.print_lines(i.read_buffer)
-            i.read_buffer = ''
-
         if i.read_in_state_not_started:
             i.print_lines(i.read_in_state_not_started)
             i.read_in_state_not_started = ''
