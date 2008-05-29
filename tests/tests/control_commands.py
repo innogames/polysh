@@ -180,3 +180,12 @@ localhost: appended to the log
         child.sendeof()
         child.expect(pexpect.EOF)
 
+    def testResetPrompt(self):
+        child = launch_gsh(['localhost'])
+        child.expect('ready \(1\)> ')
+        child.sendline('bash')
+        child.sendline(':reset_prompt l\t')
+        child.expect('ready \(1\)> ')
+        child.sendline(':quit')
+        child.expect(pexpect.EOF)
+
