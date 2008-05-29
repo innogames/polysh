@@ -16,21 +16,20 @@
 #
 # Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
 
+import glob
 import os
 import readline
 
-def complete_local_absolute_path(path):
-    if not path.startswith('/'):
-        return []
-    dirname, basename = os.path.split(path)
-    if not dirname.endswith('/'):
-        dirname += '/'
-    paths = [dirname + p for p in os.listdir(dirname) if p.startswith(basename)]
+from gsh.control_commands_helpers import complete_control_command
+from gsh.control_commands_helpers import expand_local_path
+
+def complete_local_path(path):
     def get_suffix(p):
         if os.path.isdir(p):
             return '/'
         return ''
-    paths = [p + get_suffix(p) for p in paths]
+    path = expand_local_path(path)
+    paths = [p + get_suffix(p) for p in glob.glob(path + '*')]
     return paths
 
 def remove_dupes(words):
@@ -69,7 +68,6 @@ user_commands_in_path = read_commands_in_path()
 
 def complete(text, state):
     """On tab press, return the next possible completion"""
-    from gsh.control_commands_helpers import complete_control_command
     global completion_results
     if state == 0:
         line = readline.get_line_buffer()
@@ -83,8 +81,8 @@ def complete(text, state):
             else:
                 dropped_exclam = False
             completion_results = []
-            # Complete absolute paths
-            completion_results += complete_local_absolute_path(text)
+            # Complete local paths
+            completion_results += complete_local_path(text)
             # Complete from history
             l = len(text)
             completion_results += [w + ' ' for w in history_words if \

@@ -17,7 +17,6 @@
 # Copyright (c) 2006, 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
 import asyncore
-import glob
 import os
 import shutil
 import sys
@@ -27,7 +26,7 @@ from gsh.control_commands_helpers import complete_shells, selected_shells
 from gsh.control_commands_helpers import list_control_commands
 from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
-from gsh.completion import complete_local_absolute_path
+from gsh.completion import complete_local_path
 from gsh.console import console_output
 from gsh import dispatchers
 from gsh import remote_dispatcher
@@ -101,8 +100,7 @@ def do_quit(command):
     raise asyncore.ExitNow(0)
 
 def complete_chdir(line, text):
-    return [p + '/' for p in glob.glob(expand_local_path(text) + '*') if
-                                                               os.path.isdir(p)]
+    return filter(os.path.isdir, complete_local_path(text))
 
 def do_chdir(command):
     """
@@ -285,7 +283,7 @@ def complete_replicate(line, text):
         enabled_shells =  complete_shells(line, text, lambda i: i.enabled)
         return [c[:-1] + ':' for c in enabled_shells]
     shell, path = text.split(':')
-    return [shell + ':' + p for p in complete_local_absolute_path(path)]
+    return [shell + ':' + p for p in complete_local_path(path)]
 
 def do_replicate(command):
     """
@@ -311,7 +309,7 @@ def do_replicate(command):
     file_transfer.replicate(shell, path)
 
 def complete_upload(line, text):
-    return glob.glob(expand_local_path(text) + '*')
+    return complete_local_path(text)
 
 def do_upload(command):
     """
@@ -342,7 +340,7 @@ def do_export_rank(command):
             shell.dispatch_command('export GSH_NR_SHELLS=%d\n' % rank)
 
 def complete_set_log(line, text):
-    return [p for p in glob.glob(expand_local_path(text or './') + '*')]
+    return complete_local_path(text)
 
 def do_set_log(command):
     """
