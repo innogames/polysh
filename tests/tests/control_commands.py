@@ -148,6 +148,10 @@ class TestControlCommands(unittest.TestCase):
         child.sendline(':set_log /tmp/gsh_test.lo\t')
         testEcho('appended to the log')
         child.sendline(':set_log')
+        child.expect('ready \(1\)> ')
+        child.sendline(':set_log /no-permission')
+        child.expect("[Errno 13] .*: '/no-permission'")
+        child.expect('Logging disabled')
         child.sendeof()
         child.expect(pexpect.EOF)
 
