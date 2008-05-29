@@ -189,3 +189,19 @@ localhost: appended to the log
         child.sendline(':quit')
         child.expect(pexpect.EOF)
 
+    def testPurge(self):
+        child = launch_gsh(['localhost'] * 3)
+        child.expect('ready \(3\)> ')
+        child.sendline(':disable localhost#*')
+        child.expect('ready \(1\)> ')
+        child.sendline('kill -9 $$')
+        child.expect('ready \(0\)> ')
+        child.sendline(':enable')
+        child.expect('ready \(2\)> ')
+        child.sendline(':pur\t\t')
+        child.expect('ready \(2\)> ')
+        child.sendline(':list')
+        child.sendline('total: 2')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
