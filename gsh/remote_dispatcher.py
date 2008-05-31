@@ -48,7 +48,15 @@ def main_loop_iteration(timeout=None):
 
 def log(msg):
     if options.log_file:
-        options.log_file.write(msg)
+        fd = options.log_file.fileno()
+        while msg:
+            try:
+                written = os.write(fd, msg)
+            except OSError, e:
+                print 'Exception while writing log:', options.log_file.name
+                print e
+                raise asyncore.ExitNow(1)
+            msg = msg[written:]
 
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
