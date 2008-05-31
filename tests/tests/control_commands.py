@@ -176,7 +176,9 @@ localhost: still logging
 localhost: appended to the log
 > :set_log
 """.strip()
-        actual_log = ''.join(file('/tmp/gsh_test.log').readlines()).strip()
+        log = file('/tmp/gsh_test.log')
+        log_lines = [l for l in log.readlines() if not l.startswith('[dbg] ')]
+        actual_log = ''.join(log_lines).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)
         os.remove('/tmp/gsh_test.log')
 
