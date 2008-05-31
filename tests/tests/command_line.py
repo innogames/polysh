@@ -58,3 +58,18 @@ class TestCommandLine(unittest.TestCase):
         child.expect(' function calls in ')
         child.expect('Ordered by')
         child.expect(pexpect.EOF)
+
+    def testInitError(self):
+        child = launch_gsh(['--ssh=echo message', 'localhost'])
+        child.expect('message localhost')
+        child.expect(pexpect.EOF)
+        child = launch_gsh(['--ssh=echo The authenticity of host', 'l'])
+        child.expect('Closing connection')
+        child.expect('Consider manually connecting or using ssh-keyscan')
+        child.expect(pexpect.EOF)
+        child = launch_gsh(['--ssh=echo REMOTE HOST IDENTIFICATION '
+                            'HAS CHANGED', 'l'])
+        child.expect('Remote host identification has changed')
+        child.expect('Consider manually connecting or using ssh-keyscan')
+        child.expect(pexpect.EOF)
+
