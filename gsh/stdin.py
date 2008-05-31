@@ -78,9 +78,6 @@ def process_input_buffer():
     be called in the main thread"""
     from gsh.control_commands_helpers import handle_control_command
     data = the_stdin_thread.input_buffer.get()
-    if not data:
-        return
-
     remote_dispatcher.log('> ' + data)
 
     if data.startswith(':'):
