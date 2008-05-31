@@ -162,7 +162,8 @@ def write_main_socket(c):
         try:
             the_stdin_thread.socket_write.recv(1)
         except socket.error, e:
-            assert e[0] == errno.EINTR
+            if e[0] != errno.EINTR:
+                raise
         else:
             break
 

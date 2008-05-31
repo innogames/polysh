@@ -108,7 +108,8 @@ def main():
     try:
         shutil.rmtree(PID_DIR)
     except OSError, e:
-        assert e.errno == errno.ENOENT
+        if e.errno != errno.ENOENT:
+            raise
     os.mkdir(PID_DIR)
     if args:
         import_specified_tests(args)
