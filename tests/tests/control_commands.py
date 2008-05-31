@@ -303,5 +303,5 @@ localhost: appended to the log
         for i in xrange(3):
             child.expect('2h[ #][ 12]: message')
         child.expect('waiting \(3/3\)> ')
-        child.sendline(':quit')
+        child.sendintr()
         child.expect(pexpect.EOF)
