@@ -32,3 +32,26 @@ class TestNonInteractive(unittest.TestCase):
         child.sendintr()
         child.expect(pexpect.EOF)
         child.close()
+
+    def testSimpleCommandStdin(self):
+        child = launch_gsh(['localhost'], input_data='echo line')
+        child.expect('localhost: line')
+        child.expect(pexpect.EOF)
+
+    def testMultipleCommandStdin(self):
+        commands = """
+        echo first
+        echo next
+        echo last
+        """
+        child = launch_gsh(['localhost'], input_data=commands)
+        child.expect('localhost: first')
+        child.expect('localhost: next')
+        child.expect('localhost: last')
+        child.expect(pexpect.EOF)
+
+    def testInvalidCommandStdin(self):
+        child = launch_gsh(['localhost', '--command=date'], input_data='uptime')
+        child.expect('--command and reading from stdin are incompatible')
+        child.expect(pexpect.EOF)
+
