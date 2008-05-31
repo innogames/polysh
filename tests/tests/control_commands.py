@@ -188,6 +188,7 @@ class TestControlCommands(unittest.TestCase):
         child.sendline(':set_log /no-permission')
         child.expect("[Errno 13] .*: '/no-permission'")
         child.expect('Logging disabled')
+        child.expect('ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
 
