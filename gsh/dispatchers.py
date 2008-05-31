@@ -107,7 +107,7 @@ def update_terminal_size():
 def format_info(info_list):
     """Turn a 2-dimension list of strings into a 1-dimension list of strings
     with correct spacing"""
-    info_list.sort(key=lambda i:int(i[1][3:]))
+    info_list.sort(key=lambda i:i[0])
     max_lengths = []
     if info_list:
         nr_columns = len(info_list[0])
@@ -121,6 +121,6 @@ def format_info(info_list):
             orig_str = str(info[str_id])
             indent = max_lengths[str_id] - len(orig_str)
             info[str_id] = orig_str + indent * ' '
-        info_list[info_id] = ' '.join(info)
+        info_list[info_id] = ' '.join(info) + '\n'
 
 

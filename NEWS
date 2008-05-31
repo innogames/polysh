@@ -16,6 +16,7 @@ o Added the :export_rank control command to uniquely identify each shell
 o Added the :print_read_buffer control command to see what gsh just read
 o Common SSH key problems are detected and some help is printed
 o New completion from the local filesystem
+o Simplified :list output, and added the last printed line
 
 
 0.2

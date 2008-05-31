@@ -29,7 +29,6 @@ class TestHostSyntax(unittest.TestCase):
         for i in xrange(len(expanded)):
             found = child.expect(with_spaces)
             del with_spaces[found]
-        child.expect('total: %d' % (len(expanded) + 1))
         child.expect('ready')
         child.sendeof()
         child.expect(pexpect.EOF)

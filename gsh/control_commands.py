@@ -78,19 +78,12 @@ def do_list(command):
     """
     Usage: :list [SHELLS...]
     List remote shells and their states.
+    The output consists of: <hostname> <enabled?> <state>: <last printed line>.
     The special characters * ? and [] work as expected.
     """
-    nr_active = nr_dead = 0
-    instances = []
-    for i in selected_shells(command):
-        instances.append(i.get_info())
-        if i.active:
-            nr_active += 1
-        else:
-            nr_dead += 1
+    instances = [i.get_info() for i in selected_shells(command)]
     dispatchers.format_info(instances)
-    console_output('%s\n\n%d active shells, %d dead shells, total: %d\n' % \
-           ('\n'.join(instances), nr_active, nr_dead, nr_active + nr_dead))
+    console_output(''.join(instances))
 
 def do_quit(command):
     """

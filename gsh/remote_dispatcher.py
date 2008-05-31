@@ -73,6 +73,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.init_string_sent = False
         self.read_in_state_not_started = ''
         self.command = options.command
+        self.last_printed_line = ''
 
     def launch_ssh(self, name):
         """Launch the ssh command in the child process"""
@@ -182,6 +183,7 @@ class remote_dispatcher(buffered_dispatcher):
         indent = max_display_name_length - len(self.display_name)
         prefix = self.display_name + indent * ' ' + ': '
         console_output(prefix + lines.replace('\n', '\n' + prefix) + '\n')
+        self.last_printed_line = lines[lines.rfind('\n') + 1:]
 
     def handle_read_fast_case(self, data):
         """If we are in a fast case we'll avoid the long processing of each
@@ -275,20 +277,10 @@ class remote_dispatcher(buffered_dispatcher):
         if self.active:
             state = STATE_NAMES[self.state]
         else:
-            state = ''
+            state = 'dead'
 
-        if self.debug:
-            debug = 'debug'
-        else:
-            debug = ''
-
-        return [self.display_name, 'fd:%d' % (self.fd),
-                'r:%d' % (len(self.read_buffer)),
-                'w:%d' % (len(self.write_buffer)),
-                self.active and 'active' or 'dead',
-                self.enabled and 'enabled' or 'disabled',
-                state,
-                debug]
+        return [self.display_name, self.enabled and 'enabled' or 'disabled',
+                state + ':', self.last_printed_line]
 
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""

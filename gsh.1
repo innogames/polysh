@@ -66,7 +66,7 @@ List control commands or show their documentations.
 Do not echo the next typed line. This is useful when entering password. If debugging or logging is enabled, it will be disabled to avoid displaying a password. Therefore, you will have to reenable logging or debugging afterwards if need be.
 .TP
 \fB:list [SHELLS...]\fR
-List remote shells and their states. The special characters * ? and [] work as expected.
+List remote shells and their states. The output consists of: <hostname> <enabled?> <state>: <last printed line>. The special characters * ? and [] work as expected.
 .TP
 \fB:print_read_buffer [SHELLS...]\fR
 Print the data read by remote shells. The special characters * ? and [] work as expected.
