@@ -317,5 +317,3 @@ class remote_dispatcher(buffered_dispatcher):
         else:
             self.change_name(self.hostname)
 
-    def __str__(self):
-        return self.display_name
