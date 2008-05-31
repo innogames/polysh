@@ -107,7 +107,7 @@ class remote_dispatcher(buffered_dispatcher):
         if state is not self.state:
             if self.debug:
                 self.print_debug('state => %s' % (STATE_NAMES[state]))
-            if state == STATE_RUNNING:
+            if self.state is STATE_NOT_STARTED:
                 self.read_in_state_not_started = ''
             self.state = state
 
@@ -120,13 +120,13 @@ class remote_dispatcher(buffered_dispatcher):
             pass
         self.read_buffer = ''
         self.write_buffer = ''
-        self.change_state(STATE_DEAD)
         self.set_enabled(False)
         if self.read_in_state_not_started:
             self.print_lines(self.read_in_state_not_started)
             self.read_in_state_not_started = ''
         if options.abort_error and self.state is STATE_NOT_STARTED:
             raise asyncore.ExitNow(1)
+        self.change_state(STATE_DEAD)
 
     def reconnect(self):
         """Relaunch and reconnect to this same remote process"""
