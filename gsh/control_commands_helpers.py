@@ -23,11 +23,12 @@ import readline
 from gsh.host_syntax import expand_syntax
 from gsh.console import console_output
 from gsh import dispatchers
+from gsh import remote_dispatcher
 
 def toggle_shells(command, enable):
     """Enable or disable the specified shells"""
     for i in selected_shells(command):
-        if i.active:
+        if i.state != remote_dispatcher.STATE_DEAD:
             i.set_enabled(enable)
 
 def selected_shells(command):

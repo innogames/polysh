@@ -149,7 +149,8 @@ def do_reset_prompt(command):
         i.dispatch_command(i.init_string)
 
 def complete_enable(line, text):
-    return complete_shells(line, text, lambda i: i.active and not i.enabled)
+    return complete_shells(line, text, lambda i:
+                      i.state != remote_dispatcher.STATE_DEAD and not i.enabled)
 
 def do_enable(command):
     """
@@ -171,7 +172,8 @@ def do_disable(command):
     toggle_shells(command, False)
 
 def complete_reconnect(line, text):
-    return complete_shells(line, text, lambda i: not i.active)
+    return complete_shells(line, text, lambda i:
+                                        i.state == remote_dispatcher.STATE_DEAD)
 
 def do_reconnect(command):
     """
@@ -180,7 +182,7 @@ def do_reconnect(command):
     The special characters * ? and [] work as expected.
     """
     for i in selected_shells(command):
-        if not i.active:
+        if i.state == remote_dispatcher.STATE_DEAD:
             i.reconnect()
 
 def do_add(command):

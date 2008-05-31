@@ -28,12 +28,13 @@ from gsh import callbacks
 from gsh.console import console_output
 
 # Either the remote shell is expecting a command or one is already running
-STATE_NAMES = ['not_started', 'idle', 'running', 'terminated']
+STATE_NAMES = ['not_started', 'idle', 'running', 'terminated', 'dead']
 
 STATE_NOT_STARTED,         \
 STATE_IDLE,                \
 STATE_RUNNING,             \
-STATE_TERMINATED = range(len(STATE_NAMES))
+STATE_TERMINATED,          \
+STATE_DEAD = range(len(STATE_NAMES))
 
 # Count the total number of remote_dispatcher.handle_read() invocations
 nr_handle_read = 0
@@ -63,7 +64,6 @@ class remote_dispatcher(buffered_dispatcher):
         buffered_dispatcher.__init__(self, fd)
         self.hostname = hostname
         self.debug = options.debug
-        self.active = True # deactived shells are dead forever
         self.enabled = True # shells can be enabled and disabled
         self.state = STATE_NOT_STARTED
         self.term_size = (-1, -1)
@@ -112,7 +112,7 @@ class remote_dispatcher(buffered_dispatcher):
             pass
         self.read_buffer = ''
         self.write_buffer = ''
-        self.active = False
+        self.change_state(STATE_DEAD)
         self.set_enabled(False)
         if self.read_in_state_not_started:
             self.print_lines(self.read_in_state_not_started)
@@ -162,7 +162,7 @@ class remote_dispatcher(buffered_dispatcher):
     def readable(self):
         """We are always interested in reading from active remote processes if
         the buffer is OK"""
-        return self.active and buffered_dispatcher.readable(self)
+        return self.state != STATE_DEAD and buffered_dispatcher.readable(self)
 
     def handle_error(self):
         """An exception may or may not lead to a disconnection"""
@@ -203,7 +203,7 @@ class remote_dispatcher(buffered_dispatcher):
     def handle_read(self):
         """We got some output from a remote shell, this is one of the state
         machine"""
-        if not self.active:
+        if self.state == STATE_DEAD:
             return
         global nr_handle_read
         nr_handle_read += 1
@@ -257,7 +257,7 @@ class remote_dispatcher(buffered_dispatcher):
 
     def writable(self):
         """Do we want to write something?"""
-        return self.active and buffered_dispatcher.writable(self)
+        return self.state != STATE_DEAD and buffered_dispatcher.writable(self)
 
     def handle_write(self):
         """Let's write as much as we can"""
@@ -274,17 +274,12 @@ class remote_dispatcher(buffered_dispatcher):
 
     def get_info(self):
         """Return a list with all information available about this process"""
-        if self.active:
-            state = STATE_NAMES[self.state]
-        else:
-            state = 'dead'
-
         return [self.display_name, self.enabled and 'enabled' or 'disabled',
-                state + ':', self.last_printed_line]
+                STATE_NAMES[self.state] + ':', self.last_printed_line]
 
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
-        if self.active and self.enabled:
+        if self.state != STATE_DEAD and self.enabled:
             buffered_dispatcher.dispatch_write(self, buf)
             return True
 
