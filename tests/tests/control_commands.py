@@ -172,6 +172,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect('ready \(1\)> ')
         child.sendline('echo /sbi\t')
         child.expect('localhost: /sbin/')
+        child.expect('ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
 
