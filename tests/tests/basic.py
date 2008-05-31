@@ -16,6 +16,7 @@
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
+import os
 import unittest
 import pexpect
 from gsh_tests import launch_gsh
@@ -52,3 +53,16 @@ class TestBasic(unittest.TestCase):
 
     def testLocalhostLocalhostLocalhost(self):
         self.localhost(3)
+
+    def testPrependPrompt(self):
+        child = launch_gsh(['localhost'])
+        child.expect('ready \(1\)> ')
+        child.sendline('sleep 1')
+        child.expect('waiting \(1/1\)> ')
+        child.send('echo begin-')
+        child.expect('ready \(1\)> ')
+        child.sendline('end')
+        child.expect('begin-end')
+        child.expect('ready \(1\)> ')
+        child.sendeof()
+        child.expect(pexpect.EOF)
