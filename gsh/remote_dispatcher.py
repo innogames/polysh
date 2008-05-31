@@ -107,7 +107,7 @@ class remote_dispatcher(buffered_dispatcher):
         if state is not self.state:
             if self.debug:
                 self.print_debug('state => %s' % (STATE_NAMES[state]))
-            if self.state == STATE_NOT_STARTED:
+            if state == STATE_RUNNING:
                 self.read_in_state_not_started = ''
             self.state = state
 
