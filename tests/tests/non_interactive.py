@@ -31,7 +31,6 @@ class TestNonInteractive(unittest.TestCase):
         child.expect('localhost: text')
         child.sendintr()
         child.expect(pexpect.EOF)
-        child.close()
 
     def testSimpleCommandStdin(self):
         child = launch_gsh(['localhost'], input_data='echo line')
