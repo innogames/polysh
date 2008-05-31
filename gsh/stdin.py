@@ -176,8 +176,8 @@ os.remove(tempfile_name)
 os.write(tempfile_fd, chr(3))
 
 def get_stdin_pid(cached_result=None):
-    '''Try to get the PID of the stdin thread, otherwise get the whole process
-    ID'''
+    """Try to get the PID of the stdin thread, otherwise get the whole process
+    ID"""
     if cached_result is None:
         try:
             tasks = os.listdir('/proc/self/task')
