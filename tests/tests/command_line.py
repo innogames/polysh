@@ -49,3 +49,12 @@ class TestCommandLine(unittest.TestCase):
         child = launch_gsh(['--hosts-file=/dev/null'])
         child.expect('error: no hosts given')
         child.expect(pexpect.EOF)
+
+    def testProfile(self):
+        child = launch_gsh(['--profile', 'localhost'])
+        child.expect('Profiling using ')
+        child.expect('ready \(1\)> ')
+        child.sendline(':quit')
+        child.expect(' function calls in ')
+        child.expect('Ordered by')
+        child.expect(pexpect.EOF)
