@@ -183,7 +183,6 @@ class TestControlCommands(unittest.TestCase):
         child.expect("\[Errno 13\].*'/cannot_write'")
         child.expect(pexpect.EOF)
         child = launch_gsh(['--log-file=/dev/full', 'localhost'])
-        child.expect('ready \(1\)> ')
         child.sendline('echo something')
         child.expect('Exception while writing log: /dev/full')
         child.expect('\[Errno 28\]')
