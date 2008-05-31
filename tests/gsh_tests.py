@@ -18,15 +18,19 @@
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
+import errno
 import os
 import unittest
+import shutil
 import sys
 import optparse
 import pexpect
 import subprocess
+import traceback
 
 import coverage
 
+PID_DIR = '.gsh_pids'
 TESTS = unittest.TestSuite()
 
 def iter_over_all_tests():
@@ -83,10 +87,29 @@ def end_coverage():
     # Prevent the atexit.register(the_coverage.save) from recreating the files
     coverage.the_coverage.usecache = coverage.the_coverage.cache = None
 
+def cleanup_gsh_pids():
+    for pid in map(int, os.listdir(PID_DIR)):
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            # Good, process already killed
+            pass
+        else:
+            print '--------'
+            print 'gsh process %d leaked, launched at:' % pid
+            stack_path = '%s/%d' % (PID_DIR, pid)
+            subprocess.Popen(args=['cat', stack_path]).communicate()
+    shutil.rmtree(PID_DIR)
+
 def main():
     options, args = parse_cmdline()
     if options.coverage:
         remove_coverage_files()
+    try:
+        shutil.rmtree(PID_DIR)
+    except OSError, e:
+        assert e.errno == errno.ENOENT
+    os.mkdir(PID_DIR)
     if args:
         import_specified_tests(args)
     else:
@@ -94,8 +117,12 @@ def main():
     try:
         unittest.main(argv=[sys.argv[0], '-v'], defaultTest='TESTS')
     finally:
-        if options.coverage:
-            end_coverage()
+        try:
+            cleanup_gsh_pids()
+        finally:
+            if options.coverage:
+                end_coverage()
+
 
 class non_interactive_spawn(pexpect.spawn):
     def __init__(self, argv, input_data, *args, **kwargs):
@@ -137,6 +164,7 @@ def launch_gsh(args, input_data=None):
         child = pexpect.spawn(args[0], args=args[1:], logfile=logfile)
     else:
         child = non_interactive_spawn(args, input_data, logfile=logfile)
+    traceback.print_stack(file=file('%s/%d' % (PID_DIR, child.pid), 'w'))
     return child
 
 if __name__ == '__main__':
