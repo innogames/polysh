@@ -73,3 +73,12 @@ class TestCommandLine(unittest.TestCase):
         child.expect('Consider manually connecting or using ssh-keyscan')
         child.expect(pexpect.EOF)
 
+    def testAbortError(self):
+        child = launch_gsh(['localhost', 'unknown_host'])
+        child.expect('Error talking to unknown_host')
+        child.sendline(':quit')
+        child.expect(pexpect.EOF)
+        child = launch_gsh(['--abort-errors', 'localhost', 'unknown_host'])
+        child.expect('Error talking to unknown_host')
+        child.expect(pexpect.EOF)
+
