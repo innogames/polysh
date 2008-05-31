@@ -297,7 +297,7 @@ localhost: appended to the log
         child.expect(pexpect.EOF)
 
     def testPrintReadBuffer(self):
-        child = launch_gsh(['--ssh=echo message; sleep'] + ['1h'] * 3)
+        child = launch_gsh(['--ssh=echo message; sleep'] + ['2h'] * 3)
         child.expect('waiting \(3/3\)> ')
         child.sendline(':print_read_buffer \t*')
         for i in xrange(3):
