@@ -301,7 +301,7 @@ localhost: appended to the log
         child.expect('waiting \(3/3\)> ')
         child.sendline(':print_read_buffer \t*')
         for i in xrange(3):
-            child.expect('1h[ #][ 12]: message')
+            child.expect('2h[ #][ 12]: message')
         child.expect('waiting \(3/3\)> ')
         child.sendline(':quit')
         child.expect(pexpect.EOF)
