@@ -66,7 +66,7 @@ def do_help(command):
         max_name_len = max(map(len, names))
         for i in xrange(len(names)):
             name = names[i]
-            txt = (max_name_len - len(name)) * ' ' + ':' + name + ' - '
+            txt = ':' + name + (max_name_len - len(name) + 2) * ' '
             doc = get_control_command(name).__doc__
             txt += doc.split('\n')[2].strip() + '\n'
             console_output(txt)
