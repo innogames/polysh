@@ -353,13 +353,13 @@ def do_set_log(command):
         remote_dispatcher.options.log_file = None
         console_output('Logging disabled\n')
 
-def complete_print_read_buffer(line, text):
+def complete_show_read_buffer(line, text):
     return complete_shells(line, text, lambda i: i.read_buffer or
                                                  i.read_in_state_not_started)
 
-def do_print_read_buffer(command):
+def do_show_read_buffer(command):
     """
-    Usage: :print_read_buffer [SHELLS...]
+    Usage: :show_read_buffer [SHELLS...]
     Print the data read by remote shells.
     The special characters * ? and [] work as expected.
     """
