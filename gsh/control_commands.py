@@ -340,7 +340,7 @@ def complete_set_log(line, text):
 def do_set_log(command):
     """
     Usage: :set_log [LOCAL_PATH]
-    Duplicate every console input/output into the given local file.
+    Duplicate every console I/O into the given local file.
     If LOCAL_PATH is not given, restore the default behaviour of not logging.
     """
     if command:
