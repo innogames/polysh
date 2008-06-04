@@ -102,7 +102,7 @@ def do_chdir(command):
     Change the current directory of gsh (not the remote shells).
     """
     try:
-        os.chdir(expand_local_path(command))
+        os.chdir(expand_local_path(command.strip()))
     except OSError, e:
         console_output('%s\n' % str(e))
 
@@ -295,7 +295,7 @@ def do_replicate(command):
     if ':' not in command:
         console_output('Usage: :replicate SHELL:REMOTE_PATH\n')
         return
-    shell_name, path = command.split(':', 1)
+    shell_name, path = command.strip().split(':', 1)
     if not path:
         console_output('No remote path given\n')
         return
@@ -319,7 +319,7 @@ def do_upload(command):
     Upload the specified local path to enabled remote shells.
     """
     if command:
-        file_transfer.upload(command)
+        file_transfer.upload(command.strip())
     else:
         console_output('No local path given\n')
 
@@ -350,6 +350,7 @@ def do_set_log(command):
     Duplicate every console I/O into the given local file.
     If LOCAL_PATH is not given, restore the default behaviour of not logging.
     """
+    command = command.strip()
     if command:
         try:
             remote_dispatcher.options.log_file = file(command, 'a')
