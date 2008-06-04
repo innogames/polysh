@@ -1,2 +1,3 @@
 o "(yes date | head -n 1000; echo ps) | ./gsh.py --ssh='bash;:' dummy" does not
 terminate because of the readline usage in bash.
+o Improve file transfer using crazy p2p techniques
