@@ -1,3 +1,10 @@
+0.3.1
+~~~~~
+
+o If the :{en|dis}able command would have no effect, it changes all other
+shells to the inverse enable value.
+
+
 0.3
 ~~~
 

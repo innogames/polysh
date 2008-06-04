@@ -1,4 +1,4 @@
-.TH "gsh" "1" "0.3" "Guillaume Chazarain" "Remote shells"
+.TH "gsh" "1" "0.3.1" "Guillaume Chazarain" "Remote shells"
 .SH "NAME"
 gsh \- Group Shell
 .SH "SYNOPSIS"
@@ -51,10 +51,10 @@ Add one or many remote shells.
 Change the current directory of \fIgsh\fR (not the remote shells).
 .TP
 \fB:disable [SHELLS...]\fR
-Disable sending commands to remote shells. The special characters * ? and [] work as expected.
+Disable sending commands to remote shells. If the command would have no effect, it changes all other shells to the inverse enable value. That is, if you disable only already disabled shells, it will first enable all other shells. The special characters * ? and [] work as expected.
 .TP
 \fB:enable [SHELLS...]\fR
-Enable sending commands to remote shells. The special characters * ? and [] work as expected.
+Enable sending commands to remote shells. If the command would have no effect, it changes all other shells to the inverse enable value. That is, if you enable only already enabled shells, it will first disable all other shells. The special characters * ? and [] work as expected.
 .TP
 \fB:export_rank\fR
 Set GSH_RANK and GSH_NR_SHELLS on enabled remote shells. The GSH_RANK shell variable uniquely identifies each shell with a number between 0 and GSH_NR_SHELLS - 1. GSH_NR_SHELLS is the total number of enabled shells.

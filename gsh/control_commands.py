@@ -156,6 +156,9 @@ def do_enable(command):
     """
     Usage: :enable [SHELLS...]
     Enable sending commands to remote shells.
+    If the command would have no effect, it changes all other shells to the
+    inverse enable value. That is, if you enable only already enabled
+    shells, it will first disable all other shells.
     The special characters * ? and [] work as expected.
     """
     toggle_shells(command, True)
@@ -167,6 +170,9 @@ def do_disable(command):
     """
     Usage: :disable [SHELLS...]
     Disable sending commands to remote shells.
+    If the command would have no effect, it changes all other shells to the
+    inverse enable value. That is, if you disable only already disabled
+    shells, it will first enable all other shells.
     The special characters * ? and [] work as expected.
     """
     toggle_shells(command, False)
