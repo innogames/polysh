@@ -67,9 +67,9 @@ class bandwidth_monitor(Thread):
         self.join()
 
     def run(self):
-        previous_size = 0
+        previous_size = 0L
         previous_sampling_time = time.time()
-        previous_bandwidth = 0
+        previous_bandwidth = 0L
         while not self.main_done.isSet():
             current_size = self.size
             current_sampling_time = time.time()
@@ -77,7 +77,7 @@ class bandwidth_monitor(Thread):
                                 (current_sampling_time - previous_sampling_time)
             current_bandwidth = (2*current_bandwidth + previous_bandwidth) / 3.0
             if current_bandwidth < 1:
-                current_bandwidth = 0
+                current_bandwidth = 0L
             print '%s transferred at %s/s' % (human_unit(current_size),
                                               human_unit(current_bandwidth))
             previous_size = current_size
