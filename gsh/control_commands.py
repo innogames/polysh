@@ -28,6 +28,7 @@ from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
 from gsh.completion import complete_local_path
 from gsh.console import console_output
+from gsh.version import VERSION
 from gsh import dispatchers
 from gsh import remote_dispatcher
 from gsh import stdin
@@ -389,6 +390,11 @@ def main():
 
     updated_man_page_fd, updated_man_page_path = tempfile.mkstemp()
     updated_man_page = os.fdopen(updated_man_page_fd, 'w')
+
+    # The first line is auto-generated as it contains the version number
+    man_page.readline()
+    v = '.TH "gsh" "1" "%s" "Guillaume Chazarain" "Remote shells"' % VERSION
+    print >> updated_man_page, v
 
     for line in man_page:
         print >> updated_man_page, line,
