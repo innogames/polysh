@@ -56,7 +56,7 @@ class bandwidth_monitor(Thread):
         Thread.__init__(self)
         self.setDaemon(1)
         self.main_done = Event()
-        self.size = 0
+        self.size = 0L
         self.start()
 
     def add_transferred_size(self, size):
