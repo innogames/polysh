@@ -284,7 +284,7 @@ class remote_dispatcher(buffered_dispatcher):
     def get_info(self):
         """Return a list with all information available about this process"""
         return [self.display_name, self.enabled and 'enabled' or 'disabled',
-                STATE_NAMES[self.state] + ':', self.last_printed_line]
+                STATE_NAMES[self.state] + ':', self.last_printed_line.strip()]
 
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
