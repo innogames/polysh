@@ -151,7 +151,7 @@ def do_reset_prompt(command):
 
 def complete_enable(line, text):
     return complete_shells(line, text, lambda i:
-                      i.state != remote_dispatcher.STATE_DEAD and not i.enabled)
+                                        i.state != remote_dispatcher.STATE_DEAD)
 
 def do_enable(command):
     """
@@ -165,7 +165,8 @@ def do_enable(command):
     toggle_shells(command, True)
 
 def complete_disable(line, text):
-    return complete_shells(line, text, lambda i: i.enabled)
+    return complete_shells(line, text, lambda i:
+                                        i.state != remote_dispatcher.STATE_DEAD)
 
 def do_disable(command):
     """
