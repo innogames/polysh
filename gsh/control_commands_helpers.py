@@ -28,11 +28,12 @@ from gsh import remote_dispatcher
 def toggle_shells(command, enable):
     """Enable or disable the specified shells. If the command would have
     no effect, it changes all other shells to the inverse enable value."""
-    for i in selected_shells(command):
-        if i.state != remote_dispatcher.STATE_DEAD and i.enabled != enable:
-            break
-    else:
-        toggle_shells('*', not enable)
+    if command and command != '*':
+        for i in selected_shells(command):
+            if i.state != remote_dispatcher.STATE_DEAD and i.enabled != enable:
+                break
+        else:
+            toggle_shells('*', not enable)
 
     for i in selected_shells(command):
         if i.state != remote_dispatcher.STATE_DEAD:
@@ -41,9 +42,13 @@ def toggle_shells(command, enable):
 def selected_shells(command):
     """Iterator over the shells with names matching the patterns.
     An empty patterns matches all the shells"""
+    if not command or command == '*':
+        for i in dispatchers.all_instances():
+            yield i
+        return
     selected = set()
     instance_found = False
-    for pattern in (command or '*').split():
+    for pattern in command.split():
         found = False
         for expanded_pattern in expand_syntax(pattern):
             for i in dispatchers.all_instances():
