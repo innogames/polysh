@@ -91,7 +91,6 @@ def write_fully(fd, data):
         written = os.write(fd, data)
         data = data[written:]
 
-MAX_QUEUE_SIZE = 256 * 1024 * 1024
 MAX_QUEUE_ITEM_SIZE = 8 * 1024
 
 def forward(input_file, output_files, bandwidth=0):
