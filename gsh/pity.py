@@ -37,13 +37,19 @@ STDIN_PREFIX = '!?#%!'
 
 UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
 
+def long_to_str(number):
+    s = str(number)
+    if s[-1] == 'L':
+        s = s[:-1]
+    return s
+
 def human_unit(size):
     """Return a string of the form '12.34 MiB' given a size in bytes."""
     for i in xrange(len(UNITS) - 1, 0, -1):
         base = 2.0 ** (10 * i)
         if 2 * base < size:
             return '%.2f %s' % ((float(size) / base), UNITS[i])
-    return str(size) + ' ' + UNITS[0]
+    return long_to_str(size) + ' ' + UNITS[0]
 
 
 def rstrip_char(string, char):
@@ -84,7 +90,8 @@ class bandwidth_monitor(Thread):
             previous_sampling_time = current_sampling_time
             previous_bandwidth = current_bandwidth
             self.main_done.wait(1.0)
-        print 'Done transferring %d bytes' % (self.size)
+        print 'Done transferring %s bytes (%s)' % (long_to_str(self.size),
+                                                   human_unit(self.size))
 
 def write_fully(fd, data):
     while data:
