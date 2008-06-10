@@ -28,17 +28,20 @@ syntax_pattern = re.compile('<([0-9,-]+)>')
 interval_pattern = re.compile('([0-9]+)-([0-9]+)')
 
 def _iter_numbers(start, end):
-    if int(start) < int(end):
+    int_start = int(start)
+    int_end = int(end)
+    if int_start < int_end:
         increment = 1
     else:
         increment = -1
-    zero_pad = start.startswith('0') or end.startswith('0')
+    zero_pad = len(start) > 1 and start.startswith('0') or \
+               len(end) > 1 and end.startswith('0')
     if zero_pad:
         length = max(len(start), len(end))
-    for i in xrange(int(start), int(end) + increment, increment):
+    for i in xrange(int_start, int_end + increment, increment):
         s = str(i)
         if zero_pad:
-            s = '0' * (length - len(s)) + s
+            s = s.zfill(length)
         yield s
 
 def expand_syntax(string):
