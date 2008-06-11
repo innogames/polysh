@@ -22,6 +22,7 @@ import struct
 import termios
 
 from gsh import remote_dispatcher
+from gsh import display_names
 from gsh.terminal_size import terminal_size
 
 def all_instances():
@@ -29,17 +30,6 @@ def all_instances():
     for i in asyncore.socket_map.itervalues():
         if isinstance(i, remote_dispatcher.remote_dispatcher):
             yield i
-
-def make_unique_name(name):
-    """Each shell must have a unique display name, so identical hostnames are
-    suffixed by #NUMBER"""
-    display_names = set([i.display_name for i in all_instances()])
-    candidate_name = name
-    i = 0
-    while candidate_name in display_names:
-        i += 1
-        candidate_name = '%s#%d' % (name, i)
-    return candidate_name
 
 def count_awaited_processes():
     """Return a tuple with the number of awaited processes and the total
@@ -63,38 +53,11 @@ def all_terminated():
             return False
     return instances_found
 
-max_display_name_length = 0
-def update_max_display_name_length(change):
-    """The max_display_name_length serves to compute the length of the
-    whitespace used to align the output of the remote shells. A positive change
-    argument indicates that a remote shells with such a name length was enabled
-    while a negative change argument indicates a disabled remote shell"""
-    global max_display_name_length
-
-    if change < 0:
-        if -change < max_display_name_length:
-            # The disabled shell didn't have the longest name
-            return
-        new_max = 0
-        for i in all_instances():
-            if i.enabled:
-                l = len(i.display_name)
-                if l >= -change:
-                    # The disabled shell was not alone with the longest name
-                    return
-                new_max = max(l, new_max)
-    else:
-        new_max = max(change, max_display_name_length)
-
-    if new_max != max_display_name_length:
-        max_display_name_length = new_max
-        update_terminal_size()
-
 def update_terminal_size():
     """Propagate the terminal size to the remote shells accounting for the
     place taken by the longest name"""
     w, h = terminal_size()
-    w = max(w - max_display_name_length - 2, min(w, 10))
+    w = max(w - display_names.max_display_name_length - 2, min(w, 10))
     # python bug http://python.org/sf/1112949 on amd64
     # from ajaxterm.py
     bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]

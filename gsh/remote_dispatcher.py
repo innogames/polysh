@@ -26,6 +26,7 @@ import termios
 from gsh.buffered_dispatcher import buffered_dispatcher
 from gsh import callbacks
 from gsh.console import console_output
+from gsh import display_names
 
 # Either the remote shell is expecting a command or one is already running
 STATE_NAMES = ['not_started', 'idle', 'running', 'terminated', 'dead']
@@ -75,7 +76,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.enabled = True # shells can be enabled and disabled
         self.state = STATE_NOT_STARTED
         self.term_size = (-1, -1)
-        self.display_name = ''
+        self.display_name = None
         self.change_name(hostname)
         self.init_string = self.configure_tty() + self.set_prompt()
         self.init_string_sent = False
@@ -91,16 +92,12 @@ class remote_dispatcher(buffered_dispatcher):
         os.execlp('/bin/sh', 'sh', '-c', evaluated)
 
     def set_enabled(self, enabled):
-        from gsh.dispatchers import update_max_display_name_length
-        self.enabled = enabled
-        if options.interactive:
+        if enabled != self.enabled and options.interactive:
             # In non-interactive mode, remote processes leave as soon
             # as they are terminated, but we don't want to break the
             # indentation if all the remaining processes have short names.
-            l = len(self.display_name)
-            if not enabled:
-                l = -l
-            update_max_display_name_length(l)
+            display_names.set_enabled(self.display_name, enabled)
+        self.enabled = enabled
 
     def change_state(self, state):
         """Change the state of the remote process, logging the change"""
@@ -180,7 +177,7 @@ class remote_dispatcher(buffered_dispatcher):
             self.disconnect()
 
     def print_lines(self, lines):
-        from gsh.dispatchers import max_display_name_length
+        from gsh.display_names import max_display_name_length
         lines = lines.strip('\n')
         while True:
             no_empty_lines = lines.replace('\n\n', '\n')
@@ -299,14 +296,9 @@ class remote_dispatcher(buffered_dispatcher):
     def change_name(self, name):
         """Change the name of the shell, possibly updating the maximum name
         length"""
-        from gsh import dispatchers
         if not name:
             name = self.hostname
-        previous_name_len = len(self.display_name)
-        self.display_name = None
-        self.display_name = dispatchers.make_unique_name(name)
-        dispatchers.update_max_display_name_length(len(self.display_name))
-        dispatchers.update_max_display_name_length(-previous_name_len)
+        self.display_name = display_names.change(self.display_name, name)
 
     def rename(self, string):
         """Send to the remote shell, its new name to be shell expanded"""
@@ -317,3 +309,6 @@ class remote_dispatcher(buffered_dispatcher):
         else:
             self.change_name(self.hostname)
 
+    def close(self):
+        display_names.change(self.display_name, None)
+        buffered_dispatcher.close(self)
