@@ -28,14 +28,15 @@ from gsh import remote_dispatcher
 def toggle_shells(command, enable):
     """Enable or disable the specified shells. If the command would have
     no effect, it changes all other shells to the inverse enable value."""
-    if command and command != '*':
-        for i in selected_shells(command):
+    selection = list(selected_shells(command))
+    if command and command != '*' and selection:
+        for i in selection:
             if i.state != remote_dispatcher.STATE_DEAD and i.enabled != enable:
                 break
         else:
             toggle_shells('*', not enable)
 
-    for i in selected_shells(command):
+    for i in selection:
         if i.state != remote_dispatcher.STATE_DEAD:
             i.set_enabled(enable)
 
