@@ -23,9 +23,11 @@ import re
 # <10-1> => 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
 # <01-10> => 01, 02, 03, 04, 05, 06, 07, 08, 09, 10
 # <1-4,6-10> => 1, 2, 3, 4, 6, 7, 8, 9, 10
+# <1,3-6> => 1, 3, 4, 5, 6
+# <1> => 1
 
 syntax_pattern = re.compile('<([0-9,-]+)>')
-interval_pattern = re.compile('([0-9]+)-([0-9]+)')
+interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
 
 def _iter_numbers(start, end):
     int_start = int(start)
@@ -55,7 +57,7 @@ def expand_syntax(string):
             interval_match = interval_pattern.match(interval)
             if interval_match:
                 start = interval_match.group(1)
-                end = interval_match.group(2)
+                end = (interval_match.group(2) or start).strip('-')
                 for i in _iter_numbers(start, end):
                     for expanded in expand_syntax(prefix + i + suffix):
                         yield expanded
