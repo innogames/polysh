@@ -136,7 +136,7 @@ class TestControlCommands(unittest.TestCase):
         child.sendline(':rename')
         child.expect('ready \(1\)> ')
         child.sendline('date')
-        child.expect('localhost:')
+        child.expect('localhost :')
         child.expect('ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
@@ -168,10 +168,10 @@ class TestControlCommands(unittest.TestCase):
         child = launch_gsh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('echo /dev/nul\t')
-        child.expect('localhost: /dev/null')
+        child.expect('localhost : /dev/null')
         child.expect('ready \(1\)> ')
         child.sendline('echo /sbi\t')
-        child.expect('localhost: /sbin/')
+        child.expect('localhost : /sbin/')
         child.expect('ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
@@ -193,7 +193,7 @@ class TestControlCommands(unittest.TestCase):
         def testEcho(msg):
             child.expect('ready \(1\)> ')
             child.sendline('echo %s' % msg)
-            child.expect('localhost: %s' % msg)
+            child.expect('localhost : %s' % msg)
         testEcho('not logging')
         child.sendline(':set_log')
         testEcho('still not logging')
@@ -217,12 +217,12 @@ class TestControlCommands(unittest.TestCase):
 
         EXPECTED_LOG="""
 > echo now logging
-localhost: now logging
+localhost : now logging
 > echo still logging
-localhost: still logging
+localhost : still logging
 > :set_log
 > echo appended to the log
-localhost: appended to the log
+localhost : appended to the log
 > :set_log
 """.strip()
         log = file('/tmp/gsh_test.log')
@@ -244,7 +244,7 @@ localhost: appended to the log
         child.expect('\[dbg\] localhost\[idle\]: state => running')
         child.expect('\[dbg\] localhost\[running\]: <== echo "te""st"')
         child.expect('\[dbg\] localhost\[running\]: ==> test')
-        child.expect('localhost: test')
+        child.expect('localhost : test')
         child.expect('\[dbg\] localhost\[running\]: state => idle')
         child.expect('ready \(1\)> ')
         child.sendeof()
@@ -301,7 +301,7 @@ localhost: appended to the log
         child.expect('waiting \(3/3\)> ')
         child.sendline(':show_read_buffer \t*')
         for i in xrange(3):
-            child.expect('2h[ #][ 12]: message')
+            child.expect('2h[ #][ 12] : message')
         child.expect('waiting \(3/3\)> ')
         child.sendintr()
         child.expect(pexpect.EOF)

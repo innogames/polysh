@@ -187,7 +187,7 @@ class remote_dispatcher(buffered_dispatcher):
         if not lines:
             return
         indent = max_display_name_length - len(self.display_name)
-        prefix = self.display_name + indent * ' ' + ': '
+        prefix = self.display_name + indent * ' ' + ' : '
         console_output(prefix + lines.replace('\n', '\n' + prefix) + '\n')
         self.last_printed_line = lines[lines.rfind('\n') + 1:]
 

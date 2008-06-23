@@ -3,6 +3,8 @@
 
 o If the :{en|dis}able command would have no effect, it changes all other
 shells to the inverse enable value.
+o Consistently add a space between the shell name and the colon to ease parsing
+the output.
 
 
 0.3

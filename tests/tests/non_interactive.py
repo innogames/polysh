@@ -23,18 +23,18 @@ from gsh_tests import launch_gsh
 class TestNonInteractive(unittest.TestCase):
     def testCommandNormal(self):
         child = launch_gsh(['--command=echo text', 'localhost'])
-        child.expect('localhost: text')
+        child.expect('localhost : text')
         child.expect(pexpect.EOF)
 
     def testCommandIntr(self):
         child = launch_gsh(['--command=echo text; cat', 'localhost'])
-        child.expect('localhost: text')
+        child.expect('localhost : text')
         child.sendintr()
         child.expect(pexpect.EOF)
 
     def testSimpleCommandStdin(self):
         child = launch_gsh(['localhost'], input_data='echo line')
-        child.expect('localhost: line')
+        child.expect('localhost : line')
         child.expect(pexpect.EOF)
 
     def testMultipleCommandStdin(self):
@@ -44,9 +44,9 @@ class TestNonInteractive(unittest.TestCase):
         echo last
         """
         child = launch_gsh(['localhost'], input_data=commands)
-        child.expect('localhost: first')
-        child.expect('localhost: next')
-        child.expect('localhost: last')
+        child.expect('localhost : first')
+        child.expect('localhost : next')
+        child.expect('localhost : last')
         child.expect(pexpect.EOF)
 
     def testInvalidCommandStdin(self):
