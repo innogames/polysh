@@ -80,7 +80,9 @@ def format_info(info_list):
         max_lengths.append(max([len(str(info[i])) for info in info_list]))
     for info_id in xrange(len(info_list)):
         info = info_list[info_id]
-        for str_id in xrange(len(info)):
+        for str_id in xrange(len(info) - 1):
+            # Don't justify the last column (i.e. the last printed line)
+            # as it can get much longer in some shells than in others
             orig_str = str(info[str_id])
             indent = max_lengths[str_id] - len(orig_str)
             info[str_id] = orig_str + indent * ' '
