@@ -16,6 +16,7 @@
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
+import os
 import unittest
 import pexpect
 from gsh_tests import launch_gsh
@@ -53,4 +54,14 @@ class TestNonInteractive(unittest.TestCase):
         child = launch_gsh(['localhost', '--command=date'], input_data='uptime')
         child.expect('--command and reading from stdin are incompatible')
         child.expect(pexpect.EOF)
+
+    def testExitCode(self):
+        def CommandCode(command, code):
+            child = launch_gsh(['--command=%s' % command] + ['localhost'] * 5)
+            child.expect(pexpect.EOF)
+            while child.isalive():
+                child.wait()
+            self.assertEqual(child.exitstatus, code)
+        CommandCode('true', 0)
+        CommandCode('false', 1)
 

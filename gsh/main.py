@@ -139,7 +139,7 @@ def main_loop():
             if dispatchers.all_terminated():
                 # Clear the prompt
                 console_output('')
-                raise asyncore.ExitNow(0)
+                raise asyncore.ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
                 # possible race here with the signal handler
                 remote_dispatcher.main_loop_iteration()
@@ -208,9 +208,9 @@ def main():
     options, args = parse_cmdline()
 
     atexit.register(kill_all)
-    ignore_sigchld(True) # Don't create zombies
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     options.command = find_non_interactive_command(options.command)
+    options.exit_code = 0
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()
     if options.interactive:
@@ -219,6 +219,7 @@ def main():
             next_signal = sig
         signal.signal(signal.SIGINT, handler)
         signal.signal(signal.SIGTSTP, handler)
+        ignore_sigchld(True) # Don't create zombies
         restore_tty_on_exit()
     else:
       def handler(sig, frame):

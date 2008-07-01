@@ -147,11 +147,8 @@ class remote_dispatcher(buffered_dispatcher):
             p1, p2 = callbacks.add('real prompt ends', lambda d: None, True)
             self.dispatch_command('PS1="%s""%s\n"\n' % (p1, p2))
             self.dispatch_command(self.command + '\n')
-            self.dispatch_command(self.init_string)
+            self.dispatch_command('exit 2>/dev/null\n')
             self.command = None
-        else:
-            self.change_state(STATE_TERMINATED)
-            self.disconnect()
 
     def set_prompt(self):
         """The prompt is important because we detect the readyness of a process
@@ -169,6 +166,15 @@ class remote_dispatcher(buffered_dispatcher):
         """We are always interested in reading from active remote processes if
         the buffer is OK"""
         return self.state != STATE_DEAD and buffered_dispatcher.readable(self)
+
+    def handle_expt(self):
+        if options.interactive:
+            console_output('Error talking to %s\n' % self.display_name)
+        else:
+            pid, status = os.waitpid(self.pid, 0)
+            exit_code = os.WEXITSTATUS(status)
+            options.exit_code = max(options.exit_code, exit_code)
+        self.disconnect()
 
     def handle_error(self):
         """An exception may or may not lead to a disconnection"""

@@ -43,10 +43,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
             # I/O error, let the parent take action
             return True
 
-    def handle_expt(self):
-        # Emulate the select with poll as in: asyncore.loop(use_poll=True)
-        self.handle_read()
-
     def handle_read(self):
         """Some data can be read"""
         new_data = ''
