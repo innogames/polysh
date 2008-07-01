@@ -60,7 +60,7 @@ def parse_cmdline():
     parser.add_option('--command', type='str', dest='command', default=None,
                       help='command to execute on the remote shells',
                       metavar='CMD')
-    def_ssh = 'ssh -t %(host)s bash --noprofile'
+    def_ssh = 'ssh -oLogLevel=Quiet -t %(host)s bash --noprofile'
     parser.add_option('--ssh', type='str', dest='ssh', default=def_ssh,
                       metavar='SSH', help='ssh command to use [%s]' % def_ssh)
     parser.add_option('--log-file', type='str', dest='log_file',
