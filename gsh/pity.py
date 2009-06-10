@@ -21,7 +21,6 @@
 #
 
 import os
-import popen2
 import signal
 import socket
 import string
@@ -172,6 +171,22 @@ def get_destination():
 def shell_quote(s):
     return "'" + string.replace(s, "'", "'\\''") + "'"
 
+try:
+    import subprocess
+except ImportError:
+    def pipe_to_process(cmdline):
+        import popen2
+        return popen2.popen2(cmdline)
+else:
+    def pipe_to_process(cmdline):
+        p = subprocess.Popen([cmdline],
+                             shell=True,
+                             stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             close_fds=True)
+
+        return p.stdout, p.stdin
+
 def do_send(path):
     split = os.path.split(rstrip_char(path, '/'))
     dirname, basename = split
@@ -179,20 +194,20 @@ def do_send(path):
         os.chdir(dirname)
     if not basename:
         basename = '/'
-    stdout, stdin = popen2.popen2('tar c %s' % shell_quote(basename))
+    stdout, stdin = pipe_to_process('tar c %s' % shell_quote(basename))
     stdin.close()
     forward(stdout, [get_destination()])
 
 def do_forward(gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
-    stdout, stdin = popen2.popen2('tar x')
+    stdout, stdin = pipe_to_process('tar x')
     stdout.close()
     conn, addr = listening_socket.accept()
     forward(conn.makefile(), [get_destination(), stdin])
 
 def do_receive(gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
-    stdout, stdin = popen2.popen2('tar x')
+    stdout, stdin = pipe_to_process('tar x')
     stdout.close()
     conn, addr = listening_socket.accept()
     # Only the last item in the chain displays the progress information
