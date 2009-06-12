@@ -95,6 +95,8 @@ def process_input_buffer():
             else:
                 raise
         ignore_sigchld(True)
+        if retcode > 128 and retcode <= 192:
+            retcode = 128 - retcode
         if retcode > 0:
             console_output('Child returned %d\n' % retcode)
         elif retcode < 0:
