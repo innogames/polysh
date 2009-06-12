@@ -176,12 +176,6 @@ class remote_dispatcher(buffered_dispatcher):
             options.exit_code = max(options.exit_code, exit_code)
         self.disconnect()
 
-    def handle_error(self):
-        """An exception may or may not lead to a disconnection"""
-        if buffered_dispatcher.handle_error(self):
-            console_output('Error talking to %s\n' % self.display_name)
-            self.disconnect()
-
     def print_lines(self, lines):
         from gsh.display_names import max_display_name_length
         lines = lines.strip('\n')

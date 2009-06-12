@@ -34,15 +34,6 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         self.read_buffer = ''
         self.write_buffer = ''
 
-    def handle_error(self):
-        """Handle the Ctrl-C or print the exception and its stack trace.
-        Returns True if it was an actual error"""
-        try:
-            raise
-        except OSError:
-            # I/O error, let the parent take action
-            return True
-
     def handle_read(self):
         """Some data can be read"""
         new_data = ''
