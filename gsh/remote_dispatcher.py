@@ -111,7 +111,7 @@ class remote_dispatcher(buffered_dispatcher):
     def disconnect(self):
         """We are no more interested in this remote process"""
         try:
-            os.kill(self.pid, signal.SIGKILL)
+            os.kill(-self.pid, signal.SIGKILL)
         except OSError:
             # The process was already dead, no problem
             pass

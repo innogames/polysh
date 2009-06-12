@@ -45,7 +45,7 @@ def kill_all():
     """When gsh quits, we kill all the remote shells we started"""
     for i in dispatchers.all_instances():
         try:
-            os.kill(i.pid, signal.SIGKILL)
+            os.kill(-i.pid, signal.SIGKILL)
         except OSError:
             # The process was already dead, no problem
             pass
