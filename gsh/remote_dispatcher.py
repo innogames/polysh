@@ -176,6 +176,9 @@ class remote_dispatcher(buffered_dispatcher):
             options.exit_code = max(options.exit_code, exit_code)
         self.disconnect()
 
+    def handle_close(self):
+	self.handle_expt()
+
     def print_lines(self, lines):
         from gsh.display_names import max_display_name_length
         lines = lines.strip('\n')
