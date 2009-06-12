@@ -29,7 +29,7 @@ class TestCommandLine(unittest.TestCase):
         print >> tmp, 'localhost # Comment'
         print >> tmp, '127.0.0.1'
         print >> tmp, '# Ignore me'
-        print >> tmp, 'localhost.localdomain'
+        print >> tmp, 'localhost.'
         tmp.close()
         child = launch_gsh(['--hosts-file=%s' % (tmp_name)])
         child.expect('ready \(3\)> ')
