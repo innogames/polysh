@@ -101,7 +101,7 @@ class local_uploader(remote_dispatcher.remote_dispatcher):
         self.upload_started = False
 
     def launch_ssh(self, name):
-        os.execl('/bin/sh', 'sh')
+        os.execl('/bin/bash', 'bash')
 
     def change_state(self, state):
         remote_dispatcher.remote_dispatcher.change_state(self, state)
