@@ -7,6 +7,8 @@ o Consistently add a space between the shell name and the colon to ease parsing
 the output.
 o In non-interactive mode (gsh --command) the exit code is aggregated from all
 remote shells taking the max.
+o :export_rank has been renamed to :export_vars as it now also exports the
+hostname.
 
 
 0.3

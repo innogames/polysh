@@ -28,6 +28,7 @@ from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
 from gsh.completion import complete_local_path
 from gsh.console import console_output
+from gsh.pity import shell_quote
 from gsh.version import VERSION
 from gsh import dispatchers
 from gsh import remote_dispatcher
@@ -324,18 +325,26 @@ def do_upload(command):
     else:
         console_output('No local path given\n')
 
-def do_export_rank(command):
+def do_export_vars(command):
     """
-    Usage: :export_rank
-    Set GSH_RANK and GSH_NR_SHELLS on enabled remote shells.
-    The GSH_RANK shell variable uniquely identifies each shell with a number
-    between 0 and GSH_NR_SHELLS - 1. GSH_NR_SHELLS is the total number of
-    enabled shells.
+    Usage: :export_vars
+    Export some environment variables on enabled remote shells. GSH_NR_SHELLS
+    is the total number of enabled shells. GSH_RANK uniquely identifies each
+    shell with a number between 0 and GSH_NR_SHELLS - 1. GSH_NAME is the
+    hostname as specified on the command line and GSH_DISPLAY_NAME the
+    hostname as displayed by :list (most of the time the same as GSH_NAME).
     """
     rank = 0
     for shell in dispatchers.all_instances():
         if shell.enabled:
-            shell.dispatch_command('export GSH_RANK=%d\n' % rank)
+            environment_variables = {
+                'GSH_RANK': rank,
+                'GSH_NAME': shell.hostname,
+                'GSH_DISPLAY_NAME': shell.display_name,
+            }
+            for name, value in environment_variables.iteritems():
+                value = shell_quote(str(value))
+                shell.dispatch_command('export %s=%s\n' % (name, value))
             rank += 1
 
     for shell in dispatchers.all_instances():
