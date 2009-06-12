@@ -177,7 +177,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.disconnect()
 
     def handle_close(self):
-	self.handle_expt()
+        self.handle_expt()
 
     def print_lines(self, lines):
         from gsh.display_names import max_display_name_length
