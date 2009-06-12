@@ -27,9 +27,9 @@ from gsh.terminal_size import terminal_size
 
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
-    for i in asyncore.socket_map.itervalues():
-        if isinstance(i, remote_dispatcher.remote_dispatcher):
-            yield i
+    return sorted([i for i in asyncore.socket_map.itervalues() if
+                   isinstance(i, remote_dispatcher.remote_dispatcher)],
+                  key=lambda i: i.display_name)
 
 def count_awaited_processes():
     """Return a tuple with the number of awaited processes and the total
