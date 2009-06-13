@@ -36,7 +36,7 @@ if sys.hexversion < 0x02040000:
 from gsh import remote_dispatcher
 from gsh import dispatchers
 from gsh.console import console_output
-from gsh.stdin import the_stdin_thread, ignore_sigchld
+from gsh.stdin import the_stdin_thread
 from gsh.host_syntax import expand_syntax
 from gsh.version import VERSION
 from gsh import control_commands
@@ -219,7 +219,6 @@ def main():
             next_signal = sig
         signal.signal(signal.SIGINT, handler)
         signal.signal(signal.SIGTSTP, handler)
-        ignore_sigchld(True) # Don't create zombies
         restore_tty_on_exit()
     else:
       def handler(sig, frame):

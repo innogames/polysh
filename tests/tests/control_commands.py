@@ -98,7 +98,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect('ready \(2\)> ')
         child.sendline(':disable localhost')
         child.sendline('exit')
-        child.expect('Error talking to localhost#1\r\n')
+        child.expect('exit\r\n')
         child.expect('ready \(0\)>')
         child.sendline(':reconnect l\t')
         child.sendline(':enable')

@@ -57,22 +57,6 @@ class input_buffer(object):
         finally:
             self.lock.release()
 
-def ignore_sigchld(ignore):
-    """Typically we don't want to create zombie. But when executing a user
-    command (!command) the subprocess module relies on zombies not being
-    automatically reclaimed"""
-    if ignore:
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
-        # Reclaim previously created zombies
-        try:
-            while os.waitpid(-1, os.WNOHANG) != (0, 0):
-                pass
-        except OSError, e:
-            if e.errno != errno.ECHILD:
-                raise
-    else:
-        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-
 def process_input_buffer():
     """Send the content of the input buffer to all remote processes, this must
     be called in the main thread"""
@@ -85,7 +69,6 @@ def process_input_buffer():
         return
 
     if data.startswith('!'):
-        ignore_sigchld(False)
         try:
             retcode = subprocess.call(data[1:], shell=True)
         except OSError, e:
@@ -94,7 +77,6 @@ def process_input_buffer():
                 retcode = 0
             else:
                 raise
-        ignore_sigchld(True)
         if retcode > 128 and retcode <= 192:
             retcode = 128 - retcode
         if retcode > 0:

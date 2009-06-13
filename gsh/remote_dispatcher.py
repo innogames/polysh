@@ -168,12 +168,11 @@ class remote_dispatcher(buffered_dispatcher):
         return self.state != STATE_DEAD and buffered_dispatcher.readable(self)
 
     def handle_expt(self):
-        if options.interactive:
+        pid, status = os.waitpid(self.pid, 0)
+        exit_code = os.WEXITSTATUS(status)
+        options.exit_code = max(options.exit_code, exit_code)
+        if exit_code and options.interactive:
             console_output('Error talking to %s\n' % self.display_name)
-        else:
-            pid, status = os.waitpid(self.pid, 0)
-            exit_code = os.WEXITSTATUS(status)
-            options.exit_code = max(options.exit_code, exit_code)
         self.disconnect()
 
     def handle_close(self):

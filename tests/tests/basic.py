@@ -39,7 +39,7 @@ class TestBasic(unittest.TestCase):
             child = start_child()
             child.sendline('exit')
             for i in xrange(nr_localhost):
-                child.expect('Error talking to localhost[#0-9]*')
+                child.expect('exit')
             child.expect(pexpect.EOF)
 
         test_eof()
@@ -66,3 +66,21 @@ class TestBasic(unittest.TestCase):
         child.expect('ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
+
+    def testError(self):
+        child = launch_gsh(['localhost', 'localhost'])
+        child.expect('ready \(2\)> ')
+        child.sendline('kill -9 $$')
+        child.expect('Error talking to localhost')
+        child.expect('Error talking to localhost')
+        child.expect(pexpect.EOF)
+
+    def testCleanExit(self):
+        child = launch_gsh(['localhost', 'localhost'])
+        child.expect('ready \(2\)> ')
+        child.sendeof()
+        idx = child.expect(['Error talking to localhost', 'exit'])
+        self.assertEqual(idx, 1)
+        idx = child.expect(['Error talking to localhost', pexpect.EOF])
+        self.assertEqual(idx, 1)
+
