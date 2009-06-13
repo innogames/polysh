@@ -58,7 +58,8 @@ def base64version():
         if line:
             python_lines.append(line)
     python_source = '\n'.join(python_lines)
-    encoded = base64.encodestring(python_source).rstrip('\n').replace('\n', ',')
+    encoded = base64.encodestring(python_source).rstrip('\n')
+    encoded = encoded.replace('\n', ',\\\n')
     return encoded
 
 def file_transfer_cb(dispatcher, host_port):
