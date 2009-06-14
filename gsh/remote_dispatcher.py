@@ -125,12 +125,6 @@ class remote_dispatcher(buffered_dispatcher):
             raise asyncore.ExitNow(1)
         self.change_state(STATE_DEAD)
 
-    def reconnect(self):
-        """Relaunch and reconnect to this same remote process"""
-        self.disconnect()
-        self.close()
-        remote_dispatcher(self.hostname)
-
     def configure_tty(self):
         """We don't want \n to be replaced with \r\n, and we disable the echo"""
         attr = termios.tcgetattr(self.fd)

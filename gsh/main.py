@@ -229,9 +229,11 @@ def main():
 
     remote_dispatcher.options = options
 
+    hosts = []
     for arg in args:
-        for host in expand_syntax(arg):
-            remote_dispatcher.remote_dispatcher(host)
+        hosts.extend(expand_syntax(arg))
+
+    dispatchers.create_remote_dispatchers(hosts)
 
     signal.signal(signal.SIGWINCH, lambda signum, frame:
                                             dispatchers.update_terminal_size())

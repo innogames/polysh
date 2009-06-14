@@ -19,6 +19,7 @@
 import asyncore
 import fcntl
 import struct
+import sys
 import termios
 
 from gsh import remote_dispatcher
@@ -88,4 +89,16 @@ def format_info(info_list):
             info[str_id] = orig_str + indent * ' '
         info_list[info_id] = ' '.join(info) + '\n'
 
+def create_remote_dispatchers(hosts):
+    last_message = ''
+    for i, host in enumerate(hosts):
+        if remote_dispatcher.options.interactive:
+            last_message = 'Started %d/%d remote processes\r' % (i, len(hosts))
+            sys.stdout.write(last_message)
+            sys.stdout.flush()
+        remote_dispatcher.remote_dispatcher(host)
+
+    if last_message:
+        sys.stdout.write(' ' * len(last_message) + '\r')
+        sys.stdout.flush()
 

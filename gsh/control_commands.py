@@ -190,17 +190,21 @@ def do_reconnect(command):
     Try to reconnect to disconnected remote shells.
     The special characters * ? and [] work as expected.
     """
-    for i in selected_shells(command):
-        if i.state == remote_dispatcher.STATE_DEAD:
-            i.reconnect()
+    selec = selected_shells(command)
+    to_reconnect = [i for i in selec if i.state == remote_dispatcher.STATE_DEAD]
+    for i in to_reconnect:
+        i.disconnect()
+        i.close()
+
+    hosts = [i.hostname for i in to_reconnect]
+    dispatchers.create_remote_dispatchers(hosts)
 
 def do_add(command):
     """
     Usage: :add NAMES...
     Add one or many remote shells.
     """
-    for host in command.split():
-        remote_dispatcher.remote_dispatcher(host)
+    dispatchers.create_remote_dispatchers(command.split())
 
 def complete_purge(line, text):
     return complete_shells(line, text, lambda i: not i.enabled)
