@@ -148,7 +148,7 @@ class remote_dispatcher(buffered_dispatcher):
         """The prompt is important because we detect the readyness of a process
         by waiting for its prompt."""
         # No right prompt
-        command_line = 'RPS1=;RPROMPT=;'
+        command_line = 'PS2=;RPS1=;RPROMPT=;'
         command_line += 'PROMPT_COMMAND=;'
         command_line += 'TERM=ansi;'
         command_line += 'unset HISTFILE;'
