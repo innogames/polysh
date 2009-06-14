@@ -239,7 +239,7 @@ class stdin_thread(Thread):
         self.prompt = prompt
         set_last_status_length(len(prompt))
         self.raw_input_wanted.set()
-        while not self.in_raw_input.is_set():
+        while not self.in_raw_input.isSet():
             self.socket_notification.handle_read()
             self.in_raw_input.wait(0.1)
         self.raw_input_wanted.clear()
