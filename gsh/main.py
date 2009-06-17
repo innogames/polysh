@@ -20,6 +20,7 @@
 
 import asyncore
 import atexit
+import getpass
 import locale
 import optparse
 import os
@@ -63,6 +64,10 @@ def parse_cmdline():
     def_ssh = 'ssh -oLogLevel=Quiet -t %(host)s bash --noprofile'
     parser.add_option('--ssh', type='str', dest='ssh', default=def_ssh,
                       metavar='SSH', help='ssh command to use [%s]' % def_ssh)
+    parser.add_option('--password-file', type='str', dest='password_file',
+                      default=None, metavar='FILE',
+                      help='read a password from the specified file. - is ' +
+                           'the tty.')
     parser.add_option('--log-file', type='str', dest='log_file',
                       help='file to log each machine conversation [none]')
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
@@ -95,6 +100,14 @@ def parse_cmdline():
 
     if not args:
         parser.error('no hosts given')
+
+    if options.password_file == '-':
+        options.password = getpass.getpass()
+    elif options.password_file is not None:
+        password_file = file(options.password_file, 'r')
+        options.password = password_file.readline().rstrip('\n')
+    else:
+        options.password = None
 
     return options, args
 

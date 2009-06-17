@@ -8,6 +8,7 @@ the output.
 o The gsh exit code is aggregated from all remote shells taking the max.
 o :export_rank has been renamed to :export_vars as it now also exports the
 hostname.
+o Added a --password-file to login using a password.
 
 
 0.3

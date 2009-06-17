@@ -220,6 +220,12 @@ class remote_dispatcher(buffered_dispatcher):
             # buffer, so we searched only in the new_data and we offset the
             # found index by the length of the previous buffer
             lf_pos += len(self.read_buffer) - len(new_data)
+        elif self.state is STATE_NOT_STARTED and \
+             options.password is not None and \
+             'password:' in self.read_buffer.lower():
+            self.dispatch_write(options.password + '\n')
+            self.read_buffer = ''
+            return
         while lf_pos >= 0:
             # For each line in the buffer
             line = self.read_buffer[:lf_pos + 1]
@@ -265,7 +271,8 @@ class remote_dispatcher(buffered_dispatcher):
         """Let's write as much as we can"""
         num_sent = self.send(self.write_buffer)
         if self.debug:
-            self.print_debug('<== ' + self.write_buffer[:num_sent])
+            if self.state is not STATE_NOT_STARTED or options.password is None:
+                self.print_debug('<== ' + self.write_buffer[:num_sent])
         self.write_buffer = self.write_buffer[num_sent:]
 
     def print_debug(self, msg):
