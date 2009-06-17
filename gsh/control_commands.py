@@ -332,11 +332,12 @@ def do_upload(command):
 def do_export_vars(command):
     """
     Usage: :export_vars
-    Export some environment variables on enabled remote shells. GSH_NR_SHELLS
-    is the total number of enabled shells. GSH_RANK uniquely identifies each
-    shell with a number between 0 and GSH_NR_SHELLS - 1. GSH_NAME is the
-    hostname as specified on the command line and GSH_DISPLAY_NAME the
-    hostname as displayed by :list (most of the time the same as GSH_NAME).
+    Export some environment variables on enabled remote shells.
+    GSH_NR_SHELLS is the total number of enabled shells. GSH_RANK uniquely
+    identifies each shell with a number between 0 and GSH_NR_SHELLS - 1.
+    GSH_NAME is the hostname as specified on the command line and
+    GSH_DISPLAY_NAME the hostname as displayed by :list (most of the time the
+    same as GSH_NAME).
     """
     rank = 0
     for shell in dispatchers.all_instances():
