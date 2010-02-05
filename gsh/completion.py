@@ -66,8 +66,19 @@ completion_results = None
 # Commands in $PATH, used for the completion of the first word
 user_commands_in_path = read_commands_in_path()
 
+try:
+    import ctypes.util
+    lib_readline = ctypes.cdll.LoadLibrary(ctypes.util.find_library("readline"))
+    rl_completion_append_character = ctypes.c_char.in_dll(lib_readline,
+                                               "rl_completion_append_character")
+except Exception:
+    class rl_completion_append_character:
+        pass
+
+
 def complete(text, state):
     """On tab press, return the next possible completion"""
+    rl_completion_append_character.value = '\0'
     global completion_results
     if state == 0:
         line = readline.get_line_buffer()
