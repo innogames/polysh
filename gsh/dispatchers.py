@@ -96,7 +96,11 @@ def create_remote_dispatchers(hosts):
             last_message = 'Started %d/%d remote processes\r' % (i, len(hosts))
             sys.stdout.write(last_message)
             sys.stdout.flush()
-        remote_dispatcher.remote_dispatcher(host)
+        try:
+          remote_dispatcher.remote_dispatcher(host)
+        except OSError:
+          print
+          raise
 
     if last_message:
         sys.stdout.write(' ' * len(last_message) + '\r')
