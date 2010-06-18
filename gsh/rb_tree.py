@@ -10,6 +10,8 @@
 #   a software project, may be used freely without reference to the
 #   author.
 #
+# http://epaperpress.com
+#
 # Adapted by Chris Gonnerman <chris.gonnerman@newcenturycomputers.net>
 #        and Graham Breed
 #
