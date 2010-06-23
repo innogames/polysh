@@ -1,4 +1,17 @@
 # from http://pdos.csail.mit.edu/~cblake/cls/cls.py
+# License in http://pdos.csail.mit.edu/~cblake/cls/cls_py_LICENSE reproduced
+# thereafter:
+# I, Charles Blake, hereby relinquish all rights to the functions
+# terminal_size() and ioctl_GWINSZ() in file cls.py, located in this
+# same code directory to the maximum extent applicable by this notice.
+#
+# These functions are provided "as is" and without any expressed or implied
+# warranties, including, without limitation, the implied warranties of
+# merchantibility and fitness for a particular purpose.
+#
+# It would be nice (but not necessary) to give me an artistic license credit
+# somewhere in the licensing materials of any derivative product.
+
 
 import os
 
