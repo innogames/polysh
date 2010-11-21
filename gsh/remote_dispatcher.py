@@ -37,6 +37,9 @@ STATE_RUNNING,             \
 STATE_TERMINATED,          \
 STATE_DEAD = range(len(STATE_NAMES))
 
+# Terminal color codes
+COLORS = [1] + range(30, 37)
+
 # Count the total number of remote_dispatcher.handle_read() invocations
 nr_handle_read = 0
 
@@ -83,6 +86,11 @@ class remote_dispatcher(buffered_dispatcher):
         self.read_in_state_not_started = ''
         self.command = options.command
         self.last_printed_line = ''
+        if sys.stdout.isatty():
+            COLORS.insert(0, COLORS.pop()) # Rotate the colors
+            self.color_code = COLORS[0]
+        else:
+            self.color_code = None
 
     def launch_ssh(self, name):
         """Launch the ssh command in the child process"""
@@ -184,6 +192,8 @@ class remote_dispatcher(buffered_dispatcher):
             return
         indent = max_display_name_length - len(self.display_name)
         prefix = self.display_name + indent * ' ' + ' : '
+        if self.color_code is not None:
+            prefix = '\033[1;%dm%s\033[1;m' % (self.color_code, prefix)
         console_output(prefix + lines.replace('\n', '\n' + prefix) + '\n')
         self.last_printed_line = lines[lines.rfind('\n') + 1:]
 

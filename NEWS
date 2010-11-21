@@ -11,6 +11,7 @@ hostname.
 o Added a --password-file to login using a password.
 o The file transfer feature now works even if the gsh source is in a ZIP file.
 o Migrated from setuptools to distutils.
+o Hostnames are now colorized in the output.
 
 
 0.3
