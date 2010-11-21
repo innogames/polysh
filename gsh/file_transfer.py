@@ -19,6 +19,7 @@
 import base64
 import os
 import random
+import zipimport
 
 from gsh import callbacks
 from gsh import pity
@@ -32,27 +33,27 @@ CMD_SEND = CMD_PREFIX + 'send "%s" "%s" "%s"\n'
 CMD_FORWARD = CMD_PREFIX + 'forward "%s" "%s"\n'
 CMD_RECEIVE = CMD_PREFIX + 'receive "%s" "%s"\n'
 
-def find_pity_dot_py():
+def pity_dot_py_source():
     path = pity.__file__
+    if not os.path.exists(path):
+      try:
+        zip_importer = zipimport.zipimporter(os.path.dirname(path))
+      except Exception:
+        return
+      return zip_importer.get_source('pity')
     if not path.endswith('.py'):
         # Read from the .py source file
         dot_py_start = path.find('.py')
         if dot_py_start >= 0:
             path = path[:dot_py_start+3]
 
-    if not os.path.isabs(path):
-        path = os.getcwd() + '/' + path
-
-    return path
-
-# Save the full path, in case we change directory
-PITY_PATH = find_pity_dot_py()
+    return file(path).read()
 
 def base64version():
     python_lines = []
-    for line in file(PITY_PATH):
-        hash_pos = line.find(chr(35))
-        if hash_pos < 0:
+    for line in pity_dot_py_source().splitlines():
+        hash_pos = line.find('#')
+        if hash_pos >= 0:
             line = line[:hash_pos]
         line = line.rstrip()
         if line:
@@ -60,6 +61,8 @@ def base64version():
     python_source = '\n'.join(python_lines)
     encoded = base64.encodestring(python_source).rstrip('\n').replace('\n', ',')
     return encoded
+
+BASE64_PITY_PY = base64version()
 
 def file_transfer_cb(dispatcher, host_port):
     previous_shell = get_previous_shell(dispatcher)
@@ -80,7 +83,7 @@ def replicate(shell, path):
         console_output('No other remote shell to replicate files to\n')
         return
     receiver = get_previous_shell(shell)
-    pity_py = base64version()
+    pity_py = BASE64_PITY_PY
     for i in dispatchers.all_instances():
         if not i.enabled:
             continue

@@ -31,7 +31,7 @@ from Queue import Queue
 
 # Somewhat protect the stdin, be sure we read what has been sent by gsh, and
 # not some garbage entered by the user.
-STDIN_PREFIX = '!?#%!'
+STDIN_PREFIX = '!?^%!'
 
 UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
 
