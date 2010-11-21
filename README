@@ -21,9 +21,9 @@ toplevel gsh directory.
 Installation
 ~~~~~~~~~~~~
 
-Gsh uses the setuptools, so the command './setup.py install' will install it
+Gsh uses the distutils, so the command './setup.py install' will install it
 in the default python directory. It should also install the gsh script in
-/usr/bin.
+/usr/local/bin.
 
 
 
