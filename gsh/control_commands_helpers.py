@@ -74,16 +74,16 @@ def expand_local_path(path):
     return os.path.expanduser(os.path.expandvars(path) or '~')
 
 def list_control_commands():
-    import gsh.control_commands
-    return [c[3:] for c in dir(gsh.control_commands) if c.startswith('do_')]
+    from gsh import control_commands
+    return [c[3:] for c in dir(control_commands) if c.startswith('do_')]
 
 def get_control_command(name):
-    import gsh.control_commands
-    func = getattr(gsh.control_commands, 'do_' + name)
+    from gsh import control_commands
+    func = getattr(control_commands, 'do_' + name)
     return func
 
 def complete_control_command(line, text):
-    import gsh.control_commands
+    from gsh import control_commands
     if readline.get_begidx() == 0:
         # Completing control command name
         cmds = list_control_commands()
@@ -93,7 +93,7 @@ def complete_control_command(line, text):
         # Completing control command parameters
         cmd = line.split()[0][1:]
         def_compl = lambda line: []
-        compl_func = getattr(gsh.control_commands, 'complete_' + cmd, def_compl)
+        compl_func = getattr(control_commands, 'complete_' + cmd, def_compl)
         matches = compl_func(line, text)
     return matches
 
