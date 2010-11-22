@@ -34,11 +34,11 @@ def safe_write(output, buf):
             if e.errno != errno.EINTR:
                 raise
 
-def console_output(msg):
+def console_output(msg, logging_msg=None):
     """Use instead of print, to clear the status information before printing"""
     from gsh import remote_dispatcher
 
-    remote_dispatcher.log(msg)
+    remote_dispatcher.log(logging_msg or msg)
     if remote_dispatcher.options.interactive:
         from gsh.stdin import the_stdin_thread
         the_stdin_thread.no_raw_input()

@@ -24,12 +24,12 @@ from gsh_tests import launch_gsh
 class TestNonInteractive(unittest.TestCase):
     def testCommandNormal(self):
         child = launch_gsh(['--command=echo text', 'localhost'])
-        child.expect('localhost : text')
+        child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
         child.expect(pexpect.EOF)
 
     def testCommandIntr(self):
         child = launch_gsh(['--command=echo text; cat', 'localhost'])
-        child.expect('localhost : text')
+        child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
         child.sendintr()
         child.expect(pexpect.EOF)
 

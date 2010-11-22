@@ -191,10 +191,16 @@ class remote_dispatcher(buffered_dispatcher):
         if not lines:
             return
         indent = max_display_name_length - len(self.display_name)
-        prefix = self.display_name + indent * ' ' + ' : '
-        if self.color_code is not None:
-            prefix = '\033[1;%dm%s\033[1;m' % (self.color_code, prefix)
-        console_output(prefix + lines.replace('\n', '\n' + prefix) + '\n')
+        log_prefix = self.display_name + indent * ' ' + ' : '
+        if self.color_code is None:
+            console_prefix = log_prefix
+        else:
+            console_prefix = '\033[1;%dm%s\033[1;m' % (self.color_code,
+                                                       log_prefix)
+        console_data = (console_prefix +
+                        lines.replace('\n', '\n' + console_prefix) + '\n')
+        log_data = log_prefix + lines.replace('\n', '\n' + log_prefix) + '\n'
+        console_output(console_data, logging_msg=log_data)
         self.last_printed_line = lines[lines.rfind('\n') + 1:]
 
     def handle_read_fast_case(self, data):
