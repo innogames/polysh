@@ -64,6 +64,8 @@ def parse_cmdline():
     def_ssh = 'exec ssh -oLogLevel=Quiet -t %(host)s exec bash --noprofile'
     parser.add_option('--ssh', type='str', dest='ssh', default=def_ssh,
                       metavar='SSH', help='ssh command to use [%s]' % def_ssh)
+    parser.add_option('--user', type='str', dest='user', default=None,
+                      help='remote user to log in as', metavar='USER')
     parser.add_option('--password-file', type='str', dest='password_file',
                       default=None, metavar='FILE',
                       help='read a password from the specified file. - is ' +

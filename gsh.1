@@ -32,6 +32,9 @@ Command to execute on the remote shells. This starts \fIgsh\fR in non\-interacti
 \fB\-\-ssh=SSH\fR
 Ssh command to use [exec ssh -oLogLevel=Quiet -t %(host)s exec bash --noprofile]. By default, \fIgsh\fR spawns lightweight remote shells using the ssh command, but another shell command can be specified here. For example, with \-\-ssh='usleep $((RANDOM*50)); exec ssh' a delay will be introduced to avoid all hosts accessing a NFS server at the same time. If the hostname should not be added at the end of the command, the macro %(host)s can be inserted where the hostname should be placed. Also, make sure the command you use launchs a pty, this may need the \-t option for ssh.
 .TP
+\fB\-\-user=USER\fR
+Remote user to log in as. When specified, \fIgsh\fR will ssh to USER@HOST instead of simply HOST.
+.TP
 \fB\-\-password\-file=FILE\fR
 read a password from the specified file. - is the tty. This can be used when public key authentication is not available, either write the password in a file, or set FILE to - so that \fIgsh\fR will prompt for a password.
 .TP

@@ -82,3 +82,10 @@ class TestCommandLine(unittest.TestCase):
         child.expect('Error talking to unknown_host')
         child.expect(pexpect.EOF)
 
+    def testUser(self):
+        child = launch_gsh(['--ssh=echo', 'machine'])
+        child.expect('[^@]machine')
+        child.expect(pexpect.EOF)
+        child = launch_gsh(['--ssh=echo', '--user=login', 'machine'])
+        child.expect('login@machine')
+        child.expect(pexpect.EOF)

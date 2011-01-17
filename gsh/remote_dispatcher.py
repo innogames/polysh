@@ -94,6 +94,8 @@ class remote_dispatcher(buffered_dispatcher):
 
     def launch_ssh(self, name):
         """Launch the ssh command in the child process"""
+        if options.user:
+            name = '%s@%s' % (options.user, name)
         evaluated = options.ssh % {'host': name}
         if evaluated == options.ssh:
             evaluated = '%s %s' % (evaluated, name)
