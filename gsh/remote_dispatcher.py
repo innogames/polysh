@@ -142,7 +142,7 @@ class remote_dispatcher(buffered_dispatcher):
         attr[3] &= ~termios.ECHO # lflag
         termios.tcsetattr(self.fd, termios.TCSANOW, attr)
         # unsetopt zle prevents Zsh from resetting the tty
-        return 'unsetopt zle 2> /dev/null;stty -echo -onlcr;'
+        return 'unsetopt zle 2> /dev/null;stty -echo -onlcr -ctlecho;'
 
     def seen_prompt_cb(self, unused):
         if options.interactive:
