@@ -18,6 +18,7 @@
 
 import asyncore
 import os
+import pipes
 import shutil
 import sys
 import tempfile
@@ -28,7 +29,6 @@ from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
 from gsh.completion import complete_local_path
 from gsh.console import console_output
-from gsh.pity import shell_quote
 from gsh.version import VERSION
 from gsh import dispatchers
 from gsh import remote_dispatcher
@@ -348,7 +348,7 @@ def do_export_vars(command):
                 'GSH_DISPLAY_NAME': shell.display_name,
             }
             for name, value in environment_variables.iteritems():
-                value = shell_quote(str(value))
+                value = pipes.quote(str(value))
                 shell.dispatch_command('export %s=%s\n' % (name, value))
             rank += 1
 

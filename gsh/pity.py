@@ -16,13 +16,12 @@
 #
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 #
-# This file should remain compatible with python-1.5.2
-#
 
 import os
 import signal
 import socket
 import string
+import subprocess
 import sys
 import termios
 import time
@@ -35,32 +34,21 @@ STDIN_PREFIX = '!?^%!'
 
 UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
 
-def long_to_str(number):
-    s = str(number)
-    if s[-1] == 'L':
-        s = s[:-1]
-    return s
-
 def human_unit(size):
     """Return a string of the form '12.34 MiB' given a size in bytes."""
     for i in xrange(len(UNITS) - 1, 0, -1):
         base = 2.0 ** (10 * i)
         if 2 * base < size:
             return '%.2f %s' % ((float(size) / base), UNITS[i])
-    return long_to_str(size) + ' ' + UNITS[0]
+    return str(size) + ' ' + UNITS[0]
 
-
-def rstrip_char(string, char):
-    while string and string[-1] == char:
-        string = string[:-1]
-    return string
 
 class bandwidth_monitor(Thread):
     def __init__(self):
         Thread.__init__(self)
-        self.setDaemon(1)
+        self.setDaemon(True)
         self.main_done = Event()
-        self.size = 0L
+        self.size = 0
         self.start()
 
     def add_transferred_size(self, size):
@@ -71,9 +59,9 @@ class bandwidth_monitor(Thread):
         self.join()
 
     def run(self):
-        previous_size = 0L
+        previous_size = 0
         previous_sampling_time = time.time()
-        previous_bandwidth = 0L
+        previous_bandwidth = 0
         while not self.main_done.isSet():
             current_size = self.size
             current_sampling_time = time.time()
@@ -81,14 +69,14 @@ class bandwidth_monitor(Thread):
                                 (current_sampling_time - previous_sampling_time)
             current_bandwidth = (2*current_bandwidth + previous_bandwidth) / 3.0
             if current_bandwidth < 1:
-                current_bandwidth = 0L
+                current_bandwidth = 0
             print '%s transferred at %s/s' % (human_unit(current_size),
                                               human_unit(current_bandwidth))
             previous_size = current_size
             previous_sampling_time = current_sampling_time
             previous_bandwidth = current_bandwidth
             self.main_done.wait(1.0)
-        print 'Done transferring %s bytes (%s)' % (long_to_str(self.size),
+        print 'Done transferring %s bytes (%s)' % (self.size,
                                                    human_unit(self.size))
 
 def write_fully(fd, data):
@@ -98,16 +86,14 @@ def write_fully(fd, data):
 
 MAX_QUEUE_ITEM_SIZE = 8 * 1024
 
-def forward(input_file, output_files, bandwidth=0):
+def forward(input_file, output_files, bandwidth=False):
     if bandwidth:
         bw = bandwidth_monitor()
 
     input_fd = input_file.fileno()
-    output_fds = []
-    for output_file in output_files:
-        output_fds.append(output_file.fileno())
+    output_fds = [output_file.fileno() for output_file in output_files]
 
-    while 1:
+    while True:
         data = os.read(input_fd, MAX_QUEUE_ITEM_SIZE)
         if not data:
             break
@@ -135,7 +121,7 @@ def init_listening_socket(gsh_prefix):
 
 def read_line():
     line = ''
-    while 1:
+    while True:
         c = os.read(sys.stdin.fileno(), 1)
         if c == '\n':
             break
@@ -149,17 +135,17 @@ def get_destination():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     new_settings = termios.tcgetattr(fd)
-    new_settings[3] = new_settings[3] & ~2 # 3:lflags 2:ICANON
-    new_settings[6][6] = '\000' # Set VMIN to zero for lookahead only
-    termios.tcsetattr(fd, 1, new_settings) # 1:TCSADRAIN
-    while 1:
+    new_settings[3] = new_settings[3] & ~termios.ICANON # 3:lflags
+    new_settings[6][termios.VMIN] = '\000' # 6:cc Set to zero for lookahead only
+    termios.tcsetattr(fd, termios.TCSADRAIN, new_settings)
+    while True:
         line = read_line()
         start = string.find(line, STDIN_PREFIX)
         if start >= 0:
             line = line[start + len(STDIN_PREFIX):]
             break
 
-    termios.tcsetattr(fd, 1, old_settings) # 1:TCSADRAIN
+    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     split = string.split(line, ':', 1)
     host = split[0]
     port = int(split[1])
@@ -167,46 +153,36 @@ def get_destination():
     s.connect((host, port))
     return s.makefile('r+b')
 
-def shell_quote(s):
-    return "'" + string.replace(s, "'", "'\\''") + "'"
+def pipe_to_tar(argv):
+    p = subprocess.Popen(['tar'] + argv,
+                         shell=False,
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         close_fds=True)
 
-try:
-    import subprocess
-except ImportError:
-    def pipe_to_process(cmdline):
-        import popen2
-        return popen2.popen2(cmdline)
-else:
-    def pipe_to_process(cmdline):
-        p = subprocess.Popen([cmdline],
-                             shell=True,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             close_fds=True)
-
-        return p.stdout, p.stdin
+    return p.stdout, p.stdin
 
 def do_send(path):
-    split = os.path.split(rstrip_char(path, '/'))
+    split = os.path.split(path.rstrip('/'))
     dirname, basename = split
     if dirname:
         os.chdir(dirname)
     if not basename:
         basename = '/'
-    stdout, stdin = pipe_to_process('tar c %s' % shell_quote(basename))
+    stdout, stdin = pipe_to_tar(['c', basename])
     stdin.close()
     forward(stdout, [get_destination()])
 
 def do_forward(gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
-    stdout, stdin = pipe_to_process('tar x')
+    stdout, stdin = pipe_to_tar(['x'])
     stdout.close()
     conn, addr = listening_socket.accept()
     forward(conn.makefile(), [get_destination(), stdin])
 
 def do_receive(gsh_prefix):
     listening_socket = init_listening_socket(gsh_prefix)
-    stdout, stdin = pipe_to_process('tar x')
+    stdout, stdin = pipe_to_tar(['x'])
     stdout.close()
     conn, addr = listening_socket.accept()
     # Only the last item in the chain displays the progress information
