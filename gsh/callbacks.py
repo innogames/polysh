@@ -40,16 +40,16 @@ def random_string(length):
 COMMON_PREFIX = 'gsh-%s:' % random_string(5)
 NR_GENERATED_TRIGGERS = 0
 
-# {'random_string()': (function, continuous)}
+# {'random_string()': (function, repeat)}
 CALLBACKS = {}
 
-def add(name, function, continous):
+def add(name, function, repeat):
     name = name.replace('/', '_')
     global NR_GENERATED_TRIGGERS
     nr = NR_GENERATED_TRIGGERS
     NR_GENERATED_TRIGGERS += 1
     trigger = '%s%s:%s:%d/' % (COMMON_PREFIX, name, random_string(5), nr)
-    CALLBACKS[trigger] = (function, continous)
+    CALLBACKS[trigger] = (function, repeat)
     trigger1 = trigger[:len(COMMON_PREFIX)/2]
     trigger2 = trigger[len(trigger1):]
     return trigger1, trigger2
@@ -67,11 +67,11 @@ def process(line):
         return False
 
     trigger = line[start:end]
-    callback, continous = CALLBACKS.get(trigger, (None, True))
+    callback, repeat = CALLBACKS.get(trigger, (None, True))
     if not callback:
         return False
 
-    if not continous:
+    if not repeat:
         del CALLBACKS[trigger]
 
     callback(line[end:].strip())
