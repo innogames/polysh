@@ -27,7 +27,7 @@ from gsh.control_commands_helpers import complete_shells, selected_shells
 from gsh.control_commands_helpers import list_control_commands
 from gsh.control_commands_helpers import get_control_command, toggle_shells
 from gsh.control_commands_helpers import expand_local_path
-from gsh.completion import complete_local_path
+from gsh.completion import complete_local_path, add_to_history
 from gsh.console import console_output
 from gsh.version import VERSION
 from gsh import dispatchers
@@ -355,6 +355,8 @@ def do_export_vars(command):
     for shell in dispatchers.all_instances():
         if shell.enabled:
             shell.dispatch_command('export GSH_NR_SHELLS=%d\n' % rank)
+
+add_to_history('$GSH_RANK $GSH_NAME $GSH_DISPLAY_NAME $GSH_NR_SHELLS')
 
 def complete_set_log(line, text):
     return complete_local_path(text)
