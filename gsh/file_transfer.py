@@ -60,6 +60,12 @@ def base64version():
     encoded = base64.encodestring(python_source).rstrip('\n').replace('\n', ',')
     return encoded
 
+def tarCreate(path):
+    path = path.rstrip('/') or '/' if path else '.'
+    dirname = pipes.quote(os.path.dirname(path)) or '.'
+    basename = pipes.quote(os.path.basename(path)) or '/'
+    return 'tar c -C %s %s' % (dirname, basename)
+
 BASE64_PITY_PY = base64version()
 
 CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" ' % \
@@ -70,7 +76,7 @@ CMD_UPLOAD_EMIT = ('STTY_MODE="$(stty --save)";' +
                    'echo %s""%s;' +
                    CMD_PREFIX + ' %s upload %s;' +
                    'stty "$STTY_MODE"\n')
-CMD_REPLICATE_EMIT = 'tar c %s | ' + CMD_PREFIX + ' %s replicate %s\n'
+CMD_REPLICATE_EMIT = '%s | ' + CMD_PREFIX + ' %s replicate %s\n'
 CMD_FORWARD = CMD_PREFIX + ' %s forward %s %s %s\n'
 
 def tree_max_children(depth):
@@ -134,7 +140,7 @@ class file_transfer_tree_node(object):
             t1, t2 = callbacks.add('upload_start', start_upload, False)
             cmd = CMD_UPLOAD_EMIT % (t1, t2, opt, host_ports)
         else:
-            cmd = CMD_REPLICATE_EMIT % (pipes.quote(self.path), opt, host_ports)
+            cmd = CMD_REPLICATE_EMIT % (tarCreate(self.path), opt, host_ports)
         self.remote_dispatcher.dispatch_command(cmd)
 
     def __str__(self):
@@ -180,8 +186,8 @@ class local_uploader(remote_dispatcher.remote_dispatcher):
         self.temporary = True
 
     def launch_ssh(self, name):
-        cmd = 'tar c %s | (openssl base64; echo %s) >&%d' % (
-            pipes.quote(self.path_to_upload),
+        cmd = '%s | (openssl base64; echo %s) >&%d' % (
+            tarCreate(self.path_to_upload),
             pity.BASE64_TERMINATOR,
             self.first_destination.fd)
         subprocess.call(cmd, shell=True)
