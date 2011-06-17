@@ -17,8 +17,12 @@
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 
 import base64
+import math
 import os
+import pipes
 import random
+import subprocess
+import sys
 import zipimport
 
 from gsh import callbacks
@@ -26,12 +30,6 @@ from gsh import pity
 from gsh.console import console_output
 from gsh import remote_dispatcher
 from gsh import dispatchers
-
-CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" '
-
-CMD_SEND = CMD_PREFIX + 'send "%s" "%s" "%s"\n'
-CMD_FORWARD = CMD_PREFIX + 'forward "%s" "%s"\n'
-CMD_RECEIVE = CMD_PREFIX + 'receive "%s" "%s"\n'
 
 def pity_dot_py_source():
     path = pity.__file__
@@ -64,60 +62,163 @@ def base64version():
 
 BASE64_PITY_PY = base64version()
 
-def file_transfer_cb(dispatcher, host_port):
-    previous_shell = get_previous_shell(dispatcher)
-    previous_shell.dispatch_write(pity.STDIN_PREFIX + host_port + '\n')
+CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" ' % \
+             BASE64_PITY_PY
 
-def get_previous_shell(shell):
-    shells = [i for i in dispatchers.all_instances() if i.enabled]
-    current_pos = shells.index(shell)
-    while True:
-        current_pos = (current_pos - 1) % len(shells)
-        prev_shell = shells[current_pos]
-        if prev_shell.enabled:
-            return prev_shell
+CMD_UPLOAD_EMIT = ('STTY_MODE="$(stty --save)";' +
+                   'stty raw &> /dev/null;' +
+                   'echo %s""%s;' +
+                   CMD_PREFIX + ' %s emit64 %s;' +
+                   'stty "$STTY_MODE"\n')
+CMD_REPLICATE_EMIT = 'tar c %s | ' + CMD_PREFIX + ' %s emit %s\n'
+CMD_FORWARD = CMD_PREFIX + ' %s forward %s %s %s\n'
+
+def tree_max_children(depth):
+    return 2
+
+class file_transfer_tree_node(object):
+    def __init__(self,
+                 parent,
+                 dispatcher,
+                 children_dispatchers,
+                 depth,
+                 should_print_bw,
+                 path=None,
+                 is_upload=False):
+        self.parent = parent
+        self.host_port = None
+        self.remote_dispatcher = dispatcher
+        self.children = []
+        if path:
+            self.path = path
+        self.is_upload = is_upload
+        num_children = min(len(children_dispatchers), tree_max_children(depth))
+        if num_children:
+            child_length = int(math.ceil(float(len(children_dispatchers)) /
+                                         num_children))
+            depth += 1
+            for i in xrange(num_children):
+                begin = i * child_length
+                child_dispatcher = children_dispatchers[begin]
+                end = begin + child_length
+                begin += 1
+                child = file_transfer_tree_node(self,
+                                                child_dispatcher,
+                                                children_dispatchers[begin:end],
+                                                depth,
+                                                should_print_bw)
+                self.children.append(child)
+        self.should_print_bw = should_print_bw(self)
+        self.try_start_pity()
+
+    def host_port_cb(self, host_port):
+        self.host_port = host_port
+        self.parent.try_start_pity()
+
+    def try_start_pity(self):
+        host_ports = [child.host_port for child in self.children]
+        if len(filter(bool, host_ports)) != len(host_ports):
+            return
+        host_ports = ' '.join(map(pipes.quote, host_ports))
+        if self.should_print_bw:
+            opt = '--print-bw'
+        else:
+            opt = ''
+        if self.parent:
+            cb = lambda host_port: self.host_port_cb(host_port)
+            t1, t2 = callbacks.add('file_transfer', cb, False)
+            cmd = CMD_FORWARD % (opt, t1, t2, host_ports)
+        elif self.is_upload:
+            def start_upload(unused):
+                local_uploader(self.path, self.remote_dispatcher)
+            t1, t2 = callbacks.add('upload_start', start_upload, False)
+            cmd = CMD_UPLOAD_EMIT % (t1, t2, opt, host_ports)
+        else:
+            cmd = CMD_REPLICATE_EMIT % (pipes.quote(self.path), opt, host_ports)
+        self.remote_dispatcher.dispatch_command(cmd)
+
+    def __str__(self):
+        children_str = ''
+        for child in self.children:
+            child_str = str(child)
+            for line in child_str.splitlines():
+                children_str += '+--%s\n' % line
+        return '%s\n%s' % (self.remote_dispatcher.display_name, children_str)
+
 
 def replicate(shell, path):
-    nr_peers = len([i for i in dispatchers.all_instances() if i.enabled])
-    if nr_peers <= 1:
+    peers = [i for i in dispatchers.all_instances() if i.enabled]
+    if len(peers) <= 1:
         console_output('No other remote shell to replicate files to\n')
         return
-    receiver = get_previous_shell(shell)
-    pity_py = BASE64_PITY_PY
-    for i in dispatchers.all_instances():
-        if not i.enabled:
-            continue
-        cb = lambda host_port, i=i: file_transfer_cb(i, host_port)
-        transfer1, transfer2 = callbacks.add('file transfer', cb, False)
-        if i == shell:
-            i.dispatch_command(CMD_SEND % (pity_py, path, transfer1, transfer2))
-        elif i != receiver:
-            i.dispatch_command(CMD_FORWARD % (pity_py, transfer1, transfer2))
-        else:
-            i.dispatch_command(CMD_RECEIVE % (pity_py, transfer1, transfer2))
-        i.change_state(remote_dispatcher.STATE_RUNNING)
+
+    def should_print_bw(node, already_chosen=[False]):
+        if not node.children and not already_chosen[0] and not node.is_upload:
+            already_chosen[0] = True
+            return True
+        return False
+
+    sender_index = peers.index(shell)
+    destinations = peers[:sender_index] + peers[sender_index+1:]
+    tree = file_transfer_tree_node(None,
+                                   shell,
+                                   destinations,
+                                   0,
+                                   should_print_bw,
+                                   path=path)
+
 
 class local_uploader(remote_dispatcher.remote_dispatcher):
-    def __init__(self, path_to_upload):
-        remote_dispatcher.remote_dispatcher.__init__(self, '.')
+    def __init__(self, path_to_upload, first_destination):
         self.path_to_upload = path_to_upload
-        self.upload_started = False
+        self.trigger1, self.trigger2 = callbacks.add('upload_done',
+                                                     self.upload_done,
+                                                     False)
+        self.first_destination = first_destination
+        self.first_destination.drain_and_block_writing()
+        remote_dispatcher.remote_dispatcher.__init__(self, '.')
+        self.temporary = True
 
     def launch_ssh(self, name):
-        os.execl('/bin/bash', 'bash')
+        cmd = 'tar c %s | (openssl base64; echo %s) >&%d' % (
+            pipes.quote(self.path_to_upload),
+            pity.BASE64_TERMINATOR,
+            self.first_destination.fd)
+        subprocess.call(cmd, shell=True)
 
-    def change_state(self, state):
-        remote_dispatcher.remote_dispatcher.change_state(self, state)
-        if state != remote_dispatcher.STATE_IDLE:
-            return
+        os.write(1, self.trigger1 + self.trigger2 + '\n')
+        os._exit(0)  # The atexit handler would kill all remote shells
 
-        if not self.upload_started:
-            replicate(self, self.path_to_upload)
-            self.upload_started = True
-        else:
-            self.disconnect()
-            self.close()
+    def upload_done(self, unused):
+        self.first_destination.allow_writing()
+
 
 def upload(local_path):
-    local_shell = local_uploader(local_path)
+    peers = [i for i in dispatchers.all_instances() if i.enabled]
+    if not peers:
+        console_output('No other remote shell to replicate files to\n')
+        return
 
+    if len(peers) == 1:
+        # We wouldn't be able to show the progress indicator with only one
+        # destination. We need one remote connection in blocking mode to send
+        # the base64 data to. We also need one remote connection in non blocking
+        # mode for gsh to display the progress indicator via the main select
+        # loop.
+        console_output('Uploading to only one remote shell is not supported, '
+                       'use scp instead\n')
+        return
+
+    def should_print_bw(node, already_chosen=[False]):
+        if not node.children and not already_chosen[0]:
+            already_chosen[0] = True
+            return True
+        return False
+
+    tree = file_transfer_tree_node(None,
+                                   peers[0],
+                                   peers[1:],
+                                   0,
+                                   should_print_bw,
+                                   path=local_path,
+                                   is_upload=True)

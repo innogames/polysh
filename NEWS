@@ -1,6 +1,9 @@
 0.3.2
 ~~~~~
 o Added a --user option to specify the remote user to login as.
+o New file transfer code that does not assume additional connectivity between
+the host running gsh and the remote shells but still assumes connectivity
+between the remote shells.
 
 
 0.3.1

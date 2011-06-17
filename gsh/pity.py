@@ -17,6 +17,7 @@
 # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
 #
 
+import binascii
 import os
 import signal
 import socket
@@ -33,6 +34,8 @@ from Queue import Queue
 STDIN_PREFIX = '!?^%!'
 
 UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
+
+BASE64_TERMINATOR = '.'
 
 def human_unit(size):
     """Return a string of the form '12.34 MiB' given a size in bytes."""
@@ -84,140 +87,154 @@ def write_fully(fd, data):
         written = os.write(fd, data)
         data = data[written:]
 
-MAX_QUEUE_ITEM_SIZE = 8 * 1024
 
-def forward(input_file, output_files, bandwidth=False):
-    if bandwidth:
+class Reader(object):
+    def __init__(self, input_file):
+        self.input_file = input_file
+        self.fd = input_file.fileno()
+
+    def close(self):
+        return self.input_file.close()
+
+
+class Base64Reader(Reader):
+    def __init__(self, input_file):
+        super(Base64Reader, self).__init__(input_file)
+        self.buffer = ''
+        self.eof_found = False
+
+    def read(self):
+        while True:
+            if self.eof_found:
+                assert not self.buffer, self.buffer
+                return None
+
+            piece = os.read(self.fd, 77 * 1024)
+            if BASE64_TERMINATOR in piece[-4:]:
+                self.eof_found = True
+                piece = piece[:piece.index(BASE64_TERMINATOR)]
+            self.buffer += piece.replace('\n', '')
+            if len(self.buffer) % 4:
+                end_offset = 4 * (len(self.buffer) // 4)
+                to_decode = self.buffer[:end_offset]
+                self.buffer = self.buffer[end_offset:]
+            else:
+                to_decode = self.buffer
+                self.buffer = ''
+            if to_decode:
+                return binascii.a2b_base64(to_decode)
+
+
+class FileReader(Reader):
+    def __init__(self, input_file):
+        super(FileReader, self).__init__(input_file)
+
+    def read(self):
+        return os.read(self.fd, 32 * 1024)
+
+
+def forward(reader, output_files, print_bw):
+    if print_bw:
         bw = bandwidth_monitor()
 
-    input_fd = input_file.fileno()
     output_fds = [output_file.fileno() for output_file in output_files]
 
     while True:
-        data = os.read(input_fd, MAX_QUEUE_ITEM_SIZE)
+        data = reader.read()
         if not data:
             break
-        if bandwidth:
+        if print_bw:
             bw.add_transferred_size(len(data))
         for output_fd in output_fds:
             write_fully(output_fd, data)
 
-    if bandwidth:
+    if print_bw:
         bw.finish()
 
-    input_file.close()
+    reader.close()
     for output_file in output_files:
         output_file.close()
 
-def init_listening_socket(gsh_prefix):
+def init_listening_socket(gsh1, gsh2):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('', 0))
     s.listen(5)
     host = socket.gethostname()
     port = s.getsockname()[1]
-    prefix = string.join(gsh_prefix, '')
-    print '%s%s:%s' % (prefix, host, port)
+    print '%s%s%s:%s' % (gsh1, gsh2, host, port)
     return s
 
-def read_line():
-    line = ''
-    while True:
-        c = os.read(sys.stdin.fileno(), 1)
-        if c == '\n':
-            break
-        line = line + c
-        if len(line) > 1024:
-            print 'Received input is too large'
-            sys.exit(1)
-    return line
 
-def get_destination():
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    new_settings = termios.tcgetattr(fd)
-    new_settings[3] = new_settings[3] & ~termios.ICANON # 3:lflags
-    new_settings[6][termios.VMIN] = '\000' # 6:cc Set to zero for lookahead only
-    termios.tcsetattr(fd, termios.TCSADRAIN, new_settings)
-    while True:
-        line = read_line()
-        start = string.find(line, STDIN_PREFIX)
-        if start >= 0:
-            line = line[start + len(STDIN_PREFIX):]
-            break
-
-    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    split = string.split(line, ':', 1)
-    host = split[0]
-    port = int(split[1])
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
-    return s.makefile('r+b')
-
-def pipe_to_tar(argv):
-    p = subprocess.Popen(['tar'] + argv,
-                         shell=False,
+def pipe_to_untar():
+    p = subprocess.Popen(['tar', 'x'],
                          stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
+                         stdout=None,
                          close_fds=True)
 
-    return p.stdout, p.stdin
+    return p.stdin
 
-def do_send(path):
-    split = os.path.split(path.rstrip('/'))
-    dirname, basename = split
-    if dirname:
-        os.chdir(dirname)
-    if not basename:
-        basename = '/'
-    stdout, stdin = pipe_to_tar(['c', basename])
-    stdin.close()
-    forward(stdout, [get_destination()])
+def new_connection(host_port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    host, port_str = host_port.split(':')
+    s.connect((host, int(port_str)))
+    return s.makefile('r+b')
 
-def do_forward(gsh_prefix):
-    listening_socket = init_listening_socket(gsh_prefix)
-    stdout, stdin = pipe_to_tar(['x'])
-    stdout.close()
+
+def do_emit(destinations, print_bw):
+    untar = pipe_to_untar()
+    connections = [new_connection(host_port) for host_port in destinations]
+    forward(FileReader(sys.stdin), [untar] + connections, print_bw)
+
+
+def do_emit64(destinations, print_bw):
+    untar = pipe_to_untar()
+    connections = [new_connection(host_port) for host_port in destinations]
+    forward(Base64Reader(sys.stdin), [untar] + connections, print_bw)
+
+
+def do_forward(gsh1, gsh2, destinations, print_bw):
+    listening_socket = init_listening_socket(gsh1, gsh2)
+    untar = pipe_to_untar()
+    connections = [new_connection(host_port) for host_port in destinations]
     conn, addr = listening_socket.accept()
-    forward(conn.makefile(), [get_destination(), stdin])
+    forward(FileReader(conn), [untar] + connections, print_bw)
 
-def do_receive(gsh_prefix):
-    listening_socket = init_listening_socket(gsh_prefix)
-    stdout, stdin = pipe_to_tar(['x'])
-    stdout.close()
-    conn, addr = listening_socket.accept()
-    # Only the last item in the chain displays the progress information
-    # as it should be the last one to finish.
-    forward(conn.makefile(), [stdin], bandwidth=1)
 
 # Usage:
 #
-# pity.py send PATH
-# => reads host:port on stdin
+# pity.py [--print-bw] emit host:port...
+# => reads data on stdin and forwards it to the optional list of host:port
 #
-# pity.py forward [GSH1...]
-# => reads host:port on stdin and prints listening host:port on stdout
-# prefixed by GSH1...
+# pity.py [--print-bw] emit64 host:port...
+# => reads base64 on stdin and forwards it to the optional list of host:port
 #
-# pity.py receive [GSH1...]
-# => prints listening host:port on stdout prefixed by GSH1...
+# pity.py [--print-bw] forward GSH1 GSH2 host:port...
+# => prints listening host:port on stdout prefixed by GSH1GSH2 and forwards from
+# this port to the optional list of host:port
 #
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: os.kill(0, signal.SIGKILL))
-    cmd = sys.argv[1]
+    if sys.argv[1] == '--print-bw':
+        print_bw = True
+        argv = sys.argv[2:]
+    else:
+        print_bw = False
+        argv = sys.argv[1:]
+    cmd = argv[0]
     try:
-        if cmd == 'send' and len(sys.argv) >= 3:
-            do_send(sys.argv[2])
-        elif cmd == 'forward' and len(sys.argv) >= 2:
-            do_forward(sys.argv[2:])
-        elif cmd == 'receive' and len(sys.argv) >= 2:
-            do_receive(sys.argv[2:])
+        if cmd == 'emit':
+            do_emit(argv[1:], print_bw)
+        elif cmd == 'emit64':
+            do_emit64(argv[1:], print_bw)
+        elif cmd == 'forward' and len(argv) >= 3:
+            do_forward(argv[1], argv[2], argv[3:], print_bw)
         else:
-            print 'Unknown command:', sys.argv
+            print 'Unknown command:', argv
             sys.exit(1)
     except OSError, e:
         print e
         sys.exit(1)
 
+
 if __name__ == '__main__':
     main()
-

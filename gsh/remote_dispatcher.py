@@ -74,6 +74,7 @@ class remote_dispatcher(buffered_dispatcher):
 
         # Parent
         buffered_dispatcher.__init__(self, fd)
+        self.temporary = False
         self.hostname = hostname
         self.debug = options.debug
         self.enabled = True # shells can be enabled and disabled
@@ -178,6 +179,8 @@ class remote_dispatcher(buffered_dispatcher):
         if exit_code and options.interactive:
             console_output('Error talking to %s\n' % self.display_name)
         self.disconnect()
+        if self.temporary:
+            self.close()
 
     def handle_close(self):
         self.handle_expt()
@@ -306,7 +309,7 @@ class remote_dispatcher(buffered_dispatcher):
 
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
-        if self.state != STATE_DEAD and self.enabled:
+        if self.state != STATE_DEAD and self.enabled and self.allow_write:
             buffered_dispatcher.dispatch_write(self, buf)
             return True
 
