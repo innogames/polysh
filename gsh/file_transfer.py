@@ -68,9 +68,9 @@ CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" ' % \
 CMD_UPLOAD_EMIT = ('STTY_MODE="$(stty --save)";' +
                    'stty raw &> /dev/null;' +
                    'echo %s""%s;' +
-                   CMD_PREFIX + ' %s emit64 %s;' +
+                   CMD_PREFIX + ' %s upload %s;' +
                    'stty "$STTY_MODE"\n')
-CMD_REPLICATE_EMIT = 'tar c %s | ' + CMD_PREFIX + ' %s emit %s\n'
+CMD_REPLICATE_EMIT = 'tar c %s | ' + CMD_PREFIX + ' %s replicate %s\n'
 CMD_FORWARD = CMD_PREFIX + ' %s forward %s %s %s\n'
 
 def tree_max_children(depth):

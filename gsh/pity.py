@@ -180,13 +180,12 @@ def new_connection(host_port):
     return s.makefile('r+b')
 
 
-def do_emit(destinations, print_bw):
-    untar = pipe_to_untar()
+def do_replicate(destinations, print_bw):
     connections = [new_connection(host_port) for host_port in destinations]
-    forward(FileReader(sys.stdin), [untar] + connections, print_bw)
+    forward(FileReader(sys.stdin), connections, print_bw)
 
 
-def do_emit64(destinations, print_bw):
+def do_upload(destinations, print_bw):
     untar = pipe_to_untar()
     connections = [new_connection(host_port) for host_port in destinations]
     forward(Base64Reader(sys.stdin), [untar] + connections, print_bw)
@@ -202,10 +201,10 @@ def do_forward(gsh1, gsh2, destinations, print_bw):
 
 # Usage:
 #
-# pity.py [--print-bw] emit host:port...
+# pity.py [--print-bw] replicate host:port...
 # => reads data on stdin and forwards it to the optional list of host:port
 #
-# pity.py [--print-bw] emit64 host:port...
+# pity.py [--print-bw] upload host:port...
 # => reads base64 on stdin and forwards it to the optional list of host:port
 #
 # pity.py [--print-bw] forward GSH1 GSH2 host:port...
@@ -222,10 +221,10 @@ def main():
         argv = sys.argv[1:]
     cmd = argv[0]
     try:
-        if cmd == 'emit':
-            do_emit(argv[1:], print_bw)
-        elif cmd == 'emit64':
-            do_emit64(argv[1:], print_bw)
+        if cmd == 'replicate':
+            do_replicate(argv[1:], print_bw)
+        elif cmd == 'upload':
+            do_upload(argv[1:], print_bw)
         elif cmd == 'forward' and len(argv) >= 3:
             do_forward(argv[1], argv[2], argv[3:], print_bw)
         else:
