@@ -61,9 +61,9 @@ def base64version():
     return encoded
 
 def tarCreate(path):
-    path = path.rstrip('/') or '/' if path else '.'
-    dirname = pipes.quote(os.path.dirname(path)) or '.'
-    basename = pipes.quote(os.path.basename(path)) or '/'
+    path = path.rstrip('/') or ('/' if path else '.')
+    dirname = pipes.quote(os.path.dirname(path) or '.')
+    basename = pipes.quote(os.path.basename(path) or '/')
     return 'tar c -C %s %s' % (dirname, basename)
 
 BASE64_PITY_PY = base64version()
@@ -80,7 +80,7 @@ CMD_REPLICATE_EMIT = '%s | ' + CMD_PREFIX + ' %s replicate %s\n'
 CMD_FORWARD = CMD_PREFIX + ' %s forward %s %s %s\n'
 
 def tree_max_children(depth):
-    return 2
+    return 2 + depth/2
 
 class file_transfer_tree_node(object):
     def __init__(self,
@@ -105,6 +105,8 @@ class file_transfer_tree_node(object):
             depth += 1
             for i in xrange(num_children):
                 begin = i * child_length
+                if begin >= len(children_dispatchers):
+                    break
                 child_dispatcher = children_dispatchers[begin]
                 end = begin + child_length
                 begin += 1
