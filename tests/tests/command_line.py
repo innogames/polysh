@@ -14,7 +14,7 @@
 #
 # See the COPYING file for license information.
 #
-# Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
+# Copyright (c) 2007 Guillaume Chazarain <guichaz@gmail.com>
 
 import unittest
 import pexpect
