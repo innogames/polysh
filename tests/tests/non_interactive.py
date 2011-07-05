@@ -19,22 +19,22 @@
 import os
 import unittest
 import pexpect
-from gsh_tests import launch_gsh
+from polysh_tests import launch_polysh
 
 class TestNonInteractive(unittest.TestCase):
     def testCommandNormal(self):
-        child = launch_gsh(['--command=echo text', 'localhost'])
+        child = launch_polysh(['--command=echo text', 'localhost'])
         child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
         child.expect(pexpect.EOF)
 
     def testCommandIntr(self):
-        child = launch_gsh(['--command=echo text; cat', 'localhost'])
+        child = launch_polysh(['--command=echo text; cat', 'localhost'])
         child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
         child.sendintr()
         child.expect(pexpect.EOF)
 
     def testSimpleCommandStdin(self):
-        child = launch_gsh(['localhost'], input_data='echo line')
+        child = launch_polysh(['localhost'], input_data='echo line')
         child.expect('localhost : line')
         child.expect(pexpect.EOF)
 
@@ -44,20 +44,20 @@ class TestNonInteractive(unittest.TestCase):
         echo next
         echo last
         """
-        child = launch_gsh(['localhost'], input_data=commands)
+        child = launch_polysh(['localhost'], input_data=commands)
         child.expect('localhost : first')
         child.expect('localhost : next')
         child.expect('localhost : last')
         child.expect(pexpect.EOF)
 
     def testInvalidCommandStdin(self):
-        child = launch_gsh(['localhost', '--command=date'], input_data='uptime')
+        child = launch_polysh(['localhost', '--command=date'], input_data='uptime')
         child.expect('--command and reading from stdin are incompatible')
         child.expect(pexpect.EOF)
 
     def testExitCode(self):
         def CommandCode(command, code):
-            child = launch_gsh(['--command=%s' % command] + ['localhost'] * 5)
+            child = launch_polysh(['--command=%s' % command] + ['localhost'] * 5)
             child.expect(pexpect.EOF)
             while child.isalive():
                 child.wait()

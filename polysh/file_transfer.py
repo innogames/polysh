@@ -25,11 +25,11 @@ import subprocess
 import sys
 import zipimport
 
-from gsh import callbacks
-from gsh import pity
-from gsh.console import console_output
-from gsh import remote_dispatcher
-from gsh import dispatchers
+from polysh import callbacks
+from polysh import pity
+from polysh.console import console_output
+from polysh import remote_dispatcher
+from polysh import dispatchers
 
 def pity_dot_py_source():
     path = pity.__file__
@@ -211,7 +211,7 @@ def upload(local_path):
         # We wouldn't be able to show the progress indicator with only one
         # destination. We need one remote connection in blocking mode to send
         # the base64 data to. We also need one remote connection in non blocking
-        # mode for gsh to display the progress indicator via the main select
+        # mode for polysh to display the progress indicator via the main select
         # loop.
         console_output('Uploading to only one remote shell is not supported, '
                        'use scp instead\n')

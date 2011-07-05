@@ -34,16 +34,16 @@ if sys.hexversion < 0x02040000:
         print >> sys.stderr, 'You need at least Python 2.4'
         sys.exit(1)
 
-from gsh import remote_dispatcher
-from gsh import dispatchers
-from gsh.console import console_output
-from gsh.stdin import the_stdin_thread
-from gsh.host_syntax import expand_syntax
-from gsh.version import VERSION
-from gsh import control_commands
+from polysh import remote_dispatcher
+from polysh import dispatchers
+from polysh.console import console_output
+from polysh.stdin import the_stdin_thread
+from polysh.host_syntax import expand_syntax
+from polysh.version import VERSION
+from polysh import control_commands
 
 def kill_all():
-    """When gsh quits, we kill all the remote shells we started"""
+    """When polysh quits, we kill all the remote shells we started"""
     for i in dispatchers.all_instances():
         try:
             os.kill(-i.pid, signal.SIGKILL)
@@ -54,7 +54,7 @@ def kill_all():
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
             'Control commands are prefixed by ":". Use :help for the list'
-    parser = optparse.OptionParser(usage, version='gsh ' + VERSION)
+    parser = optparse.OptionParser(usage, version='polysh ' + VERSION)
     parser.add_option('--hosts-file', type='str', action='append',
                       dest='hosts_filenames', metavar='FILE', default=[],
                       help='read hostnames from given file, one per line')
@@ -186,7 +186,7 @@ def setprocname(name):
             pass
 
 def _profile(continuation):
-    prof_file = 'gsh.prof'
+    prof_file = 'polysh.prof'
     try:
         import cProfile
         import pstats
@@ -217,9 +217,9 @@ def restore_tty_on_exit():
 next_signal = None
 
 def main():
-    """Launch gsh"""
+    """Launch polysh"""
     locale.setlocale(locale.LC_ALL, '')
-    setprocname('gsh')
+    setprocname('polysh')
     options, args = parse_cmdline()
 
     atexit.register(kill_all)

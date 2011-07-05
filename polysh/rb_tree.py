@@ -22,9 +22,9 @@
 #        added RBList class and associated tests
 
 # Trimmed by Guillaume Chazarain <guichaz@gmail.com> to keep only the part
-# needed by gsh
+# needed by polysh
 
-__version__ = "1.5-gsh"
+__version__ = "1.5-polysh"
 
 import string
 

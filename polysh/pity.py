@@ -29,7 +29,7 @@ import time
 from threading import Event, Thread
 from Queue import Queue
 
-# Somewhat protect the stdin, be sure we read what has been sent by gsh, and
+# Somewhat protect the stdin, be sure we read what has been sent by polysh, and
 # not some garbage entered by the user.
 STDIN_PREFIX = '!?^%!'
 
@@ -155,13 +155,13 @@ def forward(reader, output_files, print_bw):
     for output_file in output_files:
         output_file.close()
 
-def init_listening_socket(gsh1, gsh2):
+def init_listening_socket(polysh1, polysh2):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('', 0))
     s.listen(5)
     host = socket.gethostname()
     port = s.getsockname()[1]
-    print '%s%s%s:%s' % (gsh1, gsh2, host, port)
+    print '%s%s%s:%s' % (polysh1, polysh2, host, port)
     return s
 
 
@@ -191,8 +191,8 @@ def do_upload(destinations, print_bw):
     forward(Base64Reader(sys.stdin), [untar] + connections, print_bw)
 
 
-def do_forward(gsh1, gsh2, destinations, print_bw):
-    listening_socket = init_listening_socket(gsh1, gsh2)
+def do_forward(polysh1, polysh2, destinations, print_bw):
+    listening_socket = init_listening_socket(polysh1, polysh2)
     untar = pipe_to_untar()
     connections = [new_connection(host_port) for host_port in destinations]
     conn, addr = listening_socket.accept()
@@ -207,9 +207,9 @@ def do_forward(gsh1, gsh2, destinations, print_bw):
 # pity.py [--print-bw] upload host:port...
 # => reads base64 on stdin and forwards it to the optional list of host:port
 #
-# pity.py [--print-bw] forward GSH1 GSH2 host:port...
-# => prints listening host:port on stdout prefixed by GSH1GSH2 and forwards from
-# this port to the optional list of host:port
+# pity.py [--print-bw] forward POLYSH1 POLYSH2 host:port...
+# => prints listening host:port on stdout prefixed by POLYSH1POLYSH2 and
+# forwards from this port to the optional list of host:port
 #
 def main():
     signal.signal(signal.SIGINT, lambda sig, frame: os.kill(0, signal.SIGKILL))

@@ -36,11 +36,11 @@ def safe_write(output, buf):
 
 def console_output(msg, logging_msg=None):
     """Use instead of print, to clear the status information before printing"""
-    from gsh import remote_dispatcher
+    from polysh import remote_dispatcher
 
     remote_dispatcher.log(logging_msg or msg)
     if remote_dispatcher.options.interactive:
-        from gsh.stdin import the_stdin_thread
+        from polysh.stdin import the_stdin_thread
         the_stdin_thread.no_raw_input()
         global last_status_length
         if last_status_length:

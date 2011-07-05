@@ -18,11 +18,11 @@
 
 import unittest
 import pexpect
-from gsh_tests import launch_gsh
+from polysh_tests import launch_polysh
 
 class TestHostSyntax(unittest.TestCase):
     def assertHostSyntax(self, to_expand, expanded):
-        child = launch_gsh([to_expand, 'localhost'])
+        child = launch_polysh([to_expand, 'localhost'])
         child.expect('ready')
         child.sendline(':list')
         with_spaces = [e.replace('.', '\\.') + ' ' for e in expanded]

@@ -1,4 +1,4 @@
 #!/usr/bin/env python
 
-from gsh.main import main
+from polysh.main import main
 main()

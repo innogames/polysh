@@ -20,7 +20,7 @@ import tempfile
 import unittest
 import pexpect
 import subprocess
-from gsh_tests import launch_gsh
+from polysh_tests import launch_polysh
 
 def shell_output(command):
     p = subprocess.Popen([command], shell=True, stdout=subprocess.PIPE)
@@ -30,7 +30,7 @@ class TestFileTransfer(unittest.TestCase):
     def testReplicate(self):
         tmp_dir = tempfile.mkdtemp()
         local = tmp_dir + '/local'
-        child = launch_gsh(['localhost'] * 6)
+        child = launch_polysh(['localhost'] * 6)
         child.expect('ready \(6\)> ')
         child.sendline(':replicate')
         child.expect('Usage: :replicate SHELL:REMOTE_PATH')
@@ -65,9 +65,9 @@ class TestFileTransfer(unittest.TestCase):
         child.expect('ready \(5\)> ')
         child.sendline(':export_vars')
         child.expect('ready \(5\)> ')
-        child.sendline('mkdir $GSH_RANK')
+        child.sendline('mkdir $POLYSH_RANK')
         child.expect('ready \(5\)> ')
-        child.sendline('cd $GSH_RANK')
+        child.sendline('cd $POLYSH_RANK')
         child.expect('ready \(5\)> ')
         child.sendline(':replicate l\t:%s/fil\t' % local)
         child.expect('Done transferring 20981760 bytes')
@@ -87,7 +87,7 @@ class TestFileTransfer(unittest.TestCase):
     def testUpload(self):
         tmp_dir = tempfile.mkdtemp()
         local = tmp_dir + '/local'
-        child = launch_gsh(['localhost'] * 5)
+        child = launch_polysh(['localhost'] * 5)
         child.expect('ready \(5\)> ')
         child.sendline(':upload')
         child.expect('No local path given')
@@ -102,9 +102,9 @@ class TestFileTransfer(unittest.TestCase):
         child.expect('ready \(5\)> ')
         child.sendline(':export_vars')
         child.expect('ready \(5\)> ')
-        child.sendline('mkdir $GSH_RANK')
+        child.sendline('mkdir $POLYSH_RANK')
         child.expect('ready \(5\)> ')
-        child.sendline('cd $GSH_RANK')
+        child.sendline('cd $POLYSH_RANK')
         child.expect('ready \(5\)> ')
         child.sendline(':upload %s/fil\t' % local)
         child.expect('Done transferring 20981760 bytes')

@@ -22,9 +22,9 @@ import struct
 import sys
 import termios
 
-from gsh import remote_dispatcher
-from gsh import display_names
-from gsh.terminal_size import terminal_size
+from polysh import remote_dispatcher
+from polysh import display_names
+from polysh.terminal_size import terminal_size
 
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""

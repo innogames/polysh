@@ -23,17 +23,17 @@ import shutil
 import sys
 import tempfile
 
-from gsh.control_commands_helpers import complete_shells, selected_shells
-from gsh.control_commands_helpers import list_control_commands
-from gsh.control_commands_helpers import get_control_command, toggle_shells
-from gsh.control_commands_helpers import expand_local_path
-from gsh.completion import complete_local_path, add_to_history
-from gsh.console import console_output
-from gsh.version import VERSION
-from gsh import dispatchers
-from gsh import remote_dispatcher
-from gsh import stdin
-from gsh import file_transfer
+from polysh.control_commands_helpers import complete_shells, selected_shells
+from polysh.control_commands_helpers import list_control_commands
+from polysh.control_commands_helpers import get_control_command, toggle_shells
+from polysh.control_commands_helpers import expand_local_path
+from polysh.completion import complete_local_path, add_to_history
+from polysh.console import console_output
+from polysh.version import VERSION
+from polysh import dispatchers
+from polysh import remote_dispatcher
+from polysh import stdin
+from polysh import file_transfer
 
 def complete_help(line, text):
     colon = text.startswith(':')
@@ -90,7 +90,7 @@ def do_list(command):
 def do_quit(command):
     """
     Usage: :quit
-    Quit gsh.
+    Quit polysh.
     """
     raise asyncore.ExitNow(0)
 
@@ -100,7 +100,7 @@ def complete_chdir(line, text):
 def do_chdir(command):
     """
     Usage: :chdir LOCAL_PATH
-    Change the current directory of gsh (not the remote shells).
+    Change the current directory of polysh (not the remote shells).
     """
     try:
         os.chdir(expand_local_path(command.strip()))
@@ -121,7 +121,7 @@ def do_send_ctrl(command):
     Send a control character to remote shells.
     The first argument is the control character to send like c, d or z.
     Note that these three control characters can be sent simply by typing them
-    into gsh.
+    into polysh.
     The remaining optional arguments are the destination shells.
     The special characters * ? and [] work as expected.
     """
@@ -144,7 +144,7 @@ def complete_reset_prompt(line, text):
 def do_reset_prompt(command):
     """
     Usage: :reset_prompt [SHELLS...]
-    Change the prompt to be recognized by gsh.
+    Change the prompt to be recognized by polysh.
     The special characters * ? and [] work as expected.
     """
     for i in selected_shells(command):
@@ -333,19 +333,19 @@ def do_export_vars(command):
     """
     Usage: :export_vars
     Export some environment variables on enabled remote shells.
-    GSH_NR_SHELLS is the total number of enabled shells. GSH_RANK uniquely
-    identifies each shell with a number between 0 and GSH_NR_SHELLS - 1.
-    GSH_NAME is the hostname as specified on the command line and
-    GSH_DISPLAY_NAME the hostname as displayed by :list (most of the time the
-    same as GSH_NAME).
+    POLYSH_NR_SHELLS is the total number of enabled shells. POLYSH_RANK uniquely
+    identifies each shell with a number between 0 and POLYSH_NR_SHELLS - 1.
+    POLYSH_NAME is the hostname as specified on the command line and
+    POLYSH_DISPLAY_NAME the hostname as displayed by :list (most of the time the
+    same as POLYSH_NAME).
     """
     rank = 0
     for shell in dispatchers.all_instances():
         if shell.enabled:
             environment_variables = {
-                'GSH_RANK': rank,
-                'GSH_NAME': shell.hostname,
-                'GSH_DISPLAY_NAME': shell.display_name,
+                'POLYSH_RANK': rank,
+                'POLYSH_NAME': shell.hostname,
+                'POLYSH_DISPLAY_NAME': shell.display_name,
             }
             for name, value in environment_variables.iteritems():
                 value = pipes.quote(str(value))
@@ -354,9 +354,10 @@ def do_export_vars(command):
 
     for shell in dispatchers.all_instances():
         if shell.enabled:
-            shell.dispatch_command('export GSH_NR_SHELLS=%d\n' % rank)
+            shell.dispatch_command('export POLYSH_NR_SHELLS=%d\n' % rank)
 
-add_to_history('$GSH_RANK $GSH_NAME $GSH_DISPLAY_NAME $GSH_NR_SHELLS')
+add_to_history('$POLYSH_RANK $POLYSH_NAME $POLYSH_DISPLAY_NAME')
+add_to_history('$POLYSH_NR_SHELLS')
 
 def complete_set_log(line, text):
     return complete_local_path(text)
@@ -396,14 +397,14 @@ def do_show_read_buffer(command):
 def main():
     """
     Output a help text of each control command suitable for the man page
-    Run from the gsh top directory: python -m gsh.control_commands
+    Run from the polysh top directory: python -m polysh.control_commands
     """
     try:
-        man_page = file('gsh.1', 'r')
+        man_page = file('polysh.1', 'r')
     except IOError, e:
         print e
-        print 'Please run "python -m gsh.control_commands" from the gsh top' + \
-              ' directory'
+        print 'Please run "python -m polysh.control_commands" from the' + \
+              ' polysh top directory'
         sys.exit(1)
 
     updated_man_page_fd, updated_man_page_path = tempfile.mkstemp()
@@ -411,7 +412,7 @@ def main():
 
     # The first line is auto-generated as it contains the version number
     man_page.readline()
-    v = '.TH "gsh" "1" "%s" "Guillaume Chazarain" "Remote shells"' % VERSION
+    v = '.TH "polysh" "1" "%s" "Guillaume Chazarain" "Remote shells"' % VERSION
     print >> updated_man_page, v
 
     for line in man_page:
@@ -425,8 +426,8 @@ def main():
         lines = [l.strip() for l in unstripped]
         usage = lines[1].strip()
         print >> updated_man_page, '\\fB%s\\fR' % usage[7:]
-        help_text = ' '.join(lines[2:]).replace('gsh', '\\fIgsh\\fR').strip()
-        print >> updated_man_page, help_text
+        help_text = ' '.join(lines[2:]).replace('polysh', '\\fIpolysh\\fR')
+        print >> updated_man_page, help_text.strip()
 
     for line in man_page:
         if 'END AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
@@ -438,7 +439,7 @@ def main():
 
     man_page.close()
     updated_man_page.close()
-    shutil.move(updated_man_page_path, 'gsh.1')
+    shutil.move(updated_man_page_path, 'polysh.1')
 
 if __name__ == '__main__':
     main()

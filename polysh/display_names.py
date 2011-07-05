@@ -16,7 +16,7 @@
 #
 # Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
 
-from gsh.rb_tree import RBTree
+from polysh.rb_tree import RBTree
 
 # {'prefix': <display_name_prefix object>}
 PREFIXES = {}
@@ -75,7 +75,7 @@ def make_unique_name(prefix):
     return name
 
 def update_max_display_name_length():
-    from gsh import dispatchers
+    from polysh import dispatchers
     if len(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH) == 0:
         new_max = 0
     else:

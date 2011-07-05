@@ -19,7 +19,7 @@
 import os
 import unittest
 import pexpect
-from gsh_tests import launch_gsh
+from polysh_tests import launch_polysh
 
 SSH_ARG = """--ssh=bash -c '
 read -p password: -s PASSWD;
@@ -34,18 +34,18 @@ fi; #
 class TestPasswordFile(unittest.TestCase):
     def startTestPassword(self, password_file):
         try:
-            os.unlink('/tmp/gsh_test.log')
+            os.unlink('/tmp/polysh_test.log')
         except OSError:
             # File not found
             pass
         passwd = '--password-file=' + password_file
-        child = launch_gsh([SSH_ARG, passwd, '--debug',
-                            '--log-file=/tmp/gsh_test.log', '1', '2'])
+        child = launch_polysh([SSH_ARG, passwd, '--debug',
+                            '--log-file=/tmp/polysh_test.log', '1', '2'])
         return child
 
     def endTestPassword(self):
-        self.failIf('sikr3t' in file('/tmp/gsh_test.log').read())
-        os.unlink('/tmp/gsh_test.log')
+        self.failIf('sikr3t' in file('/tmp/polysh_test.log').read())
+        os.unlink('/tmp/polysh_test.log')
 
     def testGoodPassword(self):
         child = self.startTestPassword('-')
@@ -67,20 +67,20 @@ class TestPasswordFile(unittest.TestCase):
         self.endTestPassword()
 
     def testBadPasswordFile(self):
-        print >> file('/tmp/gsh_test.pwd', 'w'), 'noidea'
-        child = self.startTestPassword('/tmp/gsh_test.pwd')
+        print >> file('/tmp/polysh_test.pwd', 'w'), 'noidea'
+        child = self.startTestPassword('/tmp/polysh_test.pwd')
         child.expect(pexpect.EOF)
         while child.isalive():
             child.wait()
-        os.unlink('/tmp/gsh_test.pwd')
+        os.unlink('/tmp/polysh_test.pwd')
         self.assertEqual(child.exitstatus, 13)
         self.endTestPassword()
 
     def testGoodPasswordFile(self):
-        print >> file('/tmp/gsh_test.pwd', 'w'), 'sikr3t'
-        child = self.startTestPassword('/tmp/gsh_test.pwd')
+        print >> file('/tmp/polysh_test.pwd', 'w'), 'sikr3t'
+        child = self.startTestPassword('/tmp/polysh_test.pwd')
         child.expect('ready \(2\)> ')
-        os.unlink('/tmp/gsh_test.pwd')
+        os.unlink('/tmp/polysh_test.pwd')
         child.sendline(':quit')
         child.expect(pexpect.EOF)
         while child.isalive():

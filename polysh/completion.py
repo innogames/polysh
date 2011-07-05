@@ -20,8 +20,8 @@ import glob
 import os
 import readline
 
-from gsh.control_commands_helpers import complete_control_command
-from gsh.control_commands_helpers import expand_local_path
+from polysh.control_commands_helpers import complete_control_command
+from polysh.control_commands_helpers import expand_local_path
 
 def complete_local_path(path):
     def get_suffix(p):
@@ -55,7 +55,8 @@ def read_commands_in_path():
                 commands |= set(listing)
     return list(commands)
 
-# All the words that have been typed in gsh. Used by the completion mechanism.
+# All the words that have been typed in polysh. Used by the completion
+# mechanism.
 history_words = set()
 
 # When listing possible completions, the complete() function is called with

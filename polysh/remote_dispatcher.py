@@ -23,10 +23,10 @@ import signal
 import sys
 import termios
 
-from gsh.buffered_dispatcher import buffered_dispatcher
-from gsh import callbacks
-from gsh.console import console_output
-from gsh import display_names
+from polysh.buffered_dispatcher import buffered_dispatcher
+from polysh import callbacks
+from polysh.console import console_output
+from polysh import display_names
 
 # Either the remote shell is expecting a command or one is already running
 STATE_NAMES = ['not_started', 'idle', 'running', 'terminated', 'dead']
@@ -186,7 +186,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.handle_expt()
 
     def print_lines(self, lines):
-        from gsh.display_names import max_display_name_length
+        from polysh.display_names import max_display_name_length
         lines = lines.strip('\n')
         while True:
             no_empty_lines = lines.replace('\n\n', '\n')

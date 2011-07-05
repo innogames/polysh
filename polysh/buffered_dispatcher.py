@@ -21,7 +21,7 @@ import errno
 import fcntl
 import os
 
-from gsh.console import console_output
+from polysh.console import console_output
 
 class buffered_dispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a

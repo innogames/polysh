@@ -19,11 +19,11 @@
 import os
 import unittest
 import pexpect
-from gsh_tests import launch_gsh
+from polysh_tests import launch_polysh
 
 class TestControlCommands(unittest.TestCase):
     def testControl(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline(':')
         child.expect('ready \(1\)> ')
@@ -94,7 +94,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testReconnect(self):
-        child = launch_gsh(['localhost'] * 2)
+        child = launch_polysh(['localhost'] * 2)
         child.expect('ready \(2\)> ')
         child.sendline(':disable localhost')
         child.sendline('exit')
@@ -107,7 +107,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testListManipulation(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline(':add localhost')
         child.expect('ready \(2\)> ')
@@ -142,7 +142,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testLocalCommand(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('cat')
         child.expect('waiting \(1/1\)> ')
@@ -165,7 +165,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testLocalAbsPathCompletion(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('echo /dev/nul\t')
         child.expect('\033\[1;36mlocalhost : \033\[1;m/dev/null')
@@ -177,19 +177,19 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testLogOutput(self):
-        child = launch_gsh(['--log-file=/', 'localhost'])
+        child = launch_polysh(['--log-file=/', 'localhost'])
         child.expect("\[Errno 21\].*'/'")
         child.expect(pexpect.EOF)
-        child = launch_gsh(['--log-file=/cannot_write', 'localhost'])
+        child = launch_polysh(['--log-file=/cannot_write', 'localhost'])
         child.expect("\[Errno 13\].*'/cannot_write'")
         child.expect(pexpect.EOF)
-        child = launch_gsh(['--log-file=/dev/full', 'localhost'])
+        child = launch_polysh(['--log-file=/dev/full', 'localhost'])
         child.sendline('echo something')
         child.expect('Exception while writing log: /dev/full')
         child.expect('\[Errno 28\]')
         child.expect(pexpect.EOF)
 
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         def testEcho(msg):
             child.expect('ready \(1\)> ')
             child.sendline('echo %s' % msg)
@@ -197,14 +197,14 @@ class TestControlCommands(unittest.TestCase):
         testEcho('not logging')
         child.sendline(':set_log')
         testEcho('still not logging')
-        child.sendline('!rm -f /tmp/gsh_test.log')
+        child.sendline('!rm -f /tmp/polysh_test.log')
         testEcho('still not logging')
-        child.sendline(':set_log /tmp/gsh_test.log')
+        child.sendline(':set_log /tmp/polysh_test.log')
         testEcho('now logging')
         testEcho('still logging')
         child.sendline(':set_log')
         testEcho('back to no logging')
-        child.sendline(':set_log /tmp/gsh_test.lo\t')
+        child.sendline(':set_log /tmp/polysh_test.lo\t')
         testEcho('appended to the log')
         child.sendline(':set_log')
         child.expect('ready \(1\)> ')
@@ -225,14 +225,14 @@ localhost : still logging
 localhost : appended to the log
 > :set_log
 """.strip()
-        log = file('/tmp/gsh_test.log')
+        log = file('/tmp/polysh_test.log')
         log_lines = [l for l in log.readlines() if not l.startswith('[dbg] ')]
         actual_log = ''.join(log_lines).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)
-        os.remove('/tmp/gsh_test.log')
+        os.remove('/tmp/polysh_test.log')
 
     def testSetDebug(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline(':set_debug')
         child.expect('Expected at least a letter')
@@ -251,7 +251,7 @@ localhost : appended to the log
         child.expect(pexpect.EOF)
 
     def testHidePassword(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('# passwordnotprotected')
         child.expect('ready \(1\)> ')
@@ -270,7 +270,7 @@ localhost : appended to the log
         child.expect(pexpect.EOF)
 
     def testResetPrompt(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('bash')
         child.sendline(':reset_prompt l\t')
@@ -279,7 +279,7 @@ localhost : appended to the log
         child.expect(pexpect.EOF)
 
     def testPurge(self):
-        child = launch_gsh(['localhost'] * 3)
+        child = launch_polysh(['localhost'] * 3)
         child.expect('ready \(3\)> ')
         child.sendline(':disable localhost#*')
         child.expect('ready \(1\)> ')
@@ -297,7 +297,7 @@ localhost : appended to the log
         child.expect(pexpect.EOF)
 
     def testPrintReadBuffer(self):
-        child = launch_gsh(['--ssh=echo message; sleep'] + ['2h'] * 3)
+        child = launch_polysh(['--ssh=echo message; sleep'] + ['2h'] * 3)
         child.expect('waiting \(3/3\)> ')
         child.sendline(':show_read_buffer \t*')
         for i in xrange(3):

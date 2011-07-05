@@ -16,8 +16,9 @@
 #
 # Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
 
-# Gsh uses specially crafted strings to communicate out of band data with remote
-# shells. This includes detecting the shell prompt, and other events to detect.
+# Polysh uses specially crafted strings to communicate out of band data with
+# remote shells. This includes detecting the shell prompt, and other events to
+# detect.
 # These strings are built and sent in two parts, the remote shell should send
 # back the concatenation of these two strings to trigger the callback. This is
 # to insure that the sending of the trigger to the remote shell does not trigger
@@ -37,7 +38,7 @@ def random_string(length):
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
     return ''.join(map(lambda i: random_char(), xrange(length)))
 
-COMMON_PREFIX = 'gsh-%s:' % random_string(5)
+COMMON_PREFIX = 'polysh-%s:' % random_string(5)
 NR_GENERATED_TRIGGERS = 0
 
 # {'random_string()': (function, repeat)}

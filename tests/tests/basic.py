@@ -19,14 +19,14 @@
 import os
 import unittest
 import pexpect
-from gsh_tests import launch_gsh
+from polysh_tests import launch_polysh
 
 class TestBasic(unittest.TestCase):
     def localhost(self, nr_localhost):
         args = nr_localhost * ['localhost']
 
         def start_child():
-            child = launch_gsh(args)
+            child = launch_polysh(args)
             child.expect('ready \(%d\)> ' % (nr_localhost))
             return child
 
@@ -55,7 +55,7 @@ class TestBasic(unittest.TestCase):
         self.localhost(3)
 
     def testPrependPrompt(self):
-        child = launch_gsh(['localhost'])
+        child = launch_polysh(['localhost'])
         child.expect('ready \(1\)> ')
         child.sendline('sleep 1')
         child.expect('waiting \(1/1\)> ')
@@ -68,7 +68,7 @@ class TestBasic(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testError(self):
-        child = launch_gsh(['localhost', 'localhost'])
+        child = launch_polysh(['localhost', 'localhost'])
         child.expect('ready \(2\)> ')
         child.sendline('kill -9 $$')
         child.expect('Error talking to localhost')
@@ -76,7 +76,7 @@ class TestBasic(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testCleanExit(self):
-        child = launch_gsh(['localhost', 'localhost'])
+        child = launch_polysh(['localhost', 'localhost'])
         child.expect('ready \(2\)> ')
         child.sendeof()
         idx = child.expect(['Error talking to localhost', 'exit'])

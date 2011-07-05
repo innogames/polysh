@@ -18,11 +18,11 @@
 
 import unittest
 import pexpect
-from gsh_tests import launch_gsh
+from polysh_tests import launch_polysh
 
 class TestDisplayNames(unittest.TestCase):
     def testHole(self):
-        child = launch_gsh(['--ssh=sh;:'] + ['a'] * 100)
+        child = launch_polysh(['--ssh=sh;:'] + ['a'] * 100)
         child.expect('ready \(100\)> ')
         child.sendline(':disable *1*')
         child.expect('ready \(81\)> ')

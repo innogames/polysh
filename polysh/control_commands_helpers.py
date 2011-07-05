@@ -20,10 +20,10 @@ import os
 from fnmatch import fnmatch
 import readline
 
-from gsh.host_syntax import expand_syntax
-from gsh.console import console_output
-from gsh import dispatchers
-from gsh import remote_dispatcher
+from polysh.host_syntax import expand_syntax
+from polysh.console import console_output
+from polysh import dispatchers
+from polysh import remote_dispatcher
 
 def toggle_shells(command, enable):
     """Enable or disable the specified shells. If the command would have
@@ -74,16 +74,16 @@ def expand_local_path(path):
     return os.path.expanduser(os.path.expandvars(path) or '~')
 
 def list_control_commands():
-    from gsh import control_commands
+    from polysh import control_commands
     return [c[3:] for c in dir(control_commands) if c.startswith('do_')]
 
 def get_control_command(name):
-    from gsh import control_commands
+    from polysh import control_commands
     func = getattr(control_commands, 'do_' + name)
     return func
 
 def complete_control_command(line, text):
-    from gsh import control_commands
+    from polysh import control_commands
     if readline.get_begidx() == 0:
         # Completing control command name
         cmds = list_control_commands()

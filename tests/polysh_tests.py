@@ -64,7 +64,7 @@ def parse_cmdline():
     parser.add_option('--coverage', action='store_true', dest='coverage',
                       default=False, help='include coverage tests')
     parser.add_option('--log', type='str', dest='log',
-                      help='log all pexpect I/O and gsh debug info')
+                      help='log all pexpect I/O and polysh debug info')
     parser.add_option('--python', type='str', dest='python', default='python',
                       help='python binary to use')
     options, args = parser.parse_args()
@@ -79,8 +79,8 @@ def end_coverage():
     coverage.the_coverage.start()
     coverage.the_coverage.collect()
     coverage.the_coverage.stop()
-    modules = [p[:-3] for p in os.listdir('../gsh') if p.endswith('.py')]
-    coverage.report(['../gsh/%s.py' % (m) for m in modules])
+    modules = [p[:-3] for p in os.listdir('../polysh') if p.endswith('.py')]
+    coverage.report(['../polysh/%s.py' % (m) for m in modules])
     remove_coverage_files()
     # Prevent the atexit.register(the_coverage.save) from recreating the files
     coverage.the_coverage.usecache = coverage.the_coverage.cache = None
@@ -123,8 +123,8 @@ class non_interactive_spawn(pexpect.spawn):
         # use a dupped fd.
         return process.pid, os.dup(process.stdout.fileno())
 
-def launch_gsh(args, input_data=None):
-    args = ['../gsh.py'] + args
+def launch_polysh(args, input_data=None):
+    args = ['../polysh.py'] + args
     options, unused_args = parse_cmdline()
     if options.coverage:
         args = ['./coverage.py', '-x', '-p'] + args

@@ -28,9 +28,9 @@ import tempfile
 import termios
 from threading import Thread, Event, Lock
 
-from gsh import dispatchers, remote_dispatcher
-from gsh.console import console_output, set_last_status_length
-from gsh import completion
+from polysh import dispatchers, remote_dispatcher
+from polysh.console import console_output, set_last_status_length
+from polysh import completion
 
 class input_buffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
@@ -60,7 +60,7 @@ class input_buffer(object):
 def process_input_buffer():
     """Send the content of the input buffer to all remote processes, this must
     be called in the main thread"""
-    from gsh.control_commands_helpers import handle_control_command
+    from polysh.control_commands_helpers import handle_control_command
     data = the_stdin_thread.input_buffer.get()
     remote_dispatcher.log('> ' + data)
 
