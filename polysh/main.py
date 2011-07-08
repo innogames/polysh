@@ -66,6 +66,8 @@ def parse_cmdline():
                       metavar='SSH', help='ssh command to use [%s]' % def_ssh)
     parser.add_option('--user', type='str', dest='user', default=None,
                       help='remote user to log in as', metavar='USER')
+    parser.add_option('--no-color', action='store_true', dest='disable_color',
+                      help='disable colored hostnames [enabled]')
     parser.add_option('--password-file', type='str', dest='password_file',
                       default=None, metavar='FILE',
                       help='read a password from the specified file. - is ' +
@@ -75,7 +77,7 @@ def parse_cmdline():
     parser.add_option('--abort-errors', action='store_true', dest='abort_error',
                       help='abort if some shell fails to initialize [ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
-                      help='print debugging information.')
+                      help='print debugging information')
     parser.add_option('--profile', action='store_true', dest='profile',
                       default=False, help=optparse.SUPPRESS_HELP)
 

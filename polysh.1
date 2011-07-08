@@ -35,6 +35,9 @@ Ssh command to use [exec ssh -oLogLevel=Quiet -t %(host)s exec bash --noprofile]
 \fB\-\-user=USER\fR
 Remote user to log in as. When specified, \fIpolysh\fR will ssh to USER@HOST instead of simply HOST.
 .TP
+\fB\-\-no\-color\fR
+Disable colored hostnames [enabled]. When specified, \fIpolysh\fR will not use tty colors for the hostname prefix.
+.TP
 \fB\-\-password\-file=FILE\fR
 read a password from the specified file. - is the tty. This can be used when public key authentication is not available, either write the password in a file, or set FILE to - so that \fIpolysh\fR will prompt for a password.
 .TP

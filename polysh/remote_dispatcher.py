@@ -87,7 +87,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.read_in_state_not_started = ''
         self.command = options.command
         self.last_printed_line = ''
-        if sys.stdout.isatty():
+        if sys.stdout.isatty() and not options.disable_color:
             COLORS.insert(0, COLORS.pop()) # Rotate the colors
             self.color_code = COLORS[0]
         else:
