@@ -2,8 +2,9 @@
 
 # http://bugs.python.org/issue644744
 
-python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
-
+python setup.py install -O1 --root="$RPM_BUILD_ROOT" --record=INSTALLED_FILES
 # 'brp-compress' gzips the man pages without distutils knowing... fix this
-NEW_BASENAME="$(basename "$(find "$RPM_BUILD_ROOT" -type f -name "polysh.1*")")"
-set "s/polysh.1/$NEW_BASENAME/g" -i INSTALLED_FILES
+sed -i -e 's@man/man\([[:digit:]]\)/\(.\+\.[[:digit:]]\)$@man/man\1/\2.gz@g' INSTALLED_FILES
+# actually, it doesn't on all distributions so just compress unconditionally
+# before brp-compress is run
+find "$RPM_BUILD_ROOT" -type f -name polysh.1 -exec gzip '{}' \;
