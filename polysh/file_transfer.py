@@ -61,7 +61,10 @@ def base64version():
     return encoded
 
 def tarCreate(path):
-    path = path.rstrip('/') or ('/' if path else '.')
+    if path:
+      path = path.rstrip('/') or '/'
+    else:
+      path = '.'
     dirname = pipes.quote(os.path.dirname(path) or '.')
     basename = pipes.quote(os.path.basename(path) or '/')
     return 'tar c -C %s %s' % (dirname, basename)
