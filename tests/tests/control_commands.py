@@ -300,7 +300,7 @@ localhost : appended to the log
         child = launch_polysh(['--ssh=echo message; sleep'] + ['2h'] * 3)
         child.expect('waiting \(3/3\)> ')
         child.sendline(':show_read_buffer \t*')
-        for i in xrange(3):
+        for i in range(3):
             child.expect('\033\[1;[0-9]+m2h[ #][ 12] : \033\[1;mmessage')
         child.expect('waiting \(3/3\)> ')
         child.sendintr()

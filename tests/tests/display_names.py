@@ -32,7 +32,7 @@ class TestDisplayNames(unittest.TestCase):
         child.expect('ready \(19\)> ')
         child.sendline(':purge')
         child.expect('ready \(19\)> ')
-        for i in xrange(20, 101):
+        for i in range(20, 101):
             child.sendline(':add a')
             child.expect('ready \(%d\)> ' % i)
         child.sendline(':quit')

@@ -40,7 +40,7 @@ class RBNode(object):
         self.value = value
         self.nonzero = 1
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.nonzero
 
 class RBTree(object):

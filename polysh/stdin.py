@@ -71,7 +71,7 @@ def process_input_buffer():
     if data.startswith('!'):
         try:
             retcode = subprocess.call(data[1:], shell=True)
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.EINTR:
                 console_output('Child was interrupted\n')
                 retcode = 0
@@ -88,9 +88,9 @@ def process_input_buffer():
     for r in dispatchers.all_instances():
         try:
             r.dispatch_command(data)
-        except asyncore.ExitNow, e:
+        except asyncore.ExitNow as e:
             raise e
-        except Exception, msg:
+        except Exception as msg:
             console_output('%s for %s, disconnecting\n' % (msg, r.display_name))
             r.disconnect()
         else:
@@ -114,14 +114,14 @@ class socket_notification_reader(asyncore.dispatcher):
         if c == 'd':
             process_input_buffer()
         else:
-            raise Exception, 'Unknown code: %s' % (c)
+            raise Exception('Unknown code: %s' % (c))
 
     def handle_read(self):
         """Handle all the available character commands in the socket"""
         while True:
             try:
                 c = self.recv(1)
-            except socket.error, why:
+            except socket.error as why:
                 if why[0] == errno.EWOULDBLOCK:
                     return
                 else:
@@ -142,7 +142,7 @@ def write_main_socket(c):
     while True:
         try:
             the_stdin_thread.socket_write.recv(1)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] != errno.EINTR:
                 raise
         else:
@@ -163,7 +163,7 @@ def get_stdin_pid(cached_result=None):
     if cached_result is None:
         try:
             tasks = os.listdir('/proc/self/task')
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
             cached_result = os.getpid()
@@ -257,7 +257,7 @@ class stdin_thread(Thread):
             self.out_of_raw_input.clear()
             cmd = None
             try:
-                cmd = raw_input(self.prompt)
+                cmd = input(self.prompt)
             except EOFError:
                 if self.interrupt_asked:
                     cmd = readline.get_line_buffer()

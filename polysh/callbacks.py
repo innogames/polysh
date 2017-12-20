@@ -29,14 +29,14 @@
 
 import random
 
-DIGITS_LETTERS = map(str, range(10))                     + \
-                 map(chr, range(ord('a'), ord('z') + 1)) + \
-                 map(chr, range(ord('A'), ord('Z') + 1))
+DIGITS_LETTERS = list(map(str, list(range(10))))                     + \
+                 list(map(chr, list(range(ord('a'), ord('z') + 1)))) + \
+                 list(map(chr, list(range(ord('A'), ord('Z') + 1))))
 
 def random_string(length):
     def random_char():
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
-    return ''.join(map(lambda i: random_char(), xrange(length)))
+    return ''.join([random_char() for i in range(length)])
 
 COMMON_PREFIX = 'polysh-%s:' % random_string(5)
 NR_GENERATED_TRIGGERS = 0

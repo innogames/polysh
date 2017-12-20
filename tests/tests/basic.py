@@ -38,7 +38,7 @@ class TestBasic(unittest.TestCase):
         def test_exit():
             child = start_child()
             child.sendline('exit')
-            for i in xrange(nr_localhost):
+            for i in range(nr_localhost):
                 child.expect('exit')
             child.expect(pexpect.EOF)
 

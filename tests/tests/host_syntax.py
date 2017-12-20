@@ -26,7 +26,7 @@ class TestHostSyntax(unittest.TestCase):
         child.expect('ready')
         child.sendline(':list')
         with_spaces = [e.replace('.', '\\.') + ' ' for e in expanded]
-        for i in xrange(len(expanded)):
+        for i in range(len(expanded)):
             found = child.expect(with_spaces)
             del with_spaces[found]
         child.expect('ready')

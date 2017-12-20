@@ -28,7 +28,7 @@ from polysh.terminal_size import terminal_size
 
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
-    return sorted([i for i in asyncore.socket_map.itervalues() if
+    return sorted([i for i in asyncore.socket_map.values() if
                    isinstance(i, remote_dispatcher.remote_dispatcher)],
                   key=lambda i: i.display_name)
 
@@ -77,11 +77,11 @@ def format_info(info_list):
         nr_columns = len(info_list[0])
     else:
         nr_columns = 0
-    for i in xrange(nr_columns):
+    for i in range(nr_columns):
         max_lengths.append(max([len(str(info[i])) for info in info_list]))
-    for info_id in xrange(len(info_list)):
+    for info_id in range(len(info_list)):
         info = info_list[info_id]
-        for str_id in xrange(len(info) - 1):
+        for str_id in range(len(info) - 1):
             # Don't justify the last column (i.e. the last printed line)
             # as it can get much longer in some shells than in others
             orig_str = str(info[str_id])
@@ -99,7 +99,7 @@ def create_remote_dispatchers(hosts):
         try:
           remote_dispatcher.remote_dispatcher(host)
         except OSError:
-          print
+          print()
           raise
 
     if last_message:

@@ -45,7 +45,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
             while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
                 try:
                     piece = self.recv(4096)
-                except OSError, e:
+                except OSError as e:
                     if e.errno == errno.EAGAIN:
                         # End of the available data
                         break

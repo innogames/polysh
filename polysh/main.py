@@ -29,9 +29,9 @@ import sys
 import termios
 
 if sys.hexversion < 0x02040000:
-        print >> sys.stderr, 'Your python version is too old (%s)' % \
-                                                        (sys.version.split()[0])
-        print >> sys.stderr, 'You need at least Python 2.4'
+        print('Your python version is too old (%s)' % \
+                                                        (sys.version.split()[0]), file=sys.stderr)
+        print('You need at least Python 2.4', file=sys.stderr)
         sys.exit(1)
 
 from polysh import remote_dispatcher
@@ -92,14 +92,14 @@ def parse_cmdline():
                 if line:
                     args.append(line)
             hosts_file.close()
-        except IOError, e:
+        except IOError as e:
             parser.error(e)
 
     if options.log_file:
         try:
             options.log_file = file(options.log_file, 'a')
-        except IOError, e:
-            print e
+        except IOError as e:
+            print(e)
             sys.exit(1)
 
     if not args:
@@ -121,7 +121,7 @@ def find_non_interactive_command(command):
 
     stdin = sys.stdin.read()
     if stdin and command:
-        print >> sys.stderr, '--command and reading from stdin are incompatible'
+        print('--command and reading from stdin are incompatible', file=sys.stderr)
         sys.exit(1)
     if stdin and not stdin.endswith('\n'):
         stdin += '\n'
@@ -160,7 +160,7 @@ def main_loop():
             if not next_signal:
                 # possible race here with the signal handler
                 remote_dispatcher.main_loop_iteration()
-        except asyncore.ExitNow, e:
+        except asyncore.ExitNow as e:
             console_output('')
             sys.exit(e.args[0])
 
@@ -192,14 +192,14 @@ def _profile(continuation):
     try:
         import cProfile
         import pstats
-        print 'Profiling using cProfile'
+        print('Profiling using cProfile')
         cProfile.runctx('continuation()', globals(), locals(), prof_file)
         stats = pstats.Stats(prof_file)
     except ImportError:
         import hotshot
         import hotshot.stats
         prof = hotshot.Profile(prof_file, lineevents=1)
-        print 'Profiling using hotshot'
+        print('Profiling using hotshot')
         prof.runcall(continuation)
         prof.close()
         stats = hotshot.stats.load(prof_file)

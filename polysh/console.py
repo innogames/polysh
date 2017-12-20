@@ -30,7 +30,7 @@ def safe_write(output, buf):
         try:
             output.write(buf)
             break
-        except IOError, e:
+        except IOError as e:
             if e.errno != errno.EINTR:
                 raise
 

@@ -55,7 +55,7 @@ def import_specified_tests(names):
             names.remove(test_name)
             TESTS.addTest(test)
     if names:
-        print 'Cannot find tests:', names
+        print('Cannot find tests:', names)
         sys.exit(1)
 
 def parse_cmdline():
@@ -130,9 +130,9 @@ def launch_polysh(args, input_data=None):
         args = ['./coverage.py', '-x', '-p'] + args
     args = [options.python] + args
     if options.log:
-        logfile = open(options.log, 'a', 0644)
+        logfile = open(options.log, 'a', 0o644)
         args += ['--debug']
-        print >> logfile, 'Launching:', str(args)
+        print('Launching:', str(args), file=logfile)
     else:
         logfile = None
 

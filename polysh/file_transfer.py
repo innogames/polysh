@@ -106,7 +106,7 @@ class file_transfer_tree_node(object):
             child_length = int(math.ceil(float(len(children_dispatchers)) /
                                          num_children))
             depth += 1
-            for i in xrange(num_children):
+            for i in range(num_children):
                 begin = i * child_length
                 if begin >= len(children_dispatchers):
                     break
@@ -128,7 +128,7 @@ class file_transfer_tree_node(object):
 
     def try_start_pity(self):
         host_ports = [child.host_port for child in self.children]
-        if len(filter(bool, host_ports)) != len(host_ports):
+        if len(list(filter(bool, host_ports))) != len(host_ports):
             return
         host_ports = ' '.join(map(pipes.quote, host_ports))
         if self.should_print_bw:

@@ -35,10 +35,10 @@ STATE_NOT_STARTED,         \
 STATE_IDLE,                \
 STATE_RUNNING,             \
 STATE_TERMINATED,          \
-STATE_DEAD = range(len(STATE_NAMES))
+STATE_DEAD = list(range(len(STATE_NAMES)))
 
 # Terminal color codes
-COLORS = [1] + range(30, 37)
+COLORS = [1] + list(range(30, 37))
 
 # Count the total number of remote_dispatcher.handle_read() invocations
 nr_handle_read = 0
@@ -56,9 +56,9 @@ def log(msg):
         while msg:
             try:
                 written = os.write(fd, msg)
-            except OSError, e:
-                print 'Exception while writing log:', options.log_file.name
-                print e
+            except OSError as e:
+                print('Exception while writing log:', options.log_file.name)
+                print(e)
                 raise asyncore.ExitNow(1)
             msg = msg[written:]
 

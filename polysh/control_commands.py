@@ -65,8 +65,8 @@ def do_help(command):
             console_output('\n')
     else:
         names = list_control_commands()
-        max_name_len = max(map(len, names))
-        for i in xrange(len(names)):
+        max_name_len = max(list(map(len, names)))
+        for i in range(len(names)):
             name = names[i]
             txt = ':' + name + (max_name_len - len(name) + 2) * ' '
             doc = get_control_command(name).__doc__
@@ -95,7 +95,7 @@ def do_quit(command):
     raise asyncore.ExitNow(0)
 
 def complete_chdir(line, text):
-    return filter(os.path.isdir, complete_local_path(text))
+    return list(filter(os.path.isdir, complete_local_path(text)))
 
 def do_chdir(command):
     """
@@ -104,7 +104,7 @@ def do_chdir(command):
     """
     try:
         os.chdir(expand_local_path(command.strip()))
-    except OSError, e:
+    except OSError as e:
         console_output('%s\n' % str(e))
 
 def complete_send_ctrl(line, text):
@@ -347,7 +347,7 @@ def do_export_vars(command):
                 'POLYSH_NAME': shell.hostname,
                 'POLYSH_DISPLAY_NAME': shell.display_name,
             }
-            for name, value in environment_variables.iteritems():
+            for name, value in environment_variables.items():
                 value = pipes.quote(str(value))
                 shell.dispatch_command('export %s=%s\n' % (name, value))
             rank += 1
@@ -372,7 +372,7 @@ def do_set_log(command):
     if command:
         try:
             remote_dispatcher.options.log_file = file(command, 'a')
-        except IOError, e:
+        except IOError as e:
             console_output('%s\n' % str(e))
             command = None
     if not command:
@@ -401,10 +401,10 @@ def main():
     """
     try:
         man_page = file('polysh.1', 'r')
-    except IOError, e:
-        print e
-        print 'Please run "python -m polysh.control_commands" from the' + \
-              ' polysh top directory'
+    except IOError as e:
+        print(e)
+        print('Please run "python -m polysh.control_commands" from the' + \
+              ' polysh top directory')
         sys.exit(1)
 
     updated_man_page_fd, updated_man_page_path = tempfile.mkstemp()
@@ -413,29 +413,29 @@ def main():
     # The first line is auto-generated as it contains the version number
     man_page.readline()
     v = '.TH "polysh" "1" "%s" "Guillaume Chazarain" "Remote shells"' % VERSION
-    print >> updated_man_page, v
+    print(v, file=updated_man_page)
 
     for line in man_page:
-        print >> updated_man_page, line,
+        print(line, end=' ', file=updated_man_page)
         if 'BEGIN AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
             break
 
     for name in list_control_commands():
-        print >> updated_man_page, '.TP'
+        print('.TP', file=updated_man_page)
         unstripped = get_control_command(name).__doc__.split('\n')
         lines = [l.strip() for l in unstripped]
         usage = lines[1].strip()
-        print >> updated_man_page, '\\fB%s\\fR' % usage[7:]
+        print('\\fB%s\\fR' % usage[7:], file=updated_man_page)
         help_text = ' '.join(lines[2:]).replace('polysh', '\\fIpolysh\\fR')
-        print >> updated_man_page, help_text.strip()
+        print(help_text.strip(), file=updated_man_page)
 
     for line in man_page:
         if 'END AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
-            print >> updated_man_page, line,
+            print(line, end=' ', file=updated_man_page)
             break
 
     for line in man_page:
-        print >> updated_man_page, line,
+        print(line, end=' ', file=updated_man_page)
 
     man_page.close()
     updated_man_page.close()

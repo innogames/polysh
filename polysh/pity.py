@@ -27,7 +27,7 @@ import sys
 import termios
 import time
 from threading import Event, Thread
-from Queue import Queue
+from queue import Queue
 
 # Somewhat protect the stdin, be sure we read what has been sent by polysh, and
 # not some garbage entered by the user.
@@ -39,7 +39,7 @@ BASE64_TERMINATOR = '.'
 
 def human_unit(size):
     """Return a string of the form '12.34 MiB' given a size in bytes."""
-    for i in xrange(len(UNITS) - 1, 0, -1):
+    for i in range(len(UNITS) - 1, 0, -1):
         base = 2.0 ** (10 * i)
         if 2 * base < size:
             return '%.2f %s' % ((float(size) / base), UNITS[i])
@@ -73,14 +73,14 @@ class bandwidth_monitor(Thread):
             current_bandwidth = (2*current_bandwidth + previous_bandwidth) / 3.0
             if current_bandwidth < 1:
                 current_bandwidth = 0
-            print '%s transferred at %s/s' % (human_unit(current_size),
-                                              human_unit(current_bandwidth))
+            print('%s transferred at %s/s' % (human_unit(current_size),
+                                              human_unit(current_bandwidth)))
             previous_size = current_size
             previous_sampling_time = current_sampling_time
             previous_bandwidth = current_bandwidth
             self.main_done.wait(1.0)
-        print 'Done transferring %s bytes (%s)' % (self.size,
-                                                   human_unit(self.size))
+        print('Done transferring %s bytes (%s)' % (self.size,
+                                                   human_unit(self.size)))
 
 def write_fully(fd, data):
     while data:
@@ -161,7 +161,7 @@ def init_listening_socket(polysh1, polysh2):
     s.listen(5)
     host = socket.gethostname()
     port = s.getsockname()[1]
-    print '%s%s%s:%s' % (polysh1, polysh2, host, port)
+    print('%s%s%s:%s' % (polysh1, polysh2, host, port))
     return s
 
 
@@ -228,10 +228,10 @@ def main():
         elif cmd == 'forward' and len(argv) >= 3:
             do_forward(argv[1], argv[2], argv[3:], print_bw)
         else:
-            print 'Unknown command:', argv
+            print('Unknown command:', argv)
             sys.exit(1)
-    except OSError, e:
-        print e
+    except OSError as e:
+        print(e)
         sys.exit(1)
 
 
