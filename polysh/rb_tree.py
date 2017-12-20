@@ -45,15 +45,13 @@ class RBNode(object):
 
 class RBTree(object):
 
-    def __init__(self, cmpfn=cmp):
+    def __init__(self):
         self.sentinel = RBNode()
         self.sentinel.left = self.sentinel.right = self.sentinel
         self.sentinel.color = BLACK
         self.sentinel.nonzero = 0
         self.root = self.sentinel
         self.count = 0
-        # changing the comparison function for an existing tree is dangerous!
-        self.__cmp = cmpfn
 
     def __len__(self):
         return self.count
@@ -184,14 +182,10 @@ class RBTree(object):
         current = self.root
         parent = None
         while current != self.sentinel:
-            # GJB added comparison function feature
-            # slightly improved by JCG: don't assume that ==
-            # is the same as self.__cmp(..) == 0
-            rc = self.__cmp(key, current.key)
-            if rc == 0:
+            if key == current.key:
                 return current
             parent = current
-            if rc < 0:
+            if key < current.key:
                 current = current.left
             else:
                 current = current.right
@@ -205,7 +199,7 @@ class RBTree(object):
 
         # insert node in tree
         if parent:
-            if self.__cmp(key, parent.key) < 0:
+            if key < parent.key:
                 parent.left = x
             else:
                 parent.right = x
@@ -327,14 +321,10 @@ class RBTree(object):
         current = self.root
 
         while current != self.sentinel:
-            # GJB added comparison function feature
-            # slightly improved by JCG: don't assume that ==
-            # is the same as self.__cmp(..) == 0
-            rc = self.__cmp(key, current.key)
-            if rc == 0:
+            if key == current.key:
                 return current
             else:
-                if rc < 0:
+                if key < current.key:
                     current = current.left
                 else:
                     current = current.right
