@@ -38,10 +38,11 @@ class RBNode(object):
         self.color = color
         self.key = key
         self.value = value
-        self.nonzero = 1
+        self.nonzero = True
 
     def __bool__(self):
         return self.nonzero
+
 
 class RBTree(object):
 
@@ -49,7 +50,7 @@ class RBTree(object):
         self.sentinel = RBNode()
         self.sentinel.left = self.sentinel.right = self.sentinel
         self.sentinel.color = BLACK
-        self.sentinel.nonzero = 0
+        self.sentinel.nonzero = False
         self.root = self.sentinel
         self.count = 0
 
