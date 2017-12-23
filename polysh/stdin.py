@@ -123,7 +123,7 @@ class socket_notification_reader(asyncore.dispatcher):
             try:
                 c = self.recv(1).decode()
             except socket.error as why:
-                if why[0] == errno.EWOULDBLOCK:
+                if why.errno == errno.EWOULDBLOCK:
                     return
                 else:
                     raise
