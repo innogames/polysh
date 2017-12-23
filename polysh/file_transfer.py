@@ -45,7 +45,7 @@ def pity_dot_py_source():
         if dot_py_start >= 0:
             path = path[:dot_py_start+3]
 
-    return file(path).read()
+    return open(path).read()
 
 def base64version():
     python_lines = []
