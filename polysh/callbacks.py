@@ -51,7 +51,7 @@ def add(name, function, repeat):
     NR_GENERATED_TRIGGERS += 1
     trigger = '%s%s:%s:%d/' % (COMMON_PREFIX, name, random_string(5), nr)
     CALLBACKS[trigger] = (function, repeat)
-    trigger1 = trigger[:len(COMMON_PREFIX)/2]
+    trigger1 = trigger[:int(len(COMMON_PREFIX)/2)]
     trigger2 = trigger[len(trigger1):]
     return trigger1, trigger2
 
