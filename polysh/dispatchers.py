@@ -30,7 +30,7 @@ def all_instances():
     """Iterator over all the remote_dispatcher instances"""
     return sorted([i for i in asyncore.socket_map.values() if
                    isinstance(i, remote_dispatcher.remote_dispatcher)],
-                  key=lambda i: i.display_name)
+                  key=lambda i: i.display_name or '')
 
 def count_awaited_processes():
     """Return a tuple with the number of awaited processes and the total
