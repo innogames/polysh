@@ -38,7 +38,7 @@ def random_string(length):
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
     return ''.join([random_char() for i in range(length)])
 
-COMMON_PREFIX = 'polysh-%s:' % random_string(5)
+COMMON_PREFIX = 'polysh-{}:'.format(random_string(5))
 NR_GENERATED_TRIGGERS = 0
 
 # {'random_string()': (function, repeat)}
@@ -56,9 +56,10 @@ def add(name, function, repeat):
     return trigger1, trigger2
 
 def any_in(data):
-    return COMMON_PREFIX in data
+    return COMMON_PREFIX.encode() in data
 
 def process(line):
+    assert isinstance(line, str)
     start = line.find(COMMON_PREFIX)
     if start < 0:
         return False

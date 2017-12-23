@@ -57,7 +57,9 @@ def base64version():
         if line:
             python_lines.append(line)
     python_source = '\n'.join(python_lines)
-    encoded = base64.encodestring(python_source).rstrip('\n').replace('\n', ',')
+    encoded = base64.encodebytes(
+        python_source.encode('utf8')
+        ).rstrip(b'\n').replace(b'\n', b',')
     return encoded
 
 def tarCreate(path):
@@ -197,7 +199,7 @@ class local_uploader(remote_dispatcher.remote_dispatcher):
             self.first_destination.fd)
         subprocess.call(cmd, shell=True)
 
-        os.write(1, self.trigger1 + self.trigger2 + '\n')
+        os.write(1, '{}{}\n'.format(self.trigger1, self.trigger2).encode('utf8'))
         os._exit(0)  # The atexit handler would kill all remote shells
 
     def upload_done(self, unused):

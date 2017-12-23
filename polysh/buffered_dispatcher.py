@@ -33,13 +33,13 @@ class buffered_dispatcher(asyncore.file_dispatcher):
     def __init__(self, fd):
         asyncore.file_dispatcher.__init__(self, fd)
         self.fd = fd
-        self.read_buffer = ''
-        self.write_buffer = ''
+        self.read_buffer = b''
+        self.write_buffer = b''
         self.allow_write = True
 
     def handle_read(self):
         """Some data can be read"""
-        new_data = ''
+        new_data = b''
         buffer_length = len(self.read_buffer)
         try:
             while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
@@ -58,7 +58,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                 new_data += piece
                 buffer_length += len(piece)
         finally:
-            new_data = new_data.replace('\r', '\n')
+            new_data = new_data.replace(b'\r', b'\n')
             self.read_buffer += new_data
         return new_data
 
@@ -68,10 +68,11 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def writable(self):
         """Do we have something to write?"""
-        return self.write_buffer != ''
+        return self.write_buffer != b''
 
     def dispatch_write(self, buf):
         """Augment the buffer with stuff to write when possible"""
+        assert isinstance(buf, bytes)
         assert self.allow_write
         self.write_buffer += buf
         if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:

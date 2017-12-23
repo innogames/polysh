@@ -55,7 +55,7 @@ def log(msg):
         fd = options.log_file.fileno()
         while msg:
             try:
-                written = os.write(fd, msg)
+                written = os.write(fd, msg.encode())
             except OSError as e:
                 print('Exception while writing log:', options.log_file.name)
                 print(e)
@@ -126,8 +126,8 @@ class remote_dispatcher(buffered_dispatcher):
         except OSError:
             # The process was already dead, no problem
             pass
-        self.read_buffer = ''
-        self.write_buffer = ''
+        self.read_buffer = b''
+        self.write_buffer = b''
         self.set_enabled(False)
         if self.read_in_state_not_started:
             self.print_lines(self.read_in_state_not_started)
@@ -215,12 +215,12 @@ class remote_dispatcher(buffered_dispatcher):
             # Slow case :-(
             return False
 
-        last_nl = data.rfind('\n')
+        last_nl = data.rfind(b'\n')
         if last_nl == -1:
             # No '\n' in data => slow case
             return False
         self.read_buffer = data[last_nl + 1:]
-        self.print_lines(data[:last_nl])
+        self.print_lines(data[:last_nl].decode())
         return True
 
     def handle_read(self):
@@ -232,10 +232,10 @@ class remote_dispatcher(buffered_dispatcher):
         nr_handle_read += 1
         new_data = buffered_dispatcher.handle_read(self)
         if self.debug:
-            self.print_debug('==> ' + new_data)
+            self.print_debug('==> {}'.format(new_data.decode()))
         if self.handle_read_fast_case(self.read_buffer):
             return
-        lf_pos = new_data.find('\n')
+        lf_pos = new_data.find(b'\n')
         if lf_pos >= 0:
             # Optimization: we knew there were no '\n' in the previous read
             # buffer, so we searched only in the new_data and we offset the
@@ -243,13 +243,13 @@ class remote_dispatcher(buffered_dispatcher):
             lf_pos += len(self.read_buffer) - len(new_data)
         elif self.state is STATE_NOT_STARTED and \
              options.password is not None and \
-             'password:' in self.read_buffer.lower():
-            self.dispatch_write(options.password + '\n')
-            self.read_buffer = ''
+             b'password:' in self.read_buffer.lower():
+            self.dispatch_write('{}\n'.format(options.password).encode())
+            self.read_buffer = b''
             return
         while lf_pos >= 0:
             # For each line in the buffer
-            line = self.read_buffer[:lf_pos + 1]
+            line = self.read_buffer[:lf_pos + 1].decode()
             if callbacks.process(line):
                 pass
             elif self.state in (STATE_IDLE, STATE_RUNNING):
@@ -265,24 +265,24 @@ class remote_dispatcher(buffered_dispatcher):
                     msg = None
 
                 if msg:
-                    self.print_lines(msg + ' Consider manually connecting or ' +
-                                     'using ssh-keyscan.')
+                    self.print_lines('{} Consider manually connecting or '
+                                     'using ssh-keyscan.'.format(msg))
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
             if self.handle_read_fast_case(self.read_buffer):
                 return
-            lf_pos = self.read_buffer.find('\n')
+            lf_pos = self.read_buffer.find(b'\n')
         if self.state is STATE_NOT_STARTED and not self.init_string_sent:
-            self.dispatch_write(self.init_string)
+            self.dispatch_write(self.init_string.encode())
             self.init_string_sent = True
 
     def print_unfinished_line(self):
         """The unfinished line stayed long enough in the buffer to be printed"""
         if self.state is STATE_RUNNING:
-            if not callbacks.process(self.read_buffer):
-                self.print_lines(self.read_buffer)
-            self.read_buffer = ''
+            if not callbacks.process(self.read_buffer.decode()):
+                self.print_lines(self.read_buffer.decode())
+            self.read_buffer = b''
 
     def writable(self):
         """Do we want to write something?"""
@@ -293,14 +293,16 @@ class remote_dispatcher(buffered_dispatcher):
         num_sent = self.send(self.write_buffer)
         if self.debug:
             if self.state is not STATE_NOT_STARTED or options.password is None:
-                self.print_debug('<== ' + self.write_buffer[:num_sent])
+                self.print_debug('<== {}'.format(
+                    self.write_buffer[:num_sent].decode()))
         self.write_buffer = self.write_buffer[num_sent:]
 
     def print_debug(self, msg):
         """Log some debugging information to the console"""
         state = STATE_NAMES[self.state]
-        msg = msg.encode('string_escape')
-        console_output('[dbg] %s[%s]: %s\n' % (self.display_name, state, msg))
+        assert isinstance(msg, str)
+        console_output('[dbg] {}[{}]: {}\n'.format(
+            self.display_name, state, msg))
 
     def get_info(self):
         """Return a list with all information available about this process"""
@@ -314,7 +316,7 @@ class remote_dispatcher(buffered_dispatcher):
             return True
 
     def dispatch_command(self, command):
-        if self.dispatch_write(command):
+        if self.dispatch_write(command.encode()):
             self.change_state(STATE_RUNNING)
 
     def change_name(self, name):

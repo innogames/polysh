@@ -10,7 +10,7 @@ way to open a remote shell.
 Requirements
 ~~~~~~~~~~~~
 
-Python >= 2.4 is required.
+Python >= 3.something is required.
 
 Running
 ~~~~~~~

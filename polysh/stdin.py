@@ -111,6 +111,7 @@ class socket_notification_reader(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
     def _do(self, c):
+        assert isinstance(c, str)
         if c == 'd':
             process_input_buffer()
         else:
@@ -120,7 +121,7 @@ class socket_notification_reader(asyncore.dispatcher):
         """Handle all the available character commands in the socket"""
         while True:
             try:
-                c = self.recv(1)
+                c = self.recv(1).decode()
             except socket.error as why:
                 if why[0] == errno.EWOULDBLOCK:
                     return
@@ -129,7 +130,7 @@ class socket_notification_reader(asyncore.dispatcher):
             else:
                 self._do(c)
                 self.socket.setblocking(True)
-                self.send('A')
+                self.send(b'A')
                 self.socket.setblocking(False)
 
     def writable(self):
@@ -155,7 +156,7 @@ def write_main_socket(c):
 # a newline
 tempfile_fd, tempfile_name = tempfile.mkstemp()
 os.remove(tempfile_name)
-os.write(tempfile_fd, chr(3))
+os.write(tempfile_fd, b'\x03')
 
 def get_stdin_pid(cached_result=None):
     """Try to get the PID of the stdin thread, otherwise get the whole process
@@ -276,6 +277,6 @@ class stdin_thread(Thread):
             set_echo(True)
             if cmd is not None:
                 self.input_buffer.add(cmd + '\n')
-                write_main_socket('d')
+                write_main_socket(b'd')
 
 the_stdin_thread = stdin_thread()

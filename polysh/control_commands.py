@@ -136,7 +136,7 @@ def do_send_ctrl(command):
     control_letter = chr(ord(letter.lower()) - ord('a') + 1)
     for i in selected_shells(' '.join(split[1:])):
         if i.enabled:
-            i.dispatch_write(control_letter)
+            i.dispatch_write(control_letter.encode())
 
 def complete_reset_prompt(line, text):
     return complete_shells(line, text, lambda i: i.enabled)
