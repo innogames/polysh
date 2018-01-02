@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This code adapted from C source from
 # Thomas Niemann's Sorting and Searching Algorithms: A Cookbook

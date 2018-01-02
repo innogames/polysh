@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from distutils.core import setup
 from polysh.version import VERSION
