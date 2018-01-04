@@ -55,8 +55,15 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                         break
                     else:
                         raise
+
+                if not piece:
+                    # A closed connection is indicated by signaling a read
+                    # condition, and having recv() return 0.
+                    break
+
                 new_data += piece
                 buffer_length += len(piece)
+
         finally:
             new_data = new_data.replace(b'\r', b'\n')
             self.read_buffer += new_data
