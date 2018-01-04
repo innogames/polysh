@@ -65,7 +65,7 @@ def parse_cmdline():
                       default=False, help='include coverage tests')
     parser.add_option('--log', type='str', dest='log',
                       help='log all pexpect I/O and polysh debug info')
-    parser.add_option('--python', type='str', dest='python', default='python',
+    parser.add_option('--python', type='str', dest='python', default='python3',
                       help='python binary to use')
     options, args = parser.parse_args()
     return options, args
