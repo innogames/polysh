@@ -225,7 +225,7 @@ localhost : still logging
 localhost : appended to the log
 > :set_log
 """.strip()
-        log = file('/tmp/polysh_test.log')
+        log = open('/tmp/polysh_test.log')
         log_lines = [l for l in log.readlines() if not l.startswith('[dbg] ')]
         actual_log = ''.join(log_lines).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)

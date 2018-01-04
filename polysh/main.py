@@ -97,7 +97,7 @@ def parse_cmdline():
 
     if options.log_file:
         try:
-            options.log_file = file(options.log_file, 'a')
+            options.log_file = open(options.log_file, 'a')
         except IOError as e:
             print(e)
             sys.exit(1)
@@ -108,7 +108,7 @@ def parse_cmdline():
     if options.password_file == '-':
         options.password = getpass.getpass()
     elif options.password_file is not None:
-        password_file = file(options.password_file, 'r')
+        password_file = open(options.password_file, 'r')
         options.password = password_file.readline().rstrip('\n')
     else:
         options.password = None

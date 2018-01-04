@@ -371,7 +371,7 @@ def do_set_log(command):
     command = command.strip()
     if command:
         try:
-            remote_dispatcher.options.log_file = file(command, 'a')
+            remote_dispatcher.options.log_file = open(command, 'a')
         except IOError as e:
             console_output('%s\n' % str(e))
             command = None
@@ -400,7 +400,7 @@ def main():
     Run from the polysh top directory: python -m polysh.control_commands
     """
     try:
-        man_page = file('polysh.1', 'r')
+        man_page = open('polysh.1', 'r')
     except IOError as e:
         print(e)
         print('Please run "python -m polysh.control_commands" from the' + \
