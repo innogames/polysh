@@ -22,6 +22,8 @@ import pty
 import signal
 import sys
 import termios
+import select
+import platform
 
 from polysh.buffered_dispatcher import buffered_dispatcher
 from polysh import callbacks
@@ -173,6 +175,16 @@ class remote_dispatcher(buffered_dispatcher):
         return self.state != STATE_DEAD and buffered_dispatcher.readable(self)
 
     def handle_expt(self):
+        # Dirty hack to ignore POLLPRI flag that is raised on Mac OS, but not
+        # on linux. asyncore calls this method in case POLLPRI flag is set, but
+        # self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR) == 0
+        if platform.system() == 'Darwin' and select.POLLPRI:
+            return
+
+        self.handle_close()
+
+
+    def handle_close(self):
         pid, status = os.waitpid(self.pid, 0)
         exit_code = os.WEXITSTATUS(status)
         options.exit_code = max(options.exit_code, exit_code)
@@ -182,8 +194,6 @@ class remote_dispatcher(buffered_dispatcher):
         if self.temporary:
             self.close()
 
-    def handle_close(self):
-        self.handle_expt()
 
     def print_lines(self, lines):
         from polysh.display_names import max_display_name_length
