@@ -84,7 +84,7 @@ CMD_REPLICATE_EMIT = '%s | ' + CMD_PREFIX + ' %s replicate %s\n'
 CMD_FORWARD = CMD_PREFIX + ' %s forward %s %s %s\n'
 
 def tree_max_children(depth):
-    return 2 + depth/2
+    return 2 + int(depth/2)
 
 class file_transfer_tree_node(object):
     def __init__(self,
