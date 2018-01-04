@@ -185,6 +185,11 @@ class remote_dispatcher(buffered_dispatcher):
 
 
     def handle_close(self):
+        if self.state is STATE_DEAD:
+            # This connection has already been killed. Asyncore has probably
+            # called handle_close() or handle_expt() on this connection twice.
+            return
+
         pid, status = os.waitpid(self.pid, 0)
         exit_code = os.WEXITSTATUS(status)
         options.exit_code = max(options.exit_code, exit_code)
