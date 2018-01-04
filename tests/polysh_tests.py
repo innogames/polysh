@@ -137,9 +137,9 @@ def launch_polysh(args, input_data=None):
         logfile = None
 
     if input_data is None:
-        child = pexpect.spawn(args[0], args=args[1:], logfile=logfile)
+        child = pexpect.spawn(args[0], args=args[1:], encoding='utf-8', logfile=logfile)
     else:
-        child = non_interactive_spawn(args, input_data, logfile=logfile)
+        child = non_interactive_spawn(args, input_data, encoding='utf-8', logfile=logfile)
     return child
 
 if __name__ == '__main__':
