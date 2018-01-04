@@ -57,9 +57,8 @@ def base64version():
         if line:
             python_lines.append(line)
     python_source = '\n'.join(python_lines)
-    encoded = base64.encodebytes(
-        python_source.encode('utf8')
-        ).rstrip(b'\n').replace(b'\n', b',')
+    encoded = base64.b64encode(
+        python_source.encode('utf8'))
     return encoded
 
 def tarCreate(path):
@@ -73,8 +72,8 @@ def tarCreate(path):
 
 BASE64_PITY_PY = base64version()
 
-CMD_PREFIX = 'python -c "`echo "%s"|tr , \\\\\\n|openssl base64 -d`" ' % \
-             BASE64_PITY_PY
+CMD_PREFIX = 'python3 -c "`echo "{}"|openssl base64 -d -A`" '.format(
+    BASE64_PITY_PY.decode('utf8'))
 
 CMD_UPLOAD_EMIT = ('STTY_MODE="$(stty --save)";' +
                    'stty raw &> /dev/null;' +
