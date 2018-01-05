@@ -23,7 +23,7 @@ import unittest
 import sys
 import optparse
 import pexpect
-import subprocess
+from pexpect.popen_spawn import PopenSpawn
 
 import coverage
 
@@ -99,30 +99,6 @@ def main():
         if options.coverage:
             end_coverage()
 
-class non_interactive_spawn(pexpect.spawn):
-    def __init__(self, argv, input_data, *args, **kwargs):
-        pexpect.spawn.__init__(self, None, *args, **kwargs)
-        self.use_native_pty_fork = False
-        self.argv = argv
-        self.input_data = input_data
-        self.command = argv[0]
-        self.args = argv[1:]
-        self._spawn(self.command, self.args)
-
-    def _spawn__fork_pty(self):
-        process = subprocess.Popen(self.argv, stdin=subprocess.PIPE,
-                                              stdout=subprocess.PIPE,
-                                              stderr=subprocess.STDOUT)
-
-        fd = process.stdin.fileno()
-        while self.input_data:
-            written = os.write(fd, self.input_data)
-            self.input_data = self.input_data[written:]
-        process.stdin.close()
-        # process will be garbage collected and process.stdout closed, so
-        # use a dupped fd.
-        return process.pid, os.dup(process.stdout.fileno())
-
 def launch_polysh(args, input_data=None):
     args = ['../polysh.py'] + args
     options, unused_args = parse_cmdline()
@@ -139,7 +115,9 @@ def launch_polysh(args, input_data=None):
     if input_data is None:
         child = pexpect.spawn(args[0], args=args[1:], encoding='utf-8', logfile=logfile)
     else:
-        child = non_interactive_spawn(args, input_data, encoding='utf-8', logfile=logfile)
+        child = PopenSpawn(args, encoding='utf-8', logfile=logfile)
+        child.send(input_data)
+        child.sendeof()
     return child
 
 if __name__ == '__main__':
