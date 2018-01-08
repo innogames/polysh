@@ -247,6 +247,9 @@ class stdin_thread(Thread):
 
     def no_raw_input(self):
         if not self.out_of_raw_input.isSet():
+            # Save partial command before prompt redraw.
+            self.prepend_text = readline.get_line_buffer()
+
             interrupt_stdin_thread()
 
     # Beware of races
@@ -261,12 +264,9 @@ class stdin_thread(Thread):
                 cmd = input(self.prompt)
             except EOFError:
                 if self.interrupt_asked:
-                    cmd = readline.get_line_buffer()
+                    cmd = None
                 else:
-                    cmd = chr(4) # Ctrl-D
-            if self.interrupt_asked:
-                self.prepend_text = cmd
-                cmd = None
+                    cmd = chr(4)  # Ctrl-D
             self.in_raw_input.clear()
             self.out_of_raw_input.set()
             if cmd:
