@@ -127,8 +127,8 @@ def find_non_interactive_command(command):
         stdin += '\n'
     return command or stdin
 
-def main_loop():
-    global next_signal
+def main_loop(interactive):
+    next_signal = None
     last_status = None
     while True:
         try:
@@ -160,6 +160,12 @@ def main_loop():
             if not next_signal:
                 # possible race here with the signal handler
                 remote_dispatcher.main_loop_iteration()
+        except KeyboardInterrupt:
+            if interactive:
+                next_signal = signal.SIGINT
+            else:
+                kill_all()
+                os.kill(0, signal.SIGINT)
         except asyncore.ExitNow as e:
             console_output('')
             sys.exit(e.args[0])
@@ -214,10 +220,6 @@ def restore_tty_on_exit():
     old = termios.tcgetattr(fd)
     atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
 
-# We handle signals in the main loop, this way we can be signaled while
-# handling a signal.
-next_signal = None
-
 def main():
     """Launch polysh"""
     locale.setlocale(locale.LC_ALL, '')
@@ -231,18 +233,7 @@ def main():
     options.interactive = not options.command and sys.stdin.isatty() and \
                           sys.stdout.isatty()
     if options.interactive:
-        def handler(sig, frame):
-            global next_signal
-            next_signal = sig
-        signal.signal(signal.SIGINT, handler)
-        signal.signal(signal.SIGTSTP, handler)
         restore_tty_on_exit()
-    else:
-      def handler(sig, frame):
-        signal.signal(sig, signal.SIG_DFL)
-        kill_all()
-        os.kill(0, sig)
-      signal.signal(signal.SIGINT, handler)
 
     remote_dispatcher.options = options
 
@@ -260,9 +251,9 @@ def main():
     if options.profile:
         def safe_main_loop():
             try:
-                main_loop()
+                main_loop(options.interactive)
             except:
                 pass
         _profile(safe_main_loop)
     else:
-        main_loop()
+        main_loop(options.interactive)
