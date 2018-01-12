@@ -33,7 +33,6 @@ from polysh.version import VERSION
 from polysh import dispatchers
 from polysh import remote_dispatcher
 from polysh import stdin
-from polysh import file_transfer
 
 def complete_help(line, text):
     colon = text.startswith(':')
@@ -285,49 +284,6 @@ def do_set_debug(command):
     debug = letter == 'y'
     for i in selected_shells(' '.join(split[1:])):
         i.debug = debug
-
-def complete_replicate(line, text):
-    if ':' not in text:
-        enabled_shells =  complete_shells(line, text, lambda i: i.enabled)
-        return [c[:-1] + ':' for c in enabled_shells]
-    shell, path = text.split(':')
-    return [shell + ':' + p for p in complete_local_path(path)]
-
-def do_replicate(command):
-    """
-    Usage: :replicate SHELL:REMOTE_PATH
-    Copy a path from one remote shell to all others
-    """
-    if ':' not in command:
-        console_output('Usage: :replicate SHELL:REMOTE_PATH\n')
-        return
-    shell_name, path = command.strip().split(':', 1)
-    if not path:
-        console_output('No remote path given\n')
-        return
-    for shell in dispatchers.all_instances():
-        if shell.display_name == shell_name:
-            if not shell.enabled:
-                console_output('%s is not enabled\n' % shell_name)
-                return
-            break
-    else:
-        console_output('%s not found\n' % shell_name)
-        return
-    file_transfer.replicate(shell, path)
-
-def complete_upload(line, text):
-    return complete_local_path(text)
-
-def do_upload(command):
-    """
-    Usage: :upload LOCAL_PATH
-    Upload the specified local path to enabled remote shells.
-    """
-    if command:
-        file_transfer.upload(command.strip())
-    else:
-        console_output('No local path given\n')
 
 def do_export_vars(command):
     """
