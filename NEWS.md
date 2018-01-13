@@ -2,6 +2,7 @@
 
 - Drop :upload and :replicate file transfer features.
 - No longer forward Ctrl-Z sent to gsh are forwaded to the remote shells.
+- Save and restore polysh history from ~/.polysh_hisory.
 
 
 # 0.4

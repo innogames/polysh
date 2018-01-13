@@ -27,6 +27,7 @@ import os
 import signal
 import sys
 import termios
+import readline
 
 if sys.hexversion < 0x02040000:
         print('Your python version is too old (%s)' % \
@@ -127,7 +128,23 @@ def find_non_interactive_command(command):
         stdin += '\n'
     return command or stdin
 
+
+def init_history(histfile):
+    if hasattr(readline, "read_history_file"):
+        try:
+            readline.read_history_file(histfile)
+        except IOError:
+            pass
+
+
+def save_history(histfile):
+    readline.set_history_length(1000)
+    readline.write_history_file(histfile)
+
+
 def main_loop(interactive):
+    histfile = os.path.expanduser("~/.polysh_history")
+    init_history(histfile)
     next_signal = None
     last_status = None
     while True:
@@ -168,6 +185,7 @@ def main_loop(interactive):
                 os.kill(0, signal.SIGINT)
         except asyncore.ExitNow as e:
             console_output('')
+            save_history(histfile)
             sys.exit(e.args[0])
 
 def setprocname(name):
