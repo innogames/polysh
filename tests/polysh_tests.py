@@ -65,8 +65,6 @@ def parse_cmdline():
                       default=False, help='include coverage tests')
     parser.add_option('--log', type='str', dest='log',
                       help='log all pexpect I/O and polysh debug info')
-    parser.add_option('--python', type='str', dest='python', default='python3',
-                      help='python binary to use')
     options, args = parser.parse_args()
     return options, args
 
@@ -100,11 +98,10 @@ def main():
             end_coverage()
 
 def launch_polysh(args, input_data=None):
-    args = ['../polysh.py'] + args
+    args = ['polysh'] + args
     options, unused_args = parse_cmdline()
     if options.coverage:
         args = ['./coverage.py', '-x', '-p'] + args
-    args = [options.python] + args
     if options.log:
         logfile = open(options.log, 'a', 0o644)
         args += ['--debug']

@@ -16,5 +16,6 @@ install:
   - echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
   - ssh -vvvv localhost exit
 script:
+  - ./setup.py install
   - cd tests/
   - ./polysh_tests.py
