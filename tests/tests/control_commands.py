@@ -21,6 +21,7 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestControlCommands(unittest.TestCase):
     def testControl(self):
         child = launch_polysh(['localhost'])
@@ -46,10 +47,6 @@ class TestControlCommands(unittest.TestCase):
         child.expect('ready \(1\)> ')
         child.sendline('fg')
         child.expect('waiting \(1/1\)> ')
-        child.sendcontrol('z')
-        child.expect('ready \(1\)> ')
-        child.sendline('fg')
-        child.expect('waiting \(1/1\)> ')
         child.sendline(':send_ctrl d')
         child.expect('ready \(1\)> ')
         child.sendline('sleep 1h')
@@ -68,11 +65,11 @@ class TestControlCommands(unittest.TestCase):
         child.sendline(':help')
         child.expect(':enable')
         child.expect('ready \(0\)> ')
-        child.sendline(':help repl\t')
-        child.expect(':replicate')
+        child.sendline(':help show_read\t')
+        child.expect(':show_read_buff')
         child.expect('ready \(0\)> ')
-        child.sendline(':help :upl\t')
-        child.expect(':upload')
+        child.sendline(':help :send\t')
+        child.expect(':send_ctrl')
         child.expect('ready \(0\)> ')
         child.sendline(':help badcommandname\t')
         child.expect('Unknown control command: badcommandname')
@@ -190,6 +187,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
         child = launch_polysh(['localhost'])
+
         def testEcho(msg):
             child.expect('ready \(1\)> ')
             child.sendline('echo %s' % msg)
@@ -215,7 +213,7 @@ class TestControlCommands(unittest.TestCase):
         child.sendeof()
         child.expect(pexpect.EOF)
 
-        EXPECTED_LOG="""
+        EXPECTED_LOG = """
 > echo now logging
 localhost : now logging
 > echo still logging
@@ -225,7 +223,7 @@ localhost : still logging
 localhost : appended to the log
 > :set_log
 """.strip()
-        log = file('/tmp/polysh_test.log')
+        log = open('/tmp/polysh_test.log')
         log_lines = [l for l in log.readlines() if not l.startswith('[dbg] ')]
         actual_log = ''.join(log_lines).strip()
         self.assertEqual(actual_log, EXPECTED_LOG)
@@ -300,7 +298,7 @@ localhost : appended to the log
         child = launch_polysh(['--ssh=echo message; sleep'] + ['2h'] * 3)
         child.expect('waiting \(3/3\)> ')
         child.sendline(':show_read_buffer \t*')
-        for i in xrange(3):
+        for i in range(3):
             child.expect('\033\[1;[0-9]+m2h[ #][ 12] : \033\[1;mmessage')
         child.expect('waiting \(3/3\)> ')
         child.sendintr()

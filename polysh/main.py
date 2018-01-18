@@ -27,12 +27,13 @@ import os
 import signal
 import sys
 import termios
+import readline
 
 if sys.hexversion < 0x02040000:
-        print >> sys.stderr, 'Your python version is too old (%s)' % \
-                                                        (sys.version.split()[0])
-        print >> sys.stderr, 'You need at least Python 2.4'
-        sys.exit(1)
+    print('Your python version is too old (%s)' %
+          (sys.version.split()[0]), file=sys.stderr)
+    print('You need at least Python 2.4', file=sys.stderr)
+    sys.exit(1)
 
 from polysh import remote_dispatcher
 from polysh import dispatchers
@@ -42,6 +43,7 @@ from polysh.host_syntax import expand_syntax
 from polysh.version import VERSION
 from polysh import control_commands
 
+
 def kill_all():
     """When polysh quits, we kill all the remote shells we started"""
     for i in dispatchers.all_instances():
@@ -50,6 +52,7 @@ def kill_all():
         except OSError:
             # The process was already dead, no problem
             pass
+
 
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
@@ -74,8 +77,11 @@ def parse_cmdline():
                            'the tty.')
     parser.add_option('--log-file', type='str', dest='log_file',
                       help='file to log each machine conversation [none]')
-    parser.add_option('--abort-errors', action='store_true', dest='abort_error',
-                      help='abort if some shell fails to initialize [ignore]')
+    parser.add_option(
+        '--abort-errors',
+        action='store_true',
+        dest='abort_error',
+        help='abort if some shell fails to initialize [ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
                       help='print debugging information')
     parser.add_option('--profile', action='store_true', dest='profile',
@@ -92,14 +98,14 @@ def parse_cmdline():
                 if line:
                     args.append(line)
             hosts_file.close()
-        except IOError, e:
+        except IOError as e:
             parser.error(e)
 
     if options.log_file:
         try:
-            options.log_file = file(options.log_file, 'a')
-        except IOError, e:
-            print e
+            options.log_file = open(options.log_file, 'a')
+        except IOError as e:
+            print(e)
             sys.exit(1)
 
     if not args:
@@ -108,12 +114,13 @@ def parse_cmdline():
     if options.password_file == '-':
         options.password = getpass.getpass()
     elif options.password_file is not None:
-        password_file = file(options.password_file, 'r')
+        password_file = open(options.password_file, 'r')
         options.password = password_file.readline().rstrip('\n')
     else:
         options.password = None
 
     return options, args
+
 
 def find_non_interactive_command(command):
     if sys.stdin.isatty():
@@ -121,14 +128,32 @@ def find_non_interactive_command(command):
 
     stdin = sys.stdin.read()
     if stdin and command:
-        print >> sys.stderr, '--command and reading from stdin are incompatible'
+        print(
+            '--command and reading from stdin are incompatible',
+            file=sys.stderr)
         sys.exit(1)
     if stdin and not stdin.endswith('\n'):
         stdin += '\n'
     return command or stdin
 
-def main_loop():
-    global next_signal
+
+def init_history(histfile):
+    if hasattr(readline, "read_history_file"):
+        try:
+            readline.read_history_file(histfile)
+        except IOError:
+            pass
+
+
+def save_history(histfile):
+    readline.set_history_length(1000)
+    readline.write_history_file(histfile)
+
+
+def main_loop(interactive):
+    histfile = os.path.expanduser("~/.polysh_history")
+    init_history(histfile)
+    next_signal = None
     last_status = None
     while True:
         try:
@@ -142,7 +167,7 @@ def main_loop():
                 console_output('')
                 the_stdin_thread.prepend_text = None
             while dispatchers.count_awaited_processes()[0] and \
-                  remote_dispatcher.main_loop_iteration(timeout=0.2):
+                    remote_dispatcher.main_loop_iteration(timeout=0.2):
                 pass
             # Now it's quiet
             for r in dispatchers.all_instances():
@@ -160,9 +185,17 @@ def main_loop():
             if not next_signal:
                 # possible race here with the signal handler
                 remote_dispatcher.main_loop_iteration()
-        except asyncore.ExitNow, e:
+        except KeyboardInterrupt:
+            if interactive:
+                next_signal = signal.SIGINT
+            else:
+                kill_all()
+                os.kill(0, signal.SIGINT)
+        except asyncore.ExitNow as e:
             console_output('')
+            save_history(histfile)
             sys.exit(e.args[0])
+
 
 def setprocname(name):
     # From comments on http://davyd.livejournal.com/166352.html
@@ -174,7 +207,7 @@ def setprocname(name):
         if libc.prctl(15, name, 0, 0, 0):
             # BSD
             libc.setproctitle(name)
-    except:
+    except BaseException:
         try:
             # For 32 bit
             import dl
@@ -184,22 +217,23 @@ def setprocname(name):
             if libc.call('prctl', 15, name, 0, 0, 0):
                 # BSD
                 libc.call('setproctitle', name)
-        except:
+        except BaseException:
             pass
+
 
 def _profile(continuation):
     prof_file = 'polysh.prof'
     try:
         import cProfile
         import pstats
-        print 'Profiling using cProfile'
+        print('Profiling using cProfile')
         cProfile.runctx('continuation()', globals(), locals(), prof_file)
         stats = pstats.Stats(prof_file)
     except ImportError:
         import hotshot
         import hotshot.stats
         prof = hotshot.Profile(prof_file, lineevents=1)
-        print 'Profiling using hotshot'
+        print('Profiling using hotshot')
         prof.runcall(continuation)
         prof.close()
         stats = hotshot.stats.load(prof_file)
@@ -209,14 +243,12 @@ def _profile(continuation):
     stats.print_callees(50)
     os.remove(prof_file)
 
+
 def restore_tty_on_exit():
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
 
-# We handle signals in the main loop, this way we can be signaled while
-# handling a signal.
-next_signal = None
 
 def main():
     """Launch polysh"""
@@ -229,20 +261,9 @@ def main():
     options.command = find_non_interactive_command(options.command)
     options.exit_code = 0
     options.interactive = not options.command and sys.stdin.isatty() and \
-                          sys.stdout.isatty()
+        sys.stdout.isatty()
     if options.interactive:
-        def handler(sig, frame):
-            global next_signal
-            next_signal = sig
-        signal.signal(signal.SIGINT, handler)
-        signal.signal(signal.SIGTSTP, handler)
         restore_tty_on_exit()
-    else:
-      def handler(sig, frame):
-        signal.signal(sig, signal.SIG_DFL)
-        kill_all()
-        os.kill(0, sig)
-      signal.signal(signal.SIGINT, handler)
 
     remote_dispatcher.options = options
 
@@ -253,16 +274,16 @@ def main():
     dispatchers.create_remote_dispatchers(hosts)
 
     signal.signal(signal.SIGWINCH, lambda signum, frame:
-                                            dispatchers.update_terminal_size())
+                  dispatchers.update_terminal_size())
 
     the_stdin_thread.activate(options.interactive)
 
     if options.profile:
         def safe_main_loop():
             try:
-                main_loop()
-            except:
+                main_loop(options.interactive)
+            except BaseException:
                 pass
         _profile(safe_main_loop)
     else:
-        main_loop()
+        main_loop(options.interactive)

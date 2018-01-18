@@ -33,16 +33,17 @@ from polysh.version import VERSION
 from polysh import dispatchers
 from polysh import remote_dispatcher
 from polysh import stdin
-from polysh import file_transfer
+
 
 def complete_help(line, text):
     colon = text.startswith(':')
     text = text.lstrip(':')
-    res = [cmd + ' ' for cmd in list_control_commands() if \
-                           cmd.startswith(text) and ' ' + cmd + ' ' not in line]
+    res = [cmd + ' ' for cmd in list_control_commands() if
+           cmd.startswith(text) and ' ' + cmd + ' ' not in line]
     if colon:
         res = [':' + cmd for cmd in res]
     return res
+
 
 def do_help(command):
     """
@@ -65,16 +66,18 @@ def do_help(command):
             console_output('\n')
     else:
         names = list_control_commands()
-        max_name_len = max(map(len, names))
-        for i in xrange(len(names)):
+        max_name_len = max(list(map(len, names)))
+        for i in range(len(names)):
             name = names[i]
             txt = ':' + name + (max_name_len - len(name) + 2) * ' '
             doc = get_control_command(name).__doc__
             txt += doc.split('\n')[2].strip() + '\n'
             console_output(txt)
 
+
 def complete_list(line, text):
     return complete_shells(line, text)
+
 
 def do_list(command):
     """
@@ -87,6 +90,7 @@ def do_list(command):
     dispatchers.format_info(instances)
     console_output(''.join(instances))
 
+
 def do_quit(command):
     """
     Usage: :quit
@@ -94,8 +98,10 @@ def do_quit(command):
     """
     raise asyncore.ExitNow(0)
 
+
 def complete_chdir(line, text):
-    return filter(os.path.isdir, complete_local_path(text))
+    return list(filter(os.path.isdir, complete_local_path(text)))
+
 
 def do_chdir(command):
     """
@@ -104,8 +110,9 @@ def do_chdir(command):
     """
     try:
         os.chdir(expand_local_path(command.strip()))
-    except OSError, e:
+    except OSError as e:
         console_output('%s\n' % str(e))
+
 
 def complete_send_ctrl(line, text):
     if len(line[:-1].split()) >= 2:
@@ -114,6 +121,7 @@ def complete_send_ctrl(line, text):
     if text in ('c', 'd', 'z'):
         return [text + ' ']
     return ['c ', 'd ', 'z ']
+
 
 def do_send_ctrl(command):
     """
@@ -136,10 +144,12 @@ def do_send_ctrl(command):
     control_letter = chr(ord(letter.lower()) - ord('a') + 1)
     for i in selected_shells(' '.join(split[1:])):
         if i.enabled:
-            i.dispatch_write(control_letter)
+            i.dispatch_write(control_letter.encode())
+
 
 def complete_reset_prompt(line, text):
     return complete_shells(line, text, lambda i: i.enabled)
+
 
 def do_reset_prompt(command):
     """
@@ -150,9 +160,11 @@ def do_reset_prompt(command):
     for i in selected_shells(command):
         i.dispatch_command(i.init_string)
 
+
 def complete_enable(line, text):
     return complete_shells(line, text, lambda i:
-                                        i.state != remote_dispatcher.STATE_DEAD)
+                           i.state != remote_dispatcher.STATE_DEAD)
+
 
 def do_enable(command):
     """
@@ -165,9 +177,11 @@ def do_enable(command):
     """
     toggle_shells(command, True)
 
+
 def complete_disable(line, text):
     return complete_shells(line, text, lambda i:
-                                        i.state != remote_dispatcher.STATE_DEAD)
+                           i.state != remote_dispatcher.STATE_DEAD)
+
 
 def do_disable(command):
     """
@@ -180,9 +194,11 @@ def do_disable(command):
     """
     toggle_shells(command, False)
 
+
 def complete_reconnect(line, text):
     return complete_shells(line, text, lambda i:
-                                        i.state == remote_dispatcher.STATE_DEAD)
+                           i.state == remote_dispatcher.STATE_DEAD)
+
 
 def do_reconnect(command):
     """
@@ -191,13 +207,15 @@ def do_reconnect(command):
     The special characters * ? and [] work as expected.
     """
     selec = selected_shells(command)
-    to_reconnect = [i for i in selec if i.state == remote_dispatcher.STATE_DEAD]
+    to_reconnect = [i for i in selec if i.state ==
+                    remote_dispatcher.STATE_DEAD]
     for i in to_reconnect:
         i.disconnect()
         i.close()
 
     hosts = [i.hostname for i in to_reconnect]
     dispatchers.create_remote_dispatchers(hosts)
+
 
 def do_add(command):
     """
@@ -206,8 +224,10 @@ def do_add(command):
     """
     dispatchers.create_remote_dispatchers(command.split())
 
+
 def complete_purge(line, text):
     return complete_shells(line, text, lambda i: not i.enabled)
+
 
 def do_purge(command):
     """
@@ -224,6 +244,7 @@ def do_purge(command):
         i.disconnect()
         i.close()
 
+
 def do_rename(command):
     """
     Usage: :rename [NEW_NAME]
@@ -234,6 +255,7 @@ def do_rename(command):
     for i in dispatchers.all_instances():
         if i.enabled:
             i.rename(command)
+
 
 def do_hide_password(command):
     """
@@ -257,6 +279,7 @@ def do_hide_password(command):
         console_output('Logging disabled to avoid writing passwords\n')
         remote_dispatcher.options.log_file = None
 
+
 def complete_set_debug(line, text):
     if len(line[:-1].split()) >= 2:
         # Debug value already given in command line
@@ -264,6 +287,7 @@ def complete_set_debug(line, text):
     if text.lower() in ('y', 'n'):
         return [text + ' ']
     return ['y ', 'n ']
+
 
 def do_set_debug(command):
     """
@@ -286,48 +310,6 @@ def do_set_debug(command):
     for i in selected_shells(' '.join(split[1:])):
         i.debug = debug
 
-def complete_replicate(line, text):
-    if ':' not in text:
-        enabled_shells =  complete_shells(line, text, lambda i: i.enabled)
-        return [c[:-1] + ':' for c in enabled_shells]
-    shell, path = text.split(':')
-    return [shell + ':' + p for p in complete_local_path(path)]
-
-def do_replicate(command):
-    """
-    Usage: :replicate SHELL:REMOTE_PATH
-    Copy a path from one remote shell to all others
-    """
-    if ':' not in command:
-        console_output('Usage: :replicate SHELL:REMOTE_PATH\n')
-        return
-    shell_name, path = command.strip().split(':', 1)
-    if not path:
-        console_output('No remote path given\n')
-        return
-    for shell in dispatchers.all_instances():
-        if shell.display_name == shell_name:
-            if not shell.enabled:
-                console_output('%s is not enabled\n' % shell_name)
-                return
-            break
-    else:
-        console_output('%s not found\n' % shell_name)
-        return
-    file_transfer.replicate(shell, path)
-
-def complete_upload(line, text):
-    return complete_local_path(text)
-
-def do_upload(command):
-    """
-    Usage: :upload LOCAL_PATH
-    Upload the specified local path to enabled remote shells.
-    """
-    if command:
-        file_transfer.upload(command.strip())
-    else:
-        console_output('No local path given\n')
 
 def do_export_vars(command):
     """
@@ -347,7 +329,7 @@ def do_export_vars(command):
                 'POLYSH_NAME': shell.hostname,
                 'POLYSH_DISPLAY_NAME': shell.display_name,
             }
-            for name, value in environment_variables.iteritems():
+            for name, value in environment_variables.items():
                 value = pipes.quote(str(value))
                 shell.dispatch_command('export %s=%s\n' % (name, value))
             rank += 1
@@ -356,11 +338,14 @@ def do_export_vars(command):
         if shell.enabled:
             shell.dispatch_command('export POLYSH_NR_SHELLS=%d\n' % rank)
 
+
 add_to_history('$POLYSH_RANK $POLYSH_NAME $POLYSH_DISPLAY_NAME')
 add_to_history('$POLYSH_NR_SHELLS')
 
+
 def complete_set_log(line, text):
     return complete_local_path(text)
+
 
 def do_set_log(command):
     """
@@ -371,17 +356,19 @@ def do_set_log(command):
     command = command.strip()
     if command:
         try:
-            remote_dispatcher.options.log_file = file(command, 'a')
-        except IOError, e:
+            remote_dispatcher.options.log_file = open(command, 'a')
+        except IOError as e:
             console_output('%s\n' % str(e))
             command = None
     if not command:
         remote_dispatcher.options.log_file = None
         console_output('Logging disabled\n')
 
+
 def complete_show_read_buffer(line, text):
     return complete_shells(line, text, lambda i: i.read_buffer or
-                                                 i.read_in_state_not_started)
+                           i.read_in_state_not_started)
+
 
 def do_show_read_buffer(command):
     """
@@ -394,17 +381,18 @@ def do_show_read_buffer(command):
             i.print_lines(i.read_in_state_not_started)
             i.read_in_state_not_started = ''
 
+
 def main():
     """
     Output a help text of each control command suitable for the man page
     Run from the polysh top directory: python -m polysh.control_commands
     """
     try:
-        man_page = file('polysh.1', 'r')
-    except IOError, e:
-        print e
-        print 'Please run "python -m polysh.control_commands" from the' + \
-              ' polysh top directory'
+        man_page = open('polysh.1', 'r')
+    except IOError as e:
+        print(e)
+        print('Please run "python -m polysh.control_commands" from the' +
+              ' polysh top directory')
         sys.exit(1)
 
     updated_man_page_fd, updated_man_page_path = tempfile.mkstemp()
@@ -413,34 +401,34 @@ def main():
     # The first line is auto-generated as it contains the version number
     man_page.readline()
     v = '.TH "polysh" "1" "%s" "Guillaume Chazarain" "Remote shells"' % VERSION
-    print >> updated_man_page, v
+    print(v, file=updated_man_page)
 
     for line in man_page:
-        print >> updated_man_page, line,
+        print(line, end=' ', file=updated_man_page)
         if 'BEGIN AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
             break
 
     for name in list_control_commands():
-        print >> updated_man_page, '.TP'
+        print('.TP', file=updated_man_page)
         unstripped = get_control_command(name).__doc__.split('\n')
         lines = [l.strip() for l in unstripped]
         usage = lines[1].strip()
-        print >> updated_man_page, '\\fB%s\\fR' % usage[7:]
+        print('\\fB%s\\fR' % usage[7:], file=updated_man_page)
         help_text = ' '.join(lines[2:]).replace('polysh', '\\fIpolysh\\fR')
-        print >> updated_man_page, help_text.strip()
+        print(help_text.strip(), file=updated_man_page)
 
     for line in man_page:
         if 'END AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
-            print >> updated_man_page, line,
+            print(line, end=' ', file=updated_man_page)
             break
 
     for line in man_page:
-        print >> updated_man_page, line,
+        print(line, end=' ', file=updated_man_page)
 
     man_page.close()
     updated_man_page.close()
     shutil.move(updated_man_page_path, 'polysh.1')
 
+
 if __name__ == '__main__':
     main()
-

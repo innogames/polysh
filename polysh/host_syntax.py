@@ -29,6 +29,7 @@ import re
 syntax_pattern = re.compile('<([0-9,-]+)>')
 interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
 
+
 def _iter_numbers(start, end):
     int_start = int(start)
     int_end = int(end)
@@ -37,14 +38,15 @@ def _iter_numbers(start, end):
     else:
         increment = -1
     zero_pad = len(start) > 1 and start.startswith('0') or \
-               len(end) > 1 and end.startswith('0')
+        len(end) > 1 and end.startswith('0')
     if zero_pad:
         length = max(len(start), len(end))
-    for i in xrange(int_start, int_end + increment, increment):
+    for i in range(int_start, int_end + increment, increment):
         s = str(i)
         if zero_pad:
             s = s.zfill(length)
         yield s
+
 
 def expand_syntax(string):
     """Iterator over all the strings in the expansion of the argument"""

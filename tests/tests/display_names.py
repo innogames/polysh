@@ -20,6 +20,7 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestDisplayNames(unittest.TestCase):
     def testHole(self):
         child = launch_polysh(['--ssh=sh;:'] + ['a'] * 100)
@@ -32,7 +33,7 @@ class TestDisplayNames(unittest.TestCase):
         child.expect('ready \(19\)> ')
         child.sendline(':purge')
         child.expect('ready \(19\)> ')
-        for i in xrange(20, 101):
+        for i in range(20, 101):
             child.sendline(':add a')
             child.expect('ready \(%d\)> ' % i)
         child.sendline(':quit')

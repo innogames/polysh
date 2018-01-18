@@ -1,19 +1,23 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from distutils.core import setup
+from setuptools import setup
 from polysh.version import VERSION
 
-setup(name='polysh',
-      version=VERSION,
-      description='Polysh',
-      long_description=
-"""polysh is used to launch several remote shells on many machines at the same
-time and control them from a single command prompt.""",
-      author='Guillaume Chazarain',
-      author_email='guichaz@gmail.com',
-      url='http://guichaz.free.fr/polysh',
-      scripts=['bin/polysh'],
-      data_files=[('share/man/man1', ['polysh.1'])],
-      packages=['polysh'],
-      license='GPL'
+setup(
+    name='polysh',
+    version=VERSION,
+    author='InnoGames System Administration',
+    author_email='it@innogames.com',
+    url='https://github.com/innogames/polysh',
+    data_files=[('share/man/man1', ['polysh.1'])],
+    packages=['polysh'],
+    long_description=(
+        'polysh is used to launch several remote shells on many machines at'
+        ' the same time and control them from a single command prompt.'),
+    entry_points={
+        'console_scripts': [
+            'polysh=polysh.main:main',
+        ],
+    },
+    license='GPL'
 )

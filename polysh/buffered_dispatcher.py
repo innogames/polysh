@@ -23,6 +23,7 @@ import os
 
 from polysh.console import console_output
 
+
 class buffered_dispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
     read buffer to permit line oriented manipulations"""
@@ -33,19 +34,19 @@ class buffered_dispatcher(asyncore.file_dispatcher):
     def __init__(self, fd):
         asyncore.file_dispatcher.__init__(self, fd)
         self.fd = fd
-        self.read_buffer = ''
-        self.write_buffer = ''
+        self.read_buffer = b''
+        self.write_buffer = b''
         self.allow_write = True
 
     def handle_read(self):
         """Some data can be read"""
-        new_data = ''
+        new_data = b''
         buffer_length = len(self.read_buffer)
         try:
             while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
                 try:
                     piece = self.recv(4096)
-                except OSError, e:
+                except OSError as e:
                     if e.errno == errno.EAGAIN:
                         # End of the available data
                         break
@@ -55,10 +56,17 @@ class buffered_dispatcher(asyncore.file_dispatcher):
                         break
                     else:
                         raise
+
+                if not piece:
+                    # A closed connection is indicated by signaling a read
+                    # condition, and having recv() return 0.
+                    break
+
                 new_data += piece
                 buffer_length += len(piece)
+
         finally:
-            new_data = new_data.replace('\r', '\n')
+            new_data = new_data.replace(b'\r', b'\n')
             self.read_buffer += new_data
         return new_data
 
@@ -68,15 +76,16 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def writable(self):
         """Do we have something to write?"""
-        return self.write_buffer != ''
+        return self.write_buffer != b''
 
     def dispatch_write(self, buf):
         """Augment the buffer with stuff to write when possible"""
+        assert isinstance(buf, bytes)
         assert self.allow_write
         self.write_buffer += buf
         if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
             console_output('Buffer too big (%d) for %s\n' %
-                                            (len(self.write_buffer), str(self)))
+                           (len(self.write_buffer), str(self)))
             raise asyncore.ExitNow(1)
 
     def drain_and_block_writing(self):

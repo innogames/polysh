@@ -20,13 +20,14 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestHostSyntax(unittest.TestCase):
     def assertHostSyntax(self, to_expand, expanded):
         child = launch_polysh([to_expand, 'localhost'])
         child.expect('ready')
         child.sendline(':list')
         with_spaces = [e.replace('.', '\\.') + ' ' for e in expanded]
-        for i in xrange(len(expanded)):
+        for i in range(len(expanded)):
             found = child.expect(with_spaces)
             del with_spaces[found]
         child.expect('ready')
@@ -61,4 +62,3 @@ class TestHostSyntax(unittest.TestCase):
         self.assertHostSyntax('0.0.0.<1>', ['0.0.0.1'])
         self.assertHostSyntax('0.0.0.<1,3-5>',
                               ['0.0.0.1', '0.0.0.3', '0.0.0.4', '0.0.0.5'])
-

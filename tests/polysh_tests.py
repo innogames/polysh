@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,11 +23,12 @@ import unittest
 import sys
 import optparse
 import pexpect
-import subprocess
+from pexpect.popen_spawn import PopenSpawn
 
 import coverage
 
 TESTS = unittest.TestSuite()
+
 
 def iter_over_all_tests():
     py_files = [p for p in os.listdir('tests') if p.endswith('.py')]
@@ -44,9 +45,11 @@ def iter_over_all_tests():
             for test_method in suite:
                 yield test_method
 
+
 def import_all_tests():
     for test in iter_over_all_tests():
         TESTS.addTest(test)
+
 
 def import_specified_tests(names):
     for test in iter_over_all_tests():
@@ -55,25 +58,26 @@ def import_specified_tests(names):
             names.remove(test_name)
             TESTS.addTest(test)
     if names:
-        print 'Cannot find tests:', names
+        print('Cannot find tests:', names)
         sys.exit(1)
 
+
 def parse_cmdline():
-    usage='Usage: %s [OPTIONS...] [TESTS...]' % sys.argv[0]
+    usage = 'Usage: %s [OPTIONS...] [TESTS...]' % sys.argv[0]
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('--coverage', action='store_true', dest='coverage',
                       default=False, help='include coverage tests')
     parser.add_option('--log', type='str', dest='log',
                       help='log all pexpect I/O and polysh debug info')
-    parser.add_option('--python', type='str', dest='python', default='python',
-                      help='python binary to use')
     options, args = parser.parse_args()
     return options, args
+
 
 def remove_coverage_files():
     for filename in os.listdir('.'):
         if filename.startswith('.coverage'):
             os.remove(filename)
+
 
 def end_coverage():
     coverage.the_coverage.start()
@@ -84,6 +88,7 @@ def end_coverage():
     remove_coverage_files()
     # Prevent the atexit.register(the_coverage.save) from recreating the files
     coverage.the_coverage.usecache = coverage.the_coverage.cache = None
+
 
 def main():
     options, args = parse_cmdline()
@@ -99,48 +104,28 @@ def main():
         if options.coverage:
             end_coverage()
 
-class non_interactive_spawn(pexpect.spawn):
-    def __init__(self, argv, input_data, *args, **kwargs):
-        pexpect.spawn.__init__(self, None, *args, **kwargs)
-        self.use_native_pty_fork = False
-        self.argv = argv
-        self.input_data = input_data
-        self.command = argv[0]
-        self.args = argv[1:]
-        self._spawn(self.command, self.args)
-
-    def _spawn__fork_pty(self):
-        process = subprocess.Popen(self.argv, stdin=subprocess.PIPE,
-                                              stdout=subprocess.PIPE,
-                                              stderr=subprocess.STDOUT)
-
-        fd = process.stdin.fileno()
-        while self.input_data:
-            written = os.write(fd, self.input_data)
-            self.input_data = self.input_data[written:]
-        process.stdin.close()
-        # process will be garbage collected and process.stdout closed, so
-        # use a dupped fd.
-        return process.pid, os.dup(process.stdout.fileno())
 
 def launch_polysh(args, input_data=None):
-    args = ['../polysh.py'] + args
+    args = ['polysh'] + args
     options, unused_args = parse_cmdline()
     if options.coverage:
         args = ['./coverage.py', '-x', '-p'] + args
-    args = [options.python] + args
     if options.log:
-        logfile = open(options.log, 'a', 0644)
+        logfile = open(options.log, 'a', 0o644)
         args += ['--debug']
-        print >> logfile, 'Launching:', str(args)
+        print('Launching:', str(args), file=logfile)
     else:
         logfile = None
 
     if input_data is None:
-        child = pexpect.spawn(args[0], args=args[1:], logfile=logfile)
+        child = pexpect.spawn(args[0], args=args[1:],
+                              encoding='utf-8', logfile=logfile)
     else:
-        child = non_interactive_spawn(args, input_data, logfile=logfile)
+        child = PopenSpawn(args, encoding='utf-8', logfile=logfile)
+        child.send(input_data)
+        child.sendeof()
     return child
+
 
 if __name__ == '__main__':
     main()

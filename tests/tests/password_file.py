@@ -31,6 +31,7 @@ fi; #
 '
 """.strip()
 
+
 class TestPasswordFile(unittest.TestCase):
     def startTestPassword(self, password_file):
         try:
@@ -40,11 +41,11 @@ class TestPasswordFile(unittest.TestCase):
             pass
         passwd = '--password-file=' + password_file
         child = launch_polysh([SSH_ARG, passwd, '--debug',
-                            '--log-file=/tmp/polysh_test.log', '1', '2'])
+                               '--log-file=/tmp/polysh_test.log', '1', '2'])
         return child
 
     def endTestPassword(self):
-        self.failIf('sikr3t' in file('/tmp/polysh_test.log').read())
+        self.assertFalse('sikr3t' in open('/tmp/polysh_test.log').read())
         os.unlink('/tmp/polysh_test.log')
 
     def testGoodPassword(self):
@@ -67,7 +68,7 @@ class TestPasswordFile(unittest.TestCase):
         self.endTestPassword()
 
     def testBadPasswordFile(self):
-        print >> file('/tmp/polysh_test.pwd', 'w'), 'noidea'
+        print('noidea', file=open('/tmp/polysh_test.pwd', 'w'))
         child = self.startTestPassword('/tmp/polysh_test.pwd')
         child.expect(pexpect.EOF)
         while child.isalive():
@@ -77,7 +78,7 @@ class TestPasswordFile(unittest.TestCase):
         self.endTestPassword()
 
     def testGoodPasswordFile(self):
-        print >> file('/tmp/polysh_test.pwd', 'w'), 'sikr3t'
+        print('sikr3t', file=open('/tmp/polysh_test.pwd', 'w'))
         child = self.startTestPassword('/tmp/polysh_test.pwd')
         child.expect('ready \(2\)> ')
         os.unlink('/tmp/polysh_test.pwd')

@@ -23,6 +23,7 @@ import sys
 # clear it with ' ' characters
 last_status_length = None
 
+
 def safe_write(output, buf):
     """We can get a SIGWINCH when printing, which will cause write to raise
     an EINTR. That's not a reason to stop printing."""
@@ -30,9 +31,10 @@ def safe_write(output, buf):
         try:
             output.write(buf)
             break
-        except IOError, e:
+        except IOError as e:
             if e.errno != errno.EINTR:
                 raise
+
 
 def console_output(msg, logging_msg=None):
     """Use instead of print, to clear the status information before printing"""
@@ -48,8 +50,8 @@ def console_output(msg, logging_msg=None):
             last_status_length = 0
     safe_write(sys.stdout, msg)
 
+
 def set_last_status_length(length):
     """The length of the prefix to be cleared when printing something"""
     global last_status_length
     last_status_length = length
-

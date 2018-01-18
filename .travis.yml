@@ -1,0 +1,21 @@
+# SSHing to localhost does not currently work in the trusty containers...
+# https://github.com/travis-ci/travis-ci/issues/8647
+dist: precise
+sudo: false
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+install:
+  - pip install -r tests/requirements.txt
+  - ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+  - cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+  - chmod 600 ~/.ssh/authorized_keys
+  - cat ~/.ssh/known_hosts
+  - echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+  - ssh -vvvv localhost exit
+script:
+  - ./setup.py install
+  - cd tests/
+  - ./polysh_tests.py

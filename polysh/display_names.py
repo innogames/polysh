@@ -28,6 +28,7 @@ NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = RBTree()
 # Cache the right most element in the NR_ENABLED_DISPLAY_NAMES_BY_LENGTH tree
 max_display_name_length = 0
 
+
 class display_name_prefix(object):
     def __init__(self):
         self.next_suffix = 0
@@ -60,6 +61,7 @@ class display_name_prefix(object):
     def empty(self):
         return self.next_suffix == 0
 
+
 def make_unique_name(prefix):
     prefix_obj = PREFIXES.get(prefix, None)
     if prefix_obj is None:
@@ -74,6 +76,7 @@ def make_unique_name(prefix):
 
     return name
 
+
 def update_max_display_name_length():
     from polysh import dispatchers
     if len(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH) == 0:
@@ -84,6 +87,7 @@ def update_max_display_name_length():
     if new_max != max_display_name_length:
         max_display_name_length = new_max
         dispatchers.update_terminal_size()
+
 
 def change(prev_display_name, new_prefix):
     if new_prefix and '#' in new_prefix:
@@ -110,6 +114,7 @@ def change(prev_display_name, new_prefix):
 
     return name
 
+
 def set_enabled(display_name, enabled):
     length = len(display_name)
     node = NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.findNode(length)
@@ -124,4 +129,3 @@ def set_enabled(display_name, enabled):
             NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.deleteNode(node)
 
     update_max_display_name_length()
-
