@@ -22,6 +22,7 @@ import os
 
 from polysh_tests import launch_polysh
 
+
 class TestCommandLine(unittest.TestCase):
     def testGoodHostsFilename(self):
         tmp_name = '/tmp/polysh_tests.%d' % (os.getpid())
@@ -67,7 +68,7 @@ class TestCommandLine(unittest.TestCase):
         child.expect('Consider manually connecting or using ssh-keyscan')
         child.expect(pexpect.EOF)
         child = launch_polysh(['--ssh=echo REMOTE HOST IDENTIFICATION '
-                            'HAS CHANGED', 'l'])
+                               'HAS CHANGED', 'l'])
         child.expect('Remote host identification has changed')
         child.expect('Consider manually connecting or using ssh-keyscan')
         child.expect(pexpect.EOF)

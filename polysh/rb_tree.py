@@ -31,9 +31,10 @@ import string
 BLACK = 0
 RED = 1
 
+
 class RBNode(object):
 
-    def __init__(self, key = None, value = None, color = RED):
+    def __init__(self, key=None, value=None, color=RED):
         self.left = self.right = self.parent = None
         self.color = color
         self.key = key
@@ -343,4 +344,3 @@ class RBTree(object):
         while cur.right:
             cur = cur.right
         return cur
-

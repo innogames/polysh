@@ -34,10 +34,10 @@ from polysh import display_names
 STATE_NAMES = ['not_started', 'idle', 'running', 'terminated', 'dead']
 
 STATE_NOT_STARTED,         \
-STATE_IDLE,                \
-STATE_RUNNING,             \
-STATE_TERMINATED,          \
-STATE_DEAD = list(range(len(STATE_NAMES)))
+    STATE_IDLE,                \
+    STATE_RUNNING,             \
+    STATE_TERMINATED,          \
+    STATE_DEAD = list(range(len(STATE_NAMES)))
 
 # Terminal color codes
 COLORS = [1] + list(range(30, 37))
@@ -45,12 +45,14 @@ COLORS = [1] + list(range(30, 37))
 # Count the total number of remote_dispatcher.handle_read() invocations
 nr_handle_read = 0
 
+
 def main_loop_iteration(timeout=None):
     """Return the number of remote_dispatcher.handle_read() calls made by this
     iteration"""
     prev_nr_read = nr_handle_read
     asyncore.loop(count=1, timeout=timeout, use_poll=True)
     return nr_handle_read - prev_nr_read
+
 
 def log(msg):
     if options.log_file:
@@ -63,6 +65,7 @@ def log(msg):
                 print(e)
                 raise asyncore.ExitNow(1)
             msg = msg[written:]
+
 
 class remote_dispatcher(buffered_dispatcher):
     """A remote_dispatcher is a ssh process we communicate with"""
@@ -79,7 +82,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.temporary = False
         self.hostname = hostname
         self.debug = options.debug
-        self.enabled = True # shells can be enabled and disabled
+        self.enabled = True  # shells can be enabled and disabled
         self.state = STATE_NOT_STARTED
         self.term_size = (-1, -1)
         self.display_name = None
@@ -90,7 +93,7 @@ class remote_dispatcher(buffered_dispatcher):
         self.command = options.command
         self.last_printed_line = ''
         if sys.stdout.isatty() and not options.disable_color:
-            COLORS.insert(0, COLORS.pop()) # Rotate the colors
+            COLORS.insert(0, COLORS.pop())  # Rotate the colors
             self.color_code = COLORS[0]
         else:
             self.color_code = None
@@ -141,8 +144,8 @@ class remote_dispatcher(buffered_dispatcher):
     def configure_tty(self):
         """We don't want \n to be replaced with \r\n, and we disable the echo"""
         attr = termios.tcgetattr(self.fd)
-        attr[1] &= ~termios.ONLCR # oflag
-        attr[3] &= ~termios.ECHO # lflag
+        attr[1] &= ~termios.ONLCR  # oflag
+        attr[3] &= ~termios.ECHO  # lflag
         termios.tcsetattr(self.fd, termios.TCSANOW, attr)
         # unsetopt zle prevents Zsh from resetting the tty
         return 'unsetopt zle 2> /dev/null;stty -echo -onlcr -ctlecho;'
@@ -183,7 +186,6 @@ class remote_dispatcher(buffered_dispatcher):
 
         self.handle_close()
 
-
     def handle_close(self):
         if self.state is STATE_DEAD:
             # This connection has already been killed. Asyncore has probably
@@ -198,7 +200,6 @@ class remote_dispatcher(buffered_dispatcher):
         self.disconnect()
         if self.temporary:
             self.close()
-
 
     def print_lines(self, lines):
         from polysh.display_names import max_display_name_length
@@ -257,8 +258,8 @@ class remote_dispatcher(buffered_dispatcher):
             # found index by the length of the previous buffer
             lf_pos += len(self.read_buffer) - len(new_data)
         elif self.state is STATE_NOT_STARTED and \
-             options.password is not None and \
-             b'password:' in self.read_buffer.lower():
+                options.password is not None and \
+                b'password:' in self.read_buffer.lower():
             self.dispatch_write('{}\n'.format(options.password).encode())
             self.read_buffer = b''
             return
@@ -346,7 +347,7 @@ class remote_dispatcher(buffered_dispatcher):
         if string:
             rename1, rename2 = callbacks.add('rename', self.change_name, False)
             self.dispatch_command('/bin/echo "%s""%s"%s\n' %
-                                                     (rename1, rename2, string))
+                                  (rename1, rename2, string))
         else:
             self.change_name(self.hostname)
 

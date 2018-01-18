@@ -23,6 +23,7 @@ import readline
 from polysh.control_commands_helpers import complete_control_command
 from polysh.control_commands_helpers import expand_local_path
 
+
 def complete_local_path(path):
     def get_suffix(p):
         if os.path.isdir(p):
@@ -31,6 +32,7 @@ def complete_local_path(path):
     path = expand_local_path(path)
     paths = [p + get_suffix(p) for p in glob.glob(path + '*')]
     return paths
+
 
 def remove_dupes(words):
     added = set()
@@ -41,6 +43,7 @@ def remove_dupes(words):
             added.add(stripped)
             results.append(w)
     return results
+
 
 def read_commands_in_path():
     commands = set()
@@ -54,6 +57,7 @@ def read_commands_in_path():
             else:
                 commands |= set(listing)
     return list(commands)
+
 
 # All the words that have been typed in polysh. Used by the completion
 # mechanism.
@@ -87,11 +91,11 @@ def complete(text, state):
             completion_results += complete_local_path(text)
             # Complete from history
             l = len(text)
-            completion_results += [w + ' ' for w in history_words if \
-                                              len(w) > l and w.startswith(text)]
+            completion_results += [w + ' ' for w in history_words if
+                                   len(w) > l and w.startswith(text)]
             if readline.get_begidx() == 0:
                 # Completing first word from $PATH
-                completion_results += [w + ' ' for w in user_commands_in_path \
+                completion_results += [w + ' ' for w in user_commands_in_path
                                            if len(w) > l and w.startswith(text)]
             completion_results = remove_dupes(completion_results)
             if dropped_exclam:
@@ -101,19 +105,21 @@ def complete(text, state):
         return completion_results[state]
     completion_results = None
 
+
 def add_to_history(cmd):
     words = [w for w in cmd.split() if len(w) > 1]
     history_words.update(words)
     if len(history_words) > 10000:
         del history_words[:-10000]
 
+
 def remove_last_history_item():
     """The user just typed a password..."""
     last = readline.get_current_history_length() - 1
     readline.remove_history_item(last)
 
+
 def install_completion_handler():
     readline.set_completer(complete)
     readline.parse_and_bind('tab: complete')
     readline.set_completer_delims(' \t\n')
-

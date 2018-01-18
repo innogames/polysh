@@ -20,6 +20,7 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestDisplayNames(unittest.TestCase):
     def testHole(self):
         child = launch_polysh(['--ssh=sh;:'] + ['a'] * 100)

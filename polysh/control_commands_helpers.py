@@ -25,6 +25,7 @@ from polysh.console import console_output
 from polysh import dispatchers
 from polysh import remote_dispatcher
 
+
 def toggle_shells(command, enable):
     """Enable or disable the specified shells. If the command would have
     no effect, it changes all other shells to the inverse enable value."""
@@ -39,6 +40,7 @@ def toggle_shells(command, enable):
     for i in selection:
         if i.state != remote_dispatcher.STATE_DEAD:
             i.set_enabled(enable)
+
 
 def selected_shells(command):
     """Iterator over the shells with names matching the patterns.
@@ -62,25 +64,30 @@ def selected_shells(command):
         if instance_found and not found:
             console_output('%s not found\n' % pattern)
 
+
 def complete_shells(line, text, predicate=lambda i: True):
     """Return the shell names to include in the completion"""
-    res = [i.display_name + ' ' for i in dispatchers.all_instances() if \
-                i.display_name.startswith(text) and \
-                predicate(i) and \
-                ' ' + i.display_name + ' ' not in line]
+    res = [i.display_name + ' ' for i in dispatchers.all_instances() if
+           i.display_name.startswith(text) and
+           predicate(i) and
+           ' ' + i.display_name + ' ' not in line]
     return res
+
 
 def expand_local_path(path):
     return os.path.expanduser(os.path.expandvars(path) or '~')
+
 
 def list_control_commands():
     from polysh import control_commands
     return [c[3:] for c in dir(control_commands) if c.startswith('do_')]
 
+
 def get_control_command(name):
     from polysh import control_commands
     func = getattr(control_commands, 'do_' + name)
     return func
+
 
 def complete_control_command(line, text):
     from polysh import control_commands
@@ -92,10 +99,12 @@ def complete_control_command(line, text):
     else:
         # Completing control command parameters
         cmd = line.split()[0][1:]
-        def_compl = lambda line: []
+
+        def def_compl(line): return []
         compl_func = getattr(control_commands, 'complete_' + cmd, def_compl)
         matches = compl_func(line, text)
     return matches
+
 
 def handle_control_command(line):
     if not line:
@@ -108,4 +117,3 @@ def handle_control_command(line):
     else:
         parameters = line[len(cmd_name) + 1:]
         cmd_func(parameters)
-

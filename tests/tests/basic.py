@@ -21,6 +21,7 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestBasic(unittest.TestCase):
     def localhost(self, nr_localhost):
         args = nr_localhost * ['localhost']
@@ -83,4 +84,3 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(idx, 1)
         idx = child.expect(['Error talking to localhost', pexpect.EOF])
         self.assertEqual(idx, 1)
-

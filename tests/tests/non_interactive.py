@@ -21,6 +21,7 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestNonInteractive(unittest.TestCase):
     def testCommandNormal(self):
         child = launch_polysh(['--command=echo text', 'localhost'])
@@ -51,17 +52,18 @@ class TestNonInteractive(unittest.TestCase):
         child.expect(pexpect.EOF)
 
     def testInvalidCommandStdin(self):
-        child = launch_polysh(['localhost', '--command=date'], input_data='uptime')
+        child = launch_polysh(
+            ['localhost', '--command=date'], input_data='uptime')
         child.expect('--command and reading from stdin are incompatible')
         child.expect(pexpect.EOF)
 
     def testExitCode(self):
         def CommandCode(command, code):
-            child = launch_polysh(['--command=%s' % command] + ['localhost'] * 5)
+            child = launch_polysh(
+                ['--command=%s' % command] + ['localhost'] * 5)
             child.expect(pexpect.EOF)
             while child.isalive():
                 child.wait()
             self.assertEqual(child.exitstatus, code)
         CommandCode('true', 0)
         CommandCode('false', 1)
-

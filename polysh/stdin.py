@@ -19,7 +19,7 @@
 import asyncore
 import errno
 import os
-import readline # Just to say we want to use it with raw_input
+import readline  # Just to say we want to use it with raw_input
 import signal
 import socket
 import subprocess
@@ -32,8 +32,10 @@ from polysh import dispatchers, remote_dispatcher
 from polysh.console import console_output, set_last_status_length
 from polysh import completion
 
+
 class input_buffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
+
     def __init__(self):
         self.lock = Lock()
         self.buf = ''
@@ -56,6 +58,7 @@ class input_buffer(object):
                 return data
         finally:
             self.lock.release()
+
 
 def process_input_buffer():
     """Send the content of the input buffer to all remote processes, this must
@@ -91,7 +94,9 @@ def process_input_buffer():
         except asyncore.ExitNow as e:
             raise e
         except Exception as msg:
-            console_output('%s for %s, disconnecting\n' % (msg, r.display_name))
+            console_output(
+                '%s for %s, disconnecting\n' %
+                (msg, r.display_name))
             r.disconnect()
         else:
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
@@ -105,8 +110,10 @@ def process_input_buffer():
 # stdin thread sends a character to the socket, the main thread processes it,
 # sends the ACK, and the stdin thread can go on.
 
+
 class socket_notification_reader(asyncore.dispatcher):
     """The socket reader in the main thread"""
+
     def __init__(self):
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
@@ -137,6 +144,7 @@ class socket_notification_reader(asyncore.dispatcher):
         """Our writes are blocking"""
         return False
 
+
 def write_main_socket(c):
     """Synchronous write to the main socket, wait for ACK"""
     the_stdin_thread.socket_write.send(c)
@@ -149,6 +157,7 @@ def write_main_socket(c):
         else:
             break
 
+
 #
 # This file descriptor is used to interrupt readline in raw_input().
 # /dev/null is not enough as it does not get out of a 'Ctrl-R' reverse-i-search.
@@ -157,6 +166,7 @@ def write_main_socket(c):
 tempfile_fd, tempfile_name = tempfile.mkstemp()
 os.remove(tempfile_name)
 os.write(tempfile_fd, b'\x03')
+
 
 def get_stdin_pid(cached_result=None):
     """Try to get the PID of the stdin thread, otherwise get the whole process
@@ -174,21 +184,25 @@ def get_stdin_pid(cached_result=None):
             cached_result = int(tasks[0])
     return cached_result
 
+
 def interrupt_stdin_thread():
     """The stdin thread may be in raw_input(), get out of it"""
-    dupped_stdin = os.dup(0) # Backup the stdin fd
-    assert not the_stdin_thread.interrupt_asked # Sanity check
-    the_stdin_thread.interrupt_asked = True # Not user triggered
-    os.lseek(tempfile_fd, 0, 0) # Rewind in the temp file
-    os.dup2(tempfile_fd, 0) # This will make raw_input() return
+    dupped_stdin = os.dup(0)  # Backup the stdin fd
+    assert not the_stdin_thread.interrupt_asked  # Sanity check
+    the_stdin_thread.interrupt_asked = True  # Not user triggered
+    os.lseek(tempfile_fd, 0, 0)  # Rewind in the temp file
+    os.dup2(tempfile_fd, 0)  # This will make raw_input() return
     pid = get_stdin_pid()
-    os.kill(pid, signal.SIGWINCH) # Try harder to wake up raw_input()
-    the_stdin_thread.out_of_raw_input.wait() # Wait for this return
-    the_stdin_thread.interrupt_asked = False # Restore sanity
-    os.dup2(dupped_stdin, 0) # Restore stdin
-    os.close(dupped_stdin) # Cleanup
+    os.kill(pid, signal.SIGWINCH)  # Try harder to wake up raw_input()
+    the_stdin_thread.out_of_raw_input.wait()  # Wait for this return
+    the_stdin_thread.interrupt_asked = False  # Restore sanity
+    os.dup2(dupped_stdin, 0)  # Restore stdin
+    os.close(dupped_stdin)  # Cleanup
+
 
 echo_enabled = True
+
+
 def set_echo(echo):
     global echo_enabled
     if echo != echo_enabled:
@@ -201,8 +215,10 @@ def set_echo(echo):
         termios.tcsetattr(fd, termios.TCSANOW, attr)
         echo_enabled = echo
 
+
 class stdin_thread(Thread):
     """The stdin thread, used to call raw_input()"""
+
     def __init__(self):
         Thread.__init__(self, name='stdin thread')
         completion.install_completion_handler()
@@ -263,7 +279,7 @@ class stdin_thread(Thread):
                 if self.interrupt_asked:
                     cmd = readline.get_line_buffer()
                 else:
-                    cmd = chr(4) # Ctrl-D
+                    cmd = chr(4)  # Ctrl-D
             if self.interrupt_asked:
                 self.prepend_text = cmd
                 cmd = None
@@ -278,5 +294,6 @@ class stdin_thread(Thread):
             if cmd is not None:
                 self.input_buffer.add(cmd + '\n')
                 write_main_socket(b'd')
+
 
 the_stdin_thread = stdin_thread()

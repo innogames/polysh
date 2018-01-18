@@ -21,6 +21,7 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestControlCommands(unittest.TestCase):
     def testControl(self):
         child = launch_polysh(['localhost'])
@@ -186,6 +187,7 @@ class TestControlCommands(unittest.TestCase):
         child.expect(pexpect.EOF)
 
         child = launch_polysh(['localhost'])
+
         def testEcho(msg):
             child.expect('ready \(1\)> ')
             child.sendline('echo %s' % msg)
@@ -211,7 +213,7 @@ class TestControlCommands(unittest.TestCase):
         child.sendeof()
         child.expect(pexpect.EOF)
 
-        EXPECTED_LOG="""
+        EXPECTED_LOG = """
 > echo now logging
 localhost : now logging
 > echo still logging

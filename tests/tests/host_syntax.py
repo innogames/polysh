@@ -20,6 +20,7 @@ import unittest
 import pexpect
 from polysh_tests import launch_polysh
 
+
 class TestHostSyntax(unittest.TestCase):
     def assertHostSyntax(self, to_expand, expanded):
         child = launch_polysh([to_expand, 'localhost'])
@@ -61,4 +62,3 @@ class TestHostSyntax(unittest.TestCase):
         self.assertHostSyntax('0.0.0.<1>', ['0.0.0.1'])
         self.assertHostSyntax('0.0.0.<1,3-5>',
                               ['0.0.0.1', '0.0.0.3', '0.0.0.4', '0.0.0.5'])
-

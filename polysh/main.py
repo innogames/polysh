@@ -30,10 +30,10 @@ import termios
 import readline
 
 if sys.hexversion < 0x02040000:
-        print('Your python version is too old (%s)' % \
-                                                        (sys.version.split()[0]), file=sys.stderr)
-        print('You need at least Python 2.4', file=sys.stderr)
-        sys.exit(1)
+    print('Your python version is too old (%s)' %
+          (sys.version.split()[0]), file=sys.stderr)
+    print('You need at least Python 2.4', file=sys.stderr)
+    sys.exit(1)
 
 from polysh import remote_dispatcher
 from polysh import dispatchers
@@ -43,6 +43,7 @@ from polysh.host_syntax import expand_syntax
 from polysh.version import VERSION
 from polysh import control_commands
 
+
 def kill_all():
     """When polysh quits, we kill all the remote shells we started"""
     for i in dispatchers.all_instances():
@@ -51,6 +52,7 @@ def kill_all():
         except OSError:
             # The process was already dead, no problem
             pass
+
 
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
@@ -75,8 +77,11 @@ def parse_cmdline():
                            'the tty.')
     parser.add_option('--log-file', type='str', dest='log_file',
                       help='file to log each machine conversation [none]')
-    parser.add_option('--abort-errors', action='store_true', dest='abort_error',
-                      help='abort if some shell fails to initialize [ignore]')
+    parser.add_option(
+        '--abort-errors',
+        action='store_true',
+        dest='abort_error',
+        help='abort if some shell fails to initialize [ignore]')
     parser.add_option('--debug', action='store_true', dest='debug',
                       help='print debugging information')
     parser.add_option('--profile', action='store_true', dest='profile',
@@ -116,13 +121,16 @@ def parse_cmdline():
 
     return options, args
 
+
 def find_non_interactive_command(command):
     if sys.stdin.isatty():
         return command
 
     stdin = sys.stdin.read()
     if stdin and command:
-        print('--command and reading from stdin are incompatible', file=sys.stderr)
+        print(
+            '--command and reading from stdin are incompatible',
+            file=sys.stderr)
         sys.exit(1)
     if stdin and not stdin.endswith('\n'):
         stdin += '\n'
@@ -159,7 +167,7 @@ def main_loop(interactive):
                 console_output('')
                 the_stdin_thread.prepend_text = None
             while dispatchers.count_awaited_processes()[0] and \
-                  remote_dispatcher.main_loop_iteration(timeout=0.2):
+                    remote_dispatcher.main_loop_iteration(timeout=0.2):
                 pass
             # Now it's quiet
             for r in dispatchers.all_instances():
@@ -188,6 +196,7 @@ def main_loop(interactive):
             save_history(histfile)
             sys.exit(e.args[0])
 
+
 def setprocname(name):
     # From comments on http://davyd.livejournal.com/166352.html
     try:
@@ -198,7 +207,7 @@ def setprocname(name):
         if libc.prctl(15, name, 0, 0, 0):
             # BSD
             libc.setproctitle(name)
-    except:
+    except BaseException:
         try:
             # For 32 bit
             import dl
@@ -208,8 +217,9 @@ def setprocname(name):
             if libc.call('prctl', 15, name, 0, 0, 0):
                 # BSD
                 libc.call('setproctitle', name)
-        except:
+        except BaseException:
             pass
+
 
 def _profile(continuation):
     prof_file = 'polysh.prof'
@@ -233,10 +243,12 @@ def _profile(continuation):
     stats.print_callees(50)
     os.remove(prof_file)
 
+
 def restore_tty_on_exit():
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
+
 
 def main():
     """Launch polysh"""
@@ -249,7 +261,7 @@ def main():
     options.command = find_non_interactive_command(options.command)
     options.exit_code = 0
     options.interactive = not options.command and sys.stdin.isatty() and \
-                          sys.stdout.isatty()
+        sys.stdout.isatty()
     if options.interactive:
         restore_tty_on_exit()
 
@@ -262,7 +274,7 @@ def main():
     dispatchers.create_remote_dispatchers(hosts)
 
     signal.signal(signal.SIGWINCH, lambda signum, frame:
-                                            dispatchers.update_terminal_size())
+                  dispatchers.update_terminal_size())
 
     the_stdin_thread.activate(options.interactive)
 
@@ -270,7 +282,7 @@ def main():
         def safe_main_loop():
             try:
                 main_loop(options.interactive)
-            except:
+            except BaseException:
                 pass
         _profile(safe_main_loop)
     else:

@@ -26,11 +26,13 @@ from polysh import remote_dispatcher
 from polysh import display_names
 from polysh.terminal_size import terminal_size
 
+
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
     return sorted([i for i in asyncore.socket_map.values() if
                    isinstance(i, remote_dispatcher.remote_dispatcher)],
                   key=lambda i: i.display_name or '')
+
 
 def count_awaited_processes():
     """Return a tuple with the number of awaited processes and the total
@@ -44,6 +46,7 @@ def count_awaited_processes():
                 awaited += 1
     return awaited, total
 
+
 def all_terminated():
     """For each remote shell determine if its terminated"""
     instances_found = False
@@ -53,6 +56,7 @@ def all_terminated():
                            remote_dispatcher.STATE_DEAD):
             return False
     return instances_found
+
 
 def update_terminal_size():
     """Propagate the terminal size to the remote shells accounting for the
@@ -68,6 +72,7 @@ def update_terminal_size():
         if i.enabled and i.term_size != term_size:
             i.term_size = term_size
             fcntl.ioctl(i.fd, bug, packed_size)
+
 
 def format_info(info_list):
     """Turn a 2-dimension list of strings into a 1-dimension list of strings
@@ -89,6 +94,7 @@ def format_info(info_list):
             info[str_id] = orig_str + indent * ' '
         info_list[info_id] = ' '.join(info) + '\n'
 
+
 def create_remote_dispatchers(hosts):
     last_message = ''
     for i, host in enumerate(hosts):
@@ -97,12 +103,11 @@ def create_remote_dispatchers(hosts):
             sys.stdout.write(last_message)
             sys.stdout.flush()
         try:
-          remote_dispatcher.remote_dispatcher(host)
+            remote_dispatcher.remote_dispatcher(host)
         except OSError:
-          print()
-          raise
+            print()
+            raise
 
     if last_message:
         sys.stdout.write(' ' * len(last_message) + '\r')
         sys.stdout.flush()
-

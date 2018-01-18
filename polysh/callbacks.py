@@ -29,20 +29,23 @@
 
 import random
 
-DIGITS_LETTERS = list(map(str, list(range(10))))                     + \
-                 list(map(chr, list(range(ord('a'), ord('z') + 1)))) + \
-                 list(map(chr, list(range(ord('A'), ord('Z') + 1))))
+DIGITS_LETTERS = list(map(str, list(range(10)))) + \
+    list(map(chr, list(range(ord('a'), ord('z') + 1)))) + \
+    list(map(chr, list(range(ord('A'), ord('Z') + 1))))
+
 
 def random_string(length):
     def random_char():
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
     return ''.join([random_char() for i in range(length)])
 
+
 COMMON_PREFIX = 'polysh-{}:'.format(random_string(5))
 NR_GENERATED_TRIGGERS = 0
 
 # {'random_string()': (function, repeat)}
 CALLBACKS = {}
+
 
 def add(name, function, repeat):
     name = name.replace('/', '_')
@@ -51,12 +54,14 @@ def add(name, function, repeat):
     NR_GENERATED_TRIGGERS += 1
     trigger = '%s%s:%s:%d/' % (COMMON_PREFIX, name, random_string(5), nr)
     CALLBACKS[trigger] = (function, repeat)
-    trigger1 = trigger[:int(len(COMMON_PREFIX)/2)]
+    trigger1 = trigger[:int(len(COMMON_PREFIX) / 2)]
     trigger2 = trigger[len(trigger1):]
     return trigger1, trigger2
 
+
 def any_in(data):
     return COMMON_PREFIX.encode() in data
+
 
 def process(line):
     assert isinstance(line, str)
@@ -78,4 +83,3 @@ def process(line):
 
     callback(line[end:].strip())
     return True
-

@@ -31,6 +31,7 @@ fi; #
 '
 """.strip()
 
+
 class TestPasswordFile(unittest.TestCase):
     def startTestPassword(self, password_file):
         try:
@@ -40,7 +41,7 @@ class TestPasswordFile(unittest.TestCase):
             pass
         passwd = '--password-file=' + password_file
         child = launch_polysh([SSH_ARG, passwd, '--debug',
-                            '--log-file=/tmp/polysh_test.log', '1', '2'])
+                               '--log-file=/tmp/polysh_test.log', '1', '2'])
         return child
 
     def endTestPassword(self):

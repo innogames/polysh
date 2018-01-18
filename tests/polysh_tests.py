@@ -29,6 +29,7 @@ import coverage
 
 TESTS = unittest.TestSuite()
 
+
 def iter_over_all_tests():
     py_files = [p for p in os.listdir('tests') if p.endswith('.py')]
     tests = list(set([p[:p.index('.')] for p in py_files]))
@@ -44,9 +45,11 @@ def iter_over_all_tests():
             for test_method in suite:
                 yield test_method
 
+
 def import_all_tests():
     for test in iter_over_all_tests():
         TESTS.addTest(test)
+
 
 def import_specified_tests(names):
     for test in iter_over_all_tests():
@@ -58,8 +61,9 @@ def import_specified_tests(names):
         print('Cannot find tests:', names)
         sys.exit(1)
 
+
 def parse_cmdline():
-    usage='Usage: %s [OPTIONS...] [TESTS...]' % sys.argv[0]
+    usage = 'Usage: %s [OPTIONS...] [TESTS...]' % sys.argv[0]
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('--coverage', action='store_true', dest='coverage',
                       default=False, help='include coverage tests')
@@ -68,10 +72,12 @@ def parse_cmdline():
     options, args = parser.parse_args()
     return options, args
 
+
 def remove_coverage_files():
     for filename in os.listdir('.'):
         if filename.startswith('.coverage'):
             os.remove(filename)
+
 
 def end_coverage():
     coverage.the_coverage.start()
@@ -82,6 +88,7 @@ def end_coverage():
     remove_coverage_files()
     # Prevent the atexit.register(the_coverage.save) from recreating the files
     coverage.the_coverage.usecache = coverage.the_coverage.cache = None
+
 
 def main():
     options, args = parse_cmdline()
@@ -97,6 +104,7 @@ def main():
         if options.coverage:
             end_coverage()
 
+
 def launch_polysh(args, input_data=None):
     args = ['polysh'] + args
     options, unused_args = parse_cmdline()
@@ -110,12 +118,14 @@ def launch_polysh(args, input_data=None):
         logfile = None
 
     if input_data is None:
-        child = pexpect.spawn(args[0], args=args[1:], encoding='utf-8', logfile=logfile)
+        child = pexpect.spawn(args[0], args=args[1:],
+                              encoding='utf-8', logfile=logfile)
     else:
         child = PopenSpawn(args, encoding='utf-8', logfile=logfile)
         child.send(input_data)
         child.sendeof()
     return child
+
 
 if __name__ == '__main__':
     main()
