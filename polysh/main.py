@@ -159,11 +159,11 @@ def main_loop(interactive):
             if next_signal:
                 current_signal = next_signal
                 next_signal = None
-                sig2chr = {signal.SIGINT: 'c', signal.SIGTSTP: 'z'}
+                sig2chr = {signal.SIGINT: 'C', signal.SIGTSTP: 'Z'}
                 ctrl = sig2chr[current_signal]
-                remote_dispatcher.log('> ^%c\n' % ctrl.upper())
+                remote_dispatcher.log('> ^{}\n'.format(ctrl).encode())
                 control_commands.do_send_ctrl(ctrl)
-                console_output('')
+                console_output(b'')
                 stdin.the_stdin_thread.prepend_text = None
             while dispatchers.count_awaited_processes()[0] and \
                     remote_dispatcher.main_loop_iteration(timeout=0.2):
@@ -173,13 +173,13 @@ def main_loop(interactive):
                 r.print_unfinished_line()
             current_status = dispatchers.count_awaited_processes()
             if current_status != last_status:
-                console_output('')
+                console_output(b'')
             if remote_dispatcher.options.interactive:
                 stdin.the_stdin_thread.want_raw_input()
             last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
-                console_output('')
+                console_output(b'')
                 raise asyncore.ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
                 # possible race here with the signal handler
@@ -191,7 +191,7 @@ def main_loop(interactive):
                 kill_all()
                 os.kill(0, signal.SIGINT)
         except asyncore.ExitNow as e:
-            console_output('')
+            console_output(b'')
             save_history(histfile)
             sys.exit(e.args[0])
 

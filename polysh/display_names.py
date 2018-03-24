@@ -90,6 +90,8 @@ def update_max_display_name_length():
 
 
 def change(prev_display_name, new_prefix):
+    assert isinstance(prev_display_name, str) or prev_display_name is None
+    assert isinstance(new_prefix, str) or new_prefix is None
     if new_prefix and '#' in new_prefix:
         raise Exception('Names cannot contain #')
 

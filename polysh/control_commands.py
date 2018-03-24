@@ -18,10 +18,10 @@
 
 import asyncore
 import os
-import pipes
 import shutil
 import sys
 import tempfile
+import shlex
 
 from polysh.control_commands_helpers import complete_shells, selected_shells
 from polysh.control_commands_helpers import list_control_commands
@@ -50,6 +50,7 @@ def do_help(command):
     Usage: :help [COMMAND]
     List control commands or show their documentations.
     """
+    assert isinstance(command, str)
     command = command.strip()
     if command:
         texts = []
@@ -57,13 +58,13 @@ def do_help(command):
             try:
                 doc = get_control_command(name.lstrip(':')).__doc__
             except AttributeError:
-                console_output('Unknown control command: %s\n' % name)
+                console_output(b'Unknown control command: %b\n' % name.encode())
             else:
                 doc_lines = [d.strip() for d in doc.split('\n') if d.strip()]
                 texts.append('\n'.join(doc_lines))
         if texts:
-            console_output('\n\n'.join(texts))
-            console_output('\n')
+            console_output(b'\n\n'.join([text.encode() for text in texts]))
+            console_output(b'\n')
     else:
         names = list_control_commands()
         max_name_len = max(list(map(len, names)))
@@ -72,7 +73,7 @@ def do_help(command):
             txt = ':' + name + (max_name_len - len(name) + 2) * ' '
             doc = get_control_command(name).__doc__
             txt += doc.split('\n')[2].strip() + '\n'
-            console_output(txt)
+            console_output(txt.encode())
 
 
 def complete_list(line, text):
@@ -88,7 +89,7 @@ def do_list(command):
     """
     instances = [i.get_info() for i in selected_shells(command)]
     flat_instances = dispatchers.format_info(instances)
-    console_output(''.join(flat_instances))
+    console_output(b''.join(flat_instances))
 
 
 def do_quit(command):
@@ -111,7 +112,7 @@ def do_chdir(command):
     try:
         os.chdir(expand_local_path(command.strip()))
     except OSError as e:
-        console_output('%s\n' % str(e))
+        console_output('{}\n'.format(str(e)).encode())
 
 
 def complete_send_ctrl(line, text):
@@ -135,11 +136,12 @@ def do_send_ctrl(command):
     """
     split = command.split()
     if not split:
-        console_output('Expected at least a letter\n')
+        console_output(b'Expected at least a letter\n')
         return
     letter = split[0]
     if len(letter) != 1:
-        console_output('Expected a single letter, got: %s\n' % letter)
+        console_output(
+            b'Expected a single letter, got: %b\n' % letter.encode())
         return
     control_letter = chr(ord(letter.lower()) - ord('a') + 1)
     for i in selected_shells(' '.join(split[1:])):
@@ -254,7 +256,7 @@ def do_rename(command):
     """
     for i in dispatchers.all_instances():
         if i.enabled:
-            i.rename(command)
+            i.rename(command.encode())
 
 
 def do_hide_password(command):
@@ -270,13 +272,13 @@ def do_hide_password(command):
         if i.enabled and i.debug:
             i.debug = False
             if not warned:
-                console_output('Debugging disabled to avoid displaying '
-                               'passwords\n')
+                console_output(b'Debugging disabled to avoid displaying '
+                               b'passwords\n')
                 warned = True
     stdin.set_echo(False)
 
     if remote_dispatcher.options.log_file:
-        console_output('Logging disabled to avoid writing passwords\n')
+        console_output(b'Logging disabled to avoid writing passwords\n')
         remote_dispatcher.options.log_file = None
 
 
@@ -298,13 +300,14 @@ def do_set_debug(command):
     The remaining optional arguments are the selected shells.
     The special characters * ? and [] work as expected.
     """
+    assert isinstance(command, str)
     split = command.split()
     if not split:
-        console_output('Expected at least a letter\n')
+        console_output(b'Expected at least a letter\n')
         return
     letter = split[0].lower()
     if letter not in ('y', 'n'):
-        console_output("Expected 'y' or 'n', got: %s\n" % split[0])
+        console_output(b"Expected 'y' or 'n', got: %b\n" % split[0].encode())
         return
     debug = letter == 'y'
     for i in selected_shells(' '.join(split[1:])):
@@ -325,18 +328,18 @@ def do_export_vars(command):
     for shell in dispatchers.all_instances():
         if shell.enabled:
             environment_variables = {
-                'POLYSH_RANK': rank,
-                'POLYSH_NAME': shell.hostname,
-                'POLYSH_DISPLAY_NAME': shell.display_name,
+                b'POLYSH_RANK': str(rank),
+                b'POLYSH_NAME': shell.hostname,
+                b'POLYSH_DISPLAY_NAME': shell.display_name,
             }
             for name, value in environment_variables.items():
-                value = pipes.quote(str(value))
-                shell.dispatch_command('export %s=%s\n' % (name, value))
+                shell.dispatch_command(b'export %b=%b\n' % (
+                    name, shlex.quote(value).encode()))
             rank += 1
 
     for shell in dispatchers.all_instances():
         if shell.enabled:
-            shell.dispatch_command('export POLYSH_NR_SHELLS=%d\n' % rank)
+            shell.dispatch_command(b'export POLYSH_NR_SHELLS=%d\n' % rank)
 
 
 add_to_history('$POLYSH_RANK $POLYSH_NAME $POLYSH_DISPLAY_NAME')
@@ -358,11 +361,11 @@ def do_set_log(command):
         try:
             remote_dispatcher.options.log_file = open(command, 'a')
         except IOError as e:
-            console_output('%s\n' % str(e))
+            console_output('{}\n'.format(str(e)).encode())
             command = None
     if not command:
         remote_dispatcher.options.log_file = None
-        console_output('Logging disabled\n')
+        console_output(b'Logging disabled\n')
 
 
 def complete_show_read_buffer(line, text):
@@ -379,7 +382,7 @@ def do_show_read_buffer(command):
     for i in selected_shells(command):
         if i.read_in_state_not_started:
             i.print_lines(i.read_in_state_not_started)
-            i.read_in_state_not_started = ''
+            i.read_in_state_not_started = b''
 
 
 def main():

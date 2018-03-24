@@ -40,10 +40,11 @@ class InputBuffer(object):
 
     def __init__(self):
         self.lock = Lock()
-        self.buf = ''
+        self.buf = b''
 
     def add(self, data):
         """Add data to the buffer"""
+        assert isinstance(data, bytes)
         self.lock.acquire()
         try:
             self.buf += data
@@ -52,12 +53,12 @@ class InputBuffer(object):
 
     def get(self):
         """Get the content of the buffer"""
-        data = ''
+        data = b''
         self.lock.acquire()
         try:
             data = self.buf
             if data:
-                self.buf = ''
+                self.buf = b''
         finally:
             self.lock.release()
         return data
@@ -68,27 +69,30 @@ def process_input_buffer():
     be called in the main thread"""
     from polysh.control_commands_helpers import handle_control_command
     data = the_stdin_thread.input_buffer.get()
-    remote_dispatcher.log('> ' + data)
+    remote_dispatcher.log(b'> %b' % data)
 
-    if data.startswith(':'):
-        handle_control_command(data[1:-1])
+    if data.startswith(b':'):
+        try:
+            handle_control_command(data[1:-1].decode())
+        except UnicodeDecodeError as e:
+            console_output(b'Could not decode command.')
         return
 
-    if data.startswith('!'):
+    if data.startswith(b'!'):
         try:
             retcode = subprocess.call(data[1:], shell=True)
         except OSError as e:
             if e.errno == errno.EINTR:
-                console_output('Child was interrupted\n')
+                console_output(b'Child was interrupted\n')
                 retcode = 0
             else:
                 raise
         if retcode > 128 and retcode <= 192:
             retcode = 128 - retcode
         if retcode > 0:
-            console_output('Child returned %d\n' % retcode)
+            console_output(b'Child returned %d\n' % retcode)
         elif retcode < 0:
-            console_output('Child was terminated by signal %d\n' % -retcode)
+            console_output(b'Child was terminated by signal %d\n' % -retcode)
         return
 
     for r in dispatchers.all_instances():
@@ -97,9 +101,10 @@ def process_input_buffer():
         except asyncore.ExitNow as e:
             raise e
         except Exception as msg:
+            raise msg
             console_output(
-                '%s for %s, disconnecting\n' %
-                (msg, r.display_name))
+                b'%b for %b, disconnecting\n' %
+                (str(msg).encode(), r.display_name.encode()))
             r.disconnect()
         else:
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
@@ -121,8 +126,8 @@ class SocketNotificationReader(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
     def _do(self, c):
-        assert isinstance(c, str)
-        if c == 'd':
+        assert isinstance(c, bytes)
+        if c == b'd':
             process_input_buffer()
         else:
             raise Exception('Unknown code: %s' % (c))
@@ -131,7 +136,7 @@ class SocketNotificationReader(asyncore.dispatcher):
         """Handle all the available character commands in the socket"""
         while True:
             try:
-                c = self.recv(1).decode()
+                c = self.recv(1)
             except socket.error as e:
                 if e.errno == errno.EWOULDBLOCK:
                     return
@@ -292,5 +297,5 @@ class StdinThread(Thread):
                     completion.remove_last_history_item()
             set_echo(True)
             if cmd is not None:
-                self.input_buffer.add(cmd + '\n')
+                self.input_buffer.add('{}\n'.format(cmd).encode())
                 write_main_socket(b'd')
