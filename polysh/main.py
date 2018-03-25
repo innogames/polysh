@@ -16,8 +16,6 @@
 #
 # Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 
-# Requires python 2.4
-
 import asyncore
 import atexit
 import getpass
@@ -28,12 +26,6 @@ import signal
 import sys
 import termios
 import readline
-
-if sys.hexversion < 0x02040000:
-    print('Your python version is too old (%s)' %
-          (sys.version.split()[0]), file=sys.stderr)
-    print('You need at least Python 2.4', file=sys.stderr)
-    sys.exit(1)
 
 from polysh import remote_dispatcher
 from polysh import dispatchers
