@@ -24,7 +24,7 @@ import os
 from polysh.console import console_output
 
 
-class buffered_dispatcher(asyncore.file_dispatcher):
+class BufferedDispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
     read buffer to permit line oriented manipulations"""
 
@@ -43,7 +43,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         new_data = b''
         buffer_length = len(self.read_buffer)
         try:
-            while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
+            while buffer_length < self.MAX_BUFFER_SIZE:
                 try:
                     piece = self.recv(4096)
                 except OSError as e:
@@ -72,7 +72,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def readable(self):
         """No need to ask data if our buffer is already full"""
-        return len(self.read_buffer) < buffered_dispatcher.MAX_BUFFER_SIZE
+        return len(self.read_buffer) < self.MAX_BUFFER_SIZE
 
     def writable(self):
         """Do we have something to write?"""
@@ -83,7 +83,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         assert isinstance(buf, bytes)
         assert self.allow_write
         self.write_buffer += buf
-        if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
+        if len(self.write_buffer) > self.MAX_BUFFER_SIZE:
             console_output('Buffer too big (%d) for %s\n' %
                            (len(self.write_buffer), str(self)))
             raise asyncore.ExitNow(1)

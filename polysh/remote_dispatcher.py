@@ -25,7 +25,7 @@ import termios
 import select
 import platform
 
-from polysh.buffered_dispatcher import buffered_dispatcher
+from polysh.buffered_dispatcher import BufferedDispatcher
 from polysh import callbacks
 from polysh.console import console_output
 from polysh import display_names
@@ -42,12 +42,12 @@ STATE_NOT_STARTED,         \
 # Terminal color codes
 COLORS = [1] + list(range(30, 37))
 
-# Count the total number of remote_dispatcher.handle_read() invocations
+# Count the total number of RemoteDispatcher.handle_read() invocations
 nr_handle_read = 0
 
 
 def main_loop_iteration(timeout=None):
-    """Return the number of remote_dispatcher.handle_read() calls made by this
+    """Return the number of RemoteDispatcher.handle_read() calls made by this
     iteration"""
     prev_nr_read = nr_handle_read
     asyncore.loop(count=1, timeout=timeout, use_poll=True)
@@ -67,8 +67,8 @@ def log(msg):
             msg = msg[written:]
 
 
-class remote_dispatcher(buffered_dispatcher):
-    """A remote_dispatcher is a ssh process we communicate with"""
+class RemoteDispatcher(BufferedDispatcher):
+    """A RemoteDispatcher is a ssh process we communicate with"""
 
     def __init__(self, hostname):
         self.pid, fd = pty.fork()
@@ -78,7 +78,7 @@ class remote_dispatcher(buffered_dispatcher):
             sys.exit(1)
 
         # Parent
-        buffered_dispatcher.__init__(self, fd)
+        BufferedDispatcher.__init__(self, fd)
         self.temporary = False
         self.hostname = hostname
         self.debug = options.debug
@@ -175,7 +175,7 @@ class remote_dispatcher(buffered_dispatcher):
     def readable(self):
         """We are always interested in reading from active remote processes if
         the buffer is OK"""
-        return self.state != STATE_DEAD and buffered_dispatcher.readable(self)
+        return self.state != STATE_DEAD and BufferedDispatcher.readable(self)
 
     def handle_expt(self):
         # Dirty hack to ignore POLLPRI flag that is raised on Mac OS, but not
@@ -246,7 +246,7 @@ class remote_dispatcher(buffered_dispatcher):
             return
         global nr_handle_read
         nr_handle_read += 1
-        new_data = buffered_dispatcher.handle_read(self)
+        new_data = BufferedDispatcher.handle_read(self)
         if self.debug:
             self.print_debug('==> {}'.format(new_data.decode()))
         if self.handle_read_fast_case(self.read_buffer):
@@ -302,7 +302,7 @@ class remote_dispatcher(buffered_dispatcher):
 
     def writable(self):
         """Do we want to write something?"""
-        return self.state != STATE_DEAD and buffered_dispatcher.writable(self)
+        return self.state != STATE_DEAD and BufferedDispatcher.writable(self)
 
     def handle_write(self):
         """Let's write as much as we can"""
@@ -328,7 +328,7 @@ class remote_dispatcher(buffered_dispatcher):
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
         if self.state != STATE_DEAD and self.enabled and self.allow_write:
-            buffered_dispatcher.dispatch_write(self, buf)
+            BufferedDispatcher.dispatch_write(self, buf)
             return True
 
     def dispatch_command(self, command):
@@ -353,4 +353,4 @@ class remote_dispatcher(buffered_dispatcher):
 
     def close(self):
         display_names.change(self.display_name, None)
-        buffered_dispatcher.close(self)
+        BufferedDispatcher.close(self)

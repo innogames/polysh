@@ -18,7 +18,7 @@
 
 from polysh.rb_tree import RBTree
 
-# {'prefix': <display_name_prefix object>}
+# {'prefix': <DisplayNamePrefix object>}
 PREFIXES = {}
 
 # Red/black tree with key:len(display_name) value:nr of enabled shells with a
@@ -29,7 +29,7 @@ NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = RBTree()
 max_display_name_length = 0
 
 
-class display_name_prefix(object):
+class DisplayNamePrefix(object):
     def __init__(self):
         self.next_suffix = 0
         self.holes = RBTree()
@@ -65,7 +65,7 @@ class display_name_prefix(object):
 def make_unique_name(prefix):
     prefix_obj = PREFIXES.get(prefix, None)
     if prefix_obj is None:
-        prefix_obj = display_name_prefix()
+        prefix_obj = DisplayNamePrefix()
         PREFIXES[prefix] = prefix_obj
 
     suffix = prefix_obj.new_suffix()

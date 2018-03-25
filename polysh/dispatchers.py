@@ -30,7 +30,7 @@ from polysh.terminal_size import terminal_size
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
     return sorted([i for i in asyncore.socket_map.values() if
-                   isinstance(i, remote_dispatcher.remote_dispatcher)],
+                   isinstance(i, remote_dispatcher.RemoteDispatcher)],
                   key=lambda i: i.display_name or '')
 
 
@@ -103,7 +103,7 @@ def create_remote_dispatchers(hosts):
             sys.stdout.write(last_message)
             sys.stdout.flush()
         try:
-            remote_dispatcher.remote_dispatcher(host)
+            remote_dispatcher.RemoteDispatcher(host)
         except OSError:
             print()
             raise

@@ -33,7 +33,7 @@ from polysh.console import console_output, set_last_status_length
 from polysh import completion
 
 
-class input_buffer(object):
+class InputBuffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
 
     def __init__(self):
@@ -111,7 +111,7 @@ def process_input_buffer():
 # sends the ACK, and the stdin thread can go on.
 
 
-class socket_notification_reader(asyncore.dispatcher):
+class SocketNotificationReader(asyncore.dispatcher):
     """The socket reader in the main thread"""
 
     def __init__(self):
@@ -216,7 +216,7 @@ def set_echo(echo):
         echo_enabled = echo
 
 
-class stdin_thread(Thread):
+class StdinThread(Thread):
     """The stdin thread, used to call raw_input()"""
 
     def __init__(self):
@@ -226,7 +226,7 @@ class stdin_thread(Thread):
     @staticmethod
     def activate(interactive):
         """Activate the thread at initialization time"""
-        the_stdin_thread.input_buffer = input_buffer()
+        the_stdin_thread.input_buffer = InputBuffer()
         if interactive:
             the_stdin_thread.raw_input_wanted = Event()
             the_stdin_thread.in_raw_input = Event()
@@ -237,7 +237,7 @@ class stdin_thread(Thread):
             the_stdin_thread.interrupt_asked = False
             the_stdin_thread.setDaemon(True)
             the_stdin_thread.start()
-            the_stdin_thread.socket_notification = socket_notification_reader()
+            the_stdin_thread.socket_notification = SocketNotificationReader()
             the_stdin_thread.prepend_text = None
             readline.set_pre_input_hook(the_stdin_thread.prepend_previous_text)
 
@@ -296,4 +296,4 @@ class stdin_thread(Thread):
                 write_main_socket(b'd')
 
 
-the_stdin_thread = stdin_thread()
+the_stdin_thread = StdinThread()
