@@ -24,11 +24,14 @@ import sys
 import termios
 import select
 import platform
+from argparse import Namespace
 
 from polysh.buffered_dispatcher import BufferedDispatcher
 from polysh import callbacks
 from polysh.console import console_output
 from polysh import display_names
+
+options = None  # type: Optional[Namespace]
 
 # Either the remote shell is expecting a command or one is already running
 STATE_NAMES = ['not_started', 'idle', 'running', 'terminated', 'dead']
