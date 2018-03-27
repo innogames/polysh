@@ -50,14 +50,15 @@ class InputBuffer(object):
 
     def get(self):
         """Get the content of the buffer"""
+        data = ''
         self.lock.acquire()
         try:
             data = self.buf
             if data:
                 self.buf = ''
-                return data
         finally:
             self.lock.release()
+        return data
 
 
 def process_input_buffer():
