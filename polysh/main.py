@@ -29,8 +29,8 @@ import readline
 
 from polysh import remote_dispatcher
 from polysh import dispatchers
+from polysh import stdin
 from polysh.console import console_output
-from polysh.stdin import the_stdin_thread
 from polysh.host_syntax import expand_syntax
 from polysh import control_commands
 
@@ -164,7 +164,7 @@ def main_loop(interactive):
                 remote_dispatcher.log('> ^%c\n' % ctrl.upper())
                 control_commands.do_send_ctrl(ctrl)
                 console_output('')
-                the_stdin_thread.prepend_text = None
+                stdin.the_stdin_thread.prepend_text = None
             while dispatchers.count_awaited_processes()[0] and \
                     remote_dispatcher.main_loop_iteration(timeout=0.2):
                 pass
@@ -175,7 +175,7 @@ def main_loop(interactive):
             if current_status != last_status:
                 console_output('')
             if remote_dispatcher.options.interactive:
-                the_stdin_thread.want_raw_input()
+                stdin.the_stdin_thread.want_raw_input()
             last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
@@ -278,7 +278,7 @@ def main():
     signal.signal(signal.SIGWINCH, lambda signum, frame:
                   dispatchers.update_terminal_size())
 
-    the_stdin_thread.activate(args.interactive)
+    stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
 
     if args.profile:
         def safe_main_loop():

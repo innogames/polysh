@@ -32,6 +32,8 @@ from polysh import dispatchers, remote_dispatcher
 from polysh.console import console_output, set_last_status_length
 from polysh import completion
 
+the_stdin_thread = None  # type: StdinThread
+
 
 class InputBuffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
@@ -115,7 +117,7 @@ def process_input_buffer():
 class SocketNotificationReader(asyncore.dispatcher):
     """The socket reader in the main thread"""
 
-    def __init__(self):
+    def __init__(self, the_stdin_thread):
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
     def _do(self, c):
@@ -220,27 +222,24 @@ def set_echo(echo):
 class StdinThread(Thread):
     """The stdin thread, used to call raw_input()"""
 
-    def __init__(self):
+    def __init__(self, interactive):
         Thread.__init__(self, name='stdin thread')
         completion.install_completion_handler()
+        self.input_buffer = InputBuffer()
 
-    @staticmethod
-    def activate(interactive):
-        """Activate the thread at initialization time"""
-        the_stdin_thread.input_buffer = InputBuffer()
         if interactive:
-            the_stdin_thread.raw_input_wanted = Event()
-            the_stdin_thread.in_raw_input = Event()
-            the_stdin_thread.out_of_raw_input = Event()
-            the_stdin_thread.out_of_raw_input.set()
+            self.raw_input_wanted = Event()
+            self.in_raw_input = Event()
+            self.out_of_raw_input = Event()
+            self.out_of_raw_input.set()
             s1, s2 = socket.socketpair()
-            the_stdin_thread.socket_read, the_stdin_thread.socket_write = s1, s2
-            the_stdin_thread.interrupt_asked = False
-            the_stdin_thread.setDaemon(True)
-            the_stdin_thread.start()
-            the_stdin_thread.socket_notification = SocketNotificationReader()
-            the_stdin_thread.prepend_text = None
-            readline.set_pre_input_hook(the_stdin_thread.prepend_previous_text)
+            self.socket_read, self.socket_write = s1, s2
+            self.interrupt_asked = False
+            self.setDaemon(True)
+            self.start()
+            self.socket_notification = SocketNotificationReader(self)
+            self.prepend_text = None  # type: Optional[str]
+            readline.set_pre_input_hook(self.prepend_previous_text)
 
     def prepend_previous_text(self):
         if self.prepend_text:
@@ -295,6 +294,3 @@ class StdinThread(Thread):
             if cmd is not None:
                 self.input_buffer.add(cmd + '\n')
                 write_main_socket(b'd')
-
-
-the_stdin_thread = StdinThread()
