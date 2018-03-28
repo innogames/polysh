@@ -132,8 +132,8 @@ class SocketNotificationReader(asyncore.dispatcher):
         while True:
             try:
                 c = self.recv(1).decode()
-            except socket.error as why:
-                if why.errno == errno.EWOULDBLOCK:
+            except socket.error as e:
+                if e.errno == errno.EWOULDBLOCK:
                     return
                 else:
                     raise
@@ -155,7 +155,7 @@ def write_main_socket(c):
         try:
             the_stdin_thread.socket_write.recv(1)
         except socket.error as e:
-            if e[0] != errno.EINTR:
+            if e.errno != errno.EINTR:
                 raise
         else:
             break
