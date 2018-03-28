@@ -256,13 +256,13 @@ class StdinThread(Thread):
         self.prompt = prompt
         set_last_status_length(len(prompt))
         self.raw_input_wanted.set()
-        while not self.in_raw_input.isSet():
+        while not self.in_raw_input.is_set():
             self.socket_notification.handle_read()
             self.in_raw_input.wait(0.1)
         self.raw_input_wanted.clear()
 
     def no_raw_input(self):
-        if not self.out_of_raw_input.isSet():
+        if not self.out_of_raw_input.is_set():
             interrupt_stdin_thread()
 
     # Beware of races
