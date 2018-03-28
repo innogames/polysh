@@ -81,7 +81,7 @@ class RemoteDispatcher(BufferedDispatcher):
             sys.exit(1)
 
         # Parent
-        BufferedDispatcher.__init__(self, fd)
+        super(RemoteDispatcher, self).__init__(fd)
         self.temporary = False
         self.hostname = hostname
         self.debug = options.debug
@@ -178,7 +178,8 @@ class RemoteDispatcher(BufferedDispatcher):
     def readable(self):
         """We are always interested in reading from active remote processes if
         the buffer is OK"""
-        return self.state != STATE_DEAD and BufferedDispatcher.readable(self)
+        return (self.state != STATE_DEAD and
+                super(RemoteDispatcher, self).readable())
 
     def handle_expt(self):
         # Dirty hack to ignore POLLPRI flag that is raised on Mac OS, but not
@@ -249,7 +250,7 @@ class RemoteDispatcher(BufferedDispatcher):
             return
         global nr_handle_read
         nr_handle_read += 1
-        new_data = BufferedDispatcher.handle_read(self)
+        new_data = super(RemoteDispatcher, self).handle_read()
         if self.debug:
             self.print_debug('==> {}'.format(new_data.decode()))
         if self.handle_read_fast_case(self.read_buffer):
@@ -305,7 +306,8 @@ class RemoteDispatcher(BufferedDispatcher):
 
     def writable(self):
         """Do we want to write something?"""
-        return self.state != STATE_DEAD and BufferedDispatcher.writable(self)
+        return (self.state != STATE_DEAD and
+                super(RemoteDispatcher, self).writable())
 
     def handle_write(self):
         """Let's write as much as we can"""
@@ -331,7 +333,7 @@ class RemoteDispatcher(BufferedDispatcher):
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
         if self.state != STATE_DEAD and self.enabled and self.allow_write:
-            BufferedDispatcher.dispatch_write(self, buf)
+            super(RemoteDispatcher, self).dispatch_write(buf)
             return True
 
     def dispatch_command(self, command):
@@ -356,4 +358,4 @@ class RemoteDispatcher(BufferedDispatcher):
 
     def close(self):
         display_names.change(self.display_name, None)
-        BufferedDispatcher.close(self)
+        super(RemoteDispatcher, self).close()
