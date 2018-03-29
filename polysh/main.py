@@ -199,25 +199,14 @@ def main_loop(interactive):
 def setprocname(name):
     # From comments on http://davyd.livejournal.com/166352.html
     try:
-        # For Python-2.5
         import ctypes
         libc = ctypes.CDLL(None)
         # Linux 2.6 PR_SET_NAME
         if libc.prctl(15, name, 0, 0, 0):
             # BSD
             libc.setproctitle(name)
-    except BaseException:
-        try:
-            # For 32 bit
-            import dl
-            libc = dl.open(None)
-            name += '\0'
-            # Linux 2.6 PR_SET_NAME
-            if libc.call('prctl', 15, name, 0, 0, 0):
-                # BSD
-                libc.call('setproctitle', name)
-        except BaseException:
-            pass
+    except AttributeError:
+        pass
 
 
 def _profile(continuation):
