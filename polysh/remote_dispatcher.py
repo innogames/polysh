@@ -250,7 +250,7 @@ class RemoteDispatcher(BufferedDispatcher):
             return
         global nr_handle_read
         nr_handle_read += 1
-        new_data = super(RemoteDispatcher, self).handle_read()
+        new_data = self._handle_read_chunk()
         if self.debug:
             self.print_debug('==> {}'.format(new_data.decode()))
         if self.handle_read_fast_case(self.read_buffer):

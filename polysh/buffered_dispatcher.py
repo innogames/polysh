@@ -39,6 +39,9 @@ class BufferedDispatcher(asyncore.file_dispatcher):
         self.allow_write = True
 
     def handle_read(self):
+        self._handle_read_chunk()
+
+    def _handle_read_chunk(self):
         """Some data can be read"""
         new_data = b''
         buffer_length = len(self.read_buffer)
