@@ -211,20 +211,11 @@ def setprocname(name):
 
 def _profile(continuation):
     prof_file = 'polysh.prof'
-    try:
-        import cProfile
-        import pstats
-        print('Profiling using cProfile')
-        cProfile.runctx('continuation()', globals(), locals(), prof_file)
-        stats = pstats.Stats(prof_file)
-    except ImportError:
-        import hotshot
-        import hotshot.stats
-        prof = hotshot.Profile(prof_file, lineevents=1)
-        print('Profiling using hotshot')
-        prof.runcall(continuation)
-        prof.close()
-        stats = hotshot.stats.load(prof_file)
+    import cProfile
+    import pstats
+    print('Profiling using cProfile')
+    cProfile.runctx('continuation()', globals(), locals(), prof_file)
+    stats = pstats.Stats(prof_file)
     stats.strip_dirs()
     stats.sort_stats('time', 'calls')
     stats.print_stats(50)
