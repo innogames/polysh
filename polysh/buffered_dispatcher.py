@@ -87,3 +87,4 @@ class BufferedDispatcher(asyncore.file_dispatcher):
             console_output('Buffer too big (%d) for %s\n' %
                            (len(self.write_buffer), str(self)))
             raise asyncore.ExitNow(1)
+        return True

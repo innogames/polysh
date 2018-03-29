@@ -104,6 +104,7 @@ def complete(text, state):
     if state < len(completion_results):
         return completion_results[state]
     completion_results = None
+    return None
 
 
 def add_to_history(cmd):

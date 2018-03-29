@@ -335,6 +335,7 @@ class RemoteDispatcher(BufferedDispatcher):
         if self.state != STATE_DEAD and self.enabled:
             super(RemoteDispatcher, self).dispatch_write(buf)
             return True
+        return False
 
     def dispatch_command(self, command):
         if self.dispatch_write(command.encode()):
