@@ -55,12 +55,12 @@ def do_help(command):
         texts = []
         for name in command.split():
             try:
-                cmd = get_control_command(name.lstrip(':'))
+                doc = get_control_command(name.lstrip(':')).__doc__
             except AttributeError:
                 console_output('Unknown control command: %s\n' % name)
             else:
-                doc = [d.strip() for d in cmd.__doc__.split('\n') if d.strip()]
-                texts.append('\n'.join(doc))
+                doc_lines = [d.strip() for d in doc.split('\n') if d.strip()]
+                texts.append('\n'.join(doc_lines))
         if texts:
             console_output('\n\n'.join(texts))
             console_output('\n')
@@ -87,8 +87,8 @@ def do_list(command):
     The special characters * ? and [] work as expected.
     """
     instances = [i.get_info() for i in selected_shells(command)]
-    dispatchers.format_info(instances)
-    console_output(''.join(instances))
+    flat_instances = dispatchers.format_info(instances)
+    console_output(''.join(flat_instances))
 
 
 def do_quit(command):
