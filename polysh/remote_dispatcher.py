@@ -332,7 +332,7 @@ class RemoteDispatcher(BufferedDispatcher):
 
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
-        if self.state != STATE_DEAD and self.enabled and self.allow_write:
+        if self.state != STATE_DEAD and self.enabled:
             super(RemoteDispatcher, self).dispatch_write(buf)
             return True
 

@@ -36,7 +36,6 @@ class BufferedDispatcher(asyncore.file_dispatcher):
         self.fd = fd
         self.read_buffer = b''
         self.write_buffer = b''
-        self.allow_write = True
 
     def handle_read(self):
         self._handle_read_chunk()
@@ -83,26 +82,8 @@ class BufferedDispatcher(asyncore.file_dispatcher):
 
     def dispatch_write(self, buf):
         """Augment the buffer with stuff to write when possible"""
-        assert isinstance(buf, bytes)
-        assert self.allow_write
         self.write_buffer += buf
         if len(self.write_buffer) > self.MAX_BUFFER_SIZE:
             console_output('Buffer too big (%d) for %s\n' %
                            (len(self.write_buffer), str(self)))
             raise asyncore.ExitNow(1)
-
-    def drain_and_block_writing(self):
-        # set the fd to blocking mode
-        self.allow_write = False
-        flags = fcntl.fcntl(self.fd, fcntl.F_GETFL, 0)
-        flags = flags & ~os.O_NONBLOCK
-        fcntl.fcntl(self.fd, fcntl.F_SETFL, flags)
-        if self.writable():
-            self.handle_write()
-
-    def allow_writing(self):
-        # set the fd to non-blocking mode
-        flags = fcntl.fcntl(self.fd, fcntl.F_GETFL, 0)
-        flags = flags | os.O_NONBLOCK
-        fcntl.fcntl(self.fd, fcntl.F_SETFL, flags)
-        self.allow_write = True
