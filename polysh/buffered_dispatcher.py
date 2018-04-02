@@ -84,7 +84,7 @@ class BufferedDispatcher(asyncore.file_dispatcher):
         """Augment the buffer with stuff to write when possible"""
         self.write_buffer += buf
         if len(self.write_buffer) > self.MAX_BUFFER_SIZE:
-            console_output(b'Buffer too big (%d) for %b\n' %
-                           (len(self.write_buffer), str(self).encode()))
+            console_output('Buffer too big ({:d}) for {}\n'.format(
+                len(self.write_buffer), str(self)).encode())
             raise asyncore.ExitNow(1)
         return True

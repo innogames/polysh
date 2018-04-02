@@ -50,7 +50,8 @@ def console_output(msg, logging_msg=None):
         the_stdin_thread.no_raw_input()
         global last_status_length
         if last_status_length:
-            safe_write(b'\r%b\r' % (last_status_length * b' '))
+            safe_write('\r{}\r'.format(
+                last_status_length * ' ').encode())
             last_status_length = 0
     safe_write(msg)
 

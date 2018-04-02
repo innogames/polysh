@@ -69,7 +69,7 @@ def process_input_buffer():
     be called in the main thread"""
     from polysh.control_commands_helpers import handle_control_command
     data = the_stdin_thread.input_buffer.get()
-    remote_dispatcher.log(b'> %b' % data)
+    remote_dispatcher.log(b'> ' + data)
 
     if data.startswith(b':'):
         try:
@@ -90,9 +90,10 @@ def process_input_buffer():
         if retcode > 128 and retcode <= 192:
             retcode = 128 - retcode
         if retcode > 0:
-            console_output(b'Child returned %d\n' % retcode)
+            console_output('Child returned {:d}\n'.format(retcode).encode())
         elif retcode < 0:
-            console_output(b'Child was terminated by signal %d\n' % -retcode)
+            console_output('Child was terminated by signal {:d}\n'.format(
+                -retcode).encode())
         return
 
     for r in dispatchers.all_instances():
@@ -102,9 +103,8 @@ def process_input_buffer():
             raise e
         except Exception as msg:
             raise msg
-            console_output(
-                b'%b for %b, disconnecting\n' %
-                (str(msg).encode(), r.display_name.encode()))
+            console_output('{} for {}, disconnecting\n'.format(
+                str(msg), r.display_name).encode())
             r.disconnect()
         else:
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:

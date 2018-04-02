@@ -58,7 +58,8 @@ def do_help(command):
             try:
                 doc = get_control_command(name.lstrip(':')).__doc__
             except AttributeError:
-                console_output(b'Unknown control command: %b\n' % name.encode())
+                console_output('Unknown control command: {}\n'.format(
+                    name).encode())
             else:
                 doc_lines = [d.strip() for d in doc.split('\n') if d.strip()]
                 texts.append('\n'.join(doc_lines))
@@ -140,8 +141,8 @@ def do_send_ctrl(command):
         return
     letter = split[0]
     if len(letter) != 1:
-        console_output(
-            b'Expected a single letter, got: %b\n' % letter.encode())
+        console_output('Expected a single letter, got: {}\n'.format(
+            letter).encode())
         return
     control_letter = chr(ord(letter.lower()) - ord('a') + 1)
     for i in selected_shells(' '.join(split[1:])):
@@ -307,7 +308,8 @@ def do_set_debug(command):
         return
     letter = split[0].lower()
     if letter not in ('y', 'n'):
-        console_output(b"Expected 'y' or 'n', got: %b\n" % split[0].encode())
+        console_output("Expected 'y' or 'n', got: {}\n".format(
+            split[0]).encode())
         return
     debug = letter == 'y'
     for i in selected_shells(' '.join(split[1:])):
@@ -328,18 +330,19 @@ def do_export_vars(command):
     for shell in dispatchers.all_instances():
         if shell.enabled:
             environment_variables = {
-                b'POLYSH_RANK': str(rank),
-                b'POLYSH_NAME': shell.hostname,
-                b'POLYSH_DISPLAY_NAME': shell.display_name,
+                'POLYSH_RANK': str(rank),
+                'POLYSH_NAME': shell.hostname,
+                'POLYSH_DISPLAY_NAME': shell.display_name,
             }
             for name, value in environment_variables.items():
-                shell.dispatch_command(b'export %b=%b\n' % (
-                    name, shlex.quote(value).encode()))
+                shell.dispatch_command('export {}={}\n'.format(
+                    name, shlex.quote(value)).encode())
             rank += 1
 
     for shell in dispatchers.all_instances():
         if shell.enabled:
-            shell.dispatch_command(b'export POLYSH_NR_SHELLS=%d\n' % rank)
+            shell.dispatch_command('export POLYSH_NR_SHELLS={:d}\n'.format(
+                rank).encode())
 
 
 add_to_history('$POLYSH_RANK $POLYSH_NAME $POLYSH_DISPLAY_NAME')

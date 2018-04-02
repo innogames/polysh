@@ -124,7 +124,7 @@ class RemoteDispatcher(BufferedDispatcher):
         """Change the state of the remote process, logging the change"""
         if state is not self.state:
             if self.debug:
-                self.print_debug(b'state => %b' % (STATE_NAMES[state].encode()))
+                self.print_debug(b'state => ' + STATE_NAMES[state].encode())
             if self.state is STATE_NOT_STARTED:
                 self.read_in_state_not_started = b''
             self.state = state
@@ -160,8 +160,8 @@ class RemoteDispatcher(BufferedDispatcher):
             self.change_state(STATE_IDLE)
         elif self.command:
             p1, p2 = callbacks.add(b'real prompt ends', lambda d: None, True)
-            self.dispatch_command(b'PS1="%b""%b\n"\n' % (p1, p2))
-            self.dispatch_command(b'%b\n' % self.command.encode())
+            self.dispatch_command(b'PS1="' + p1 + b'""' + p2 + b'\n"\n')
+            self.dispatch_command(self.command.encode() + b'\n')
             self.dispatch_command(b'exit 2>/dev/null\n')
             self.command = None
 
@@ -174,7 +174,7 @@ class RemoteDispatcher(BufferedDispatcher):
         command_line += b'TERM=ansi;'
         command_line += b'unset HISTFILE;'
         prompt1, prompt2 = callbacks.add(b'prompt', self.seen_prompt_cb, True)
-        command_line += b'PS1="%b""%b\n"\n' % (prompt1, prompt2)
+        command_line += b'PS1="' + prompt1 + b'""' + prompt2 + b'\n"\n'
         return command_line
 
     def readable(self):
@@ -202,7 +202,8 @@ class RemoteDispatcher(BufferedDispatcher):
         exit_code = os.WEXITSTATUS(status)
         options.exit_code = max(options.exit_code, exit_code)
         if exit_code and options.interactive:
-            console_output(b'Error talking to %b\n' % self.display_name.encode())
+            console_output('Error talking to {}\n'.format(
+                self.display_name).encode())
         self.disconnect()
         if self.temporary:
             self.close()
@@ -223,8 +224,8 @@ class RemoteDispatcher(BufferedDispatcher):
         if self.color_code is None:
             console_prefix = log_prefix
         else:
-            console_prefix = b'\033[1;%dm%b\033[1;m' % (
-                self.color_code, log_prefix)
+            console_prefix = (b'\033[1;' + str(self.color_code).encode() +
+                              b'm' + log_prefix + b'\033[1;m')
         console_data = (console_prefix +
                         lines.replace(b'\n', b'\n' + console_prefix) + b'\n')
         log_data = (log_prefix +
@@ -256,7 +257,7 @@ class RemoteDispatcher(BufferedDispatcher):
         nr_handle_read += 1
         new_data = self._handle_read_chunk()
         if self.debug:
-            self.print_debug(b'==> %b' % new_data)
+            self.print_debug(b'==> ' + new_data)
         if self.handle_read_fast_case(self.read_buffer):
             return
         lf_pos = new_data.find(b'\n')
@@ -289,8 +290,8 @@ class RemoteDispatcher(BufferedDispatcher):
                     msg = None
 
                 if msg:
-                    self.print_lines(b'%b Consider manually connecting or '
-                                     b'using ssh-keyscan.' % msg)
+                    self.print_lines(msg + b' Consider manually connecting or '
+                                     b'using ssh-keyscan.')
 
             # Go to the next line in the buffer
             self.read_buffer = self.read_buffer[lf_pos + 1:]
@@ -318,14 +319,15 @@ class RemoteDispatcher(BufferedDispatcher):
         num_sent = self.send(self.write_buffer)
         if self.debug:
             if self.state is not STATE_NOT_STARTED or options.password is None:
-                self.print_debug(b'<== %b' % self.write_buffer[:num_sent])
+                self.print_debug(b'<== ' + self.write_buffer[:num_sent])
         self.write_buffer = self.write_buffer[num_sent:]
 
     def print_debug(self, msg):
         """Log some debugging information to the console"""
         assert isinstance(msg, bytes)
         state = STATE_NAMES[self.state].encode()
-        console_output(b'[dbg] %b[%b]: %b\n' % (self.display_name.encode(), state, msg))
+        console_output(b'[dbg] ' + self.display_name.encode() + b'[' + state +
+                       b']: ' + msg + b'\n')
 
     def get_info(self):
         """Return a list with all information available about this process"""
@@ -361,8 +363,8 @@ class RemoteDispatcher(BufferedDispatcher):
             # defug callback add?
             rename1, rename2 = callbacks.add(
                 b'rename', self.change_name, False)
-            self.dispatch_command(b'/bin/echo "%b""%b"%b\n' %
-                                  (rename1, rename2, name))
+            self.dispatch_command(b'/bin/echo "' + rename1 + b'""' + rename2 +
+                                  b'"' + name + b'\n')
         else:
             self.change_name(self.hostname.encode())
 
