@@ -29,7 +29,7 @@ from polysh.control_commands_helpers import get_control_command, toggle_shells
 from polysh.control_commands_helpers import expand_local_path
 from polysh.completion import complete_local_path, add_to_history
 from polysh.console import console_output
-from polysh.version import VERSION
+from polysh import VERSION
 from polysh import dispatchers
 from polysh import remote_dispatcher
 from polysh import stdin
@@ -406,8 +406,9 @@ def main():
 
     # The first line is auto-generated as it contains the version number
     man_page.readline()
-    v = '.TH "polysh" "1" "%s" "Guillaume Chazarain" "Remote shells"' % VERSION
-    print(v, file=updated_man_page)
+    print('.TH "polysh" "1" "{}" "Guillaume Chazarain" "Remote shells"'.format(
+        '.'.join(map(str, VERSION))
+    ), file=updated_man_page)
 
     for line in man_page:
         print(line, end=' ', file=updated_man_page)

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
-from polysh.version import VERSION
+
+from polysh import VERSION
 
 setup(
     name='polysh',
-    version=VERSION,
+    version='.'.join(map(str, VERSION)),
     author='InnoGames System Administration',
     author_email='it@innogames.com',
     url='https://github.com/innogames/polysh',
