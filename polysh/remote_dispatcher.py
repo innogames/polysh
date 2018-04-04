@@ -83,7 +83,7 @@ class RemoteDispatcher(BufferedDispatcher):
             sys.exit(1)
 
         # Parent
-        super(RemoteDispatcher, self).__init__(fd)
+        super().__init__(fd)
         self.temporary = False
         self.hostname = hostname
         self.debug = options.debug
@@ -181,7 +181,7 @@ class RemoteDispatcher(BufferedDispatcher):
         """We are always interested in reading from active remote processes if
         the buffer is OK"""
         return (self.state != STATE_DEAD and
-                super(RemoteDispatcher, self).readable())
+                super().readable())
 
     def handle_expt(self):
         # Dirty hack to ignore POLLPRI flag that is raised on Mac OS, but not
@@ -312,7 +312,7 @@ class RemoteDispatcher(BufferedDispatcher):
     def writable(self):
         """Do we want to write something?"""
         return (self.state != STATE_DEAD and
-                super(RemoteDispatcher, self).writable())
+                super().writable())
 
     def handle_write(self):
         """Let's write as much as we can"""
@@ -339,7 +339,7 @@ class RemoteDispatcher(BufferedDispatcher):
     def dispatch_write(self, buf):
         """There is new stuff to write when possible"""
         if self.state != STATE_DEAD and self.enabled:
-            super(RemoteDispatcher, self).dispatch_write(buf)
+            super().dispatch_write(buf)
             return True
         return False
 
@@ -370,4 +370,4 @@ class RemoteDispatcher(BufferedDispatcher):
 
     def close(self):
         display_names.change(self.display_name, None)
-        super(RemoteDispatcher, self).close()
+        super().close()
