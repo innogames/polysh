@@ -195,19 +195,6 @@ def main_loop(interactive):
             sys.exit(e.args[0])
 
 
-def setprocname(name):
-    # From comments on http://davyd.livejournal.com/166352.html
-    try:
-        import ctypes
-        libc = ctypes.CDLL(None)
-        # Linux 2.6 PR_SET_NAME
-        if libc.prctl(15, name, 0, 0, 0):
-            # BSD
-            libc.setproctitle(name)
-    except AttributeError:
-        pass
-
-
 def _profile(continuation):
     prof_file = 'polysh.prof'
     import cProfile
@@ -231,7 +218,6 @@ def restore_tty_on_exit():
 def main():
     """Launch polysh"""
     locale.setlocale(locale.LC_ALL, '')
-    setprocname('polysh')
     atexit.register(kill_all)
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
