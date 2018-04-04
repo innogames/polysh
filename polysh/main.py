@@ -33,6 +33,7 @@ from polysh import stdin
 from polysh.console import console_output
 from polysh.host_syntax import expand_syntax
 from polysh import control_commands
+from polysh import VERSION
 
 
 def kill_all():
@@ -148,7 +149,7 @@ def save_history(histfile):
     readline.write_history_file(histfile)
 
 
-def main_loop(interactive):
+def loop(interactive):
     histfile = os.path.expanduser("~/.polysh_history")
     init_history(histfile)
     next_signal = None
@@ -215,7 +216,7 @@ def restore_tty_on_exit():
     atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
 
 
-def main():
+def run():
     """Launch polysh"""
     locale.setlocale(locale.LC_ALL, '')
     atexit.register(kill_all)
@@ -246,11 +247,35 @@ def main():
     stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
 
     if args.profile:
-        def safe_main_loop():
+        def safe_loop():
             try:
-                main_loop(args.interactive)
+                loop(args.interactive)
             except BaseException:
                 pass
-        _profile(safe_main_loop)
+        _profile(safe_loop)
     else:
-        main_loop(args.interactive)
+        loop(args.interactive)
+
+
+def main():
+    """Wrapper around run() to setup sentry"""
+
+    sentry_dsn = os.environ.get('POLYSH_SENTRY_DSN')
+
+    if sentry_dsn:
+        from raven import Client
+        client = Client(
+            dsn=sentry_dsn,
+            release='.'.join(map(str, VERSION)),
+            ignore_exceptions=[
+                KeyboardInterrupt
+            ]
+        )
+
+        try:
+            main()
+        except Exception:
+            client.captureException()
+
+    else:
+        main()
