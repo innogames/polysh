@@ -15,6 +15,7 @@
 # See the COPYING file for license information.
 #
 # Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
+# Copyright (c) 2018 InnoGames GmbH
 
 # Polysh uses specially crafted strings to communicate out of band data with
 # remote shells. This includes detecting the shell prompt, and other events to

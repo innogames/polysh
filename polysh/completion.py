@@ -15,6 +15,7 @@
 # See the COPYING file for license information.
 #
 # Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
+# Copyright (c) 2018 InnoGames GmbH
 
 import glob
 import os
