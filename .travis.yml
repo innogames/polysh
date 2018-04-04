@@ -1,7 +1,7 @@
-# SSHing to localhost does not currently work in the trusty containers...
+# SSHing to localhost does not currently work in the the trusty containers,
+# setting sudo to true means we will get a VM. VMs take longer to boot though..
 # https://github.com/travis-ci/travis-ci/issues/8647
-dist: precise
-sudo: false
+sudo: true
 language: python
 python:
   - "3.4"

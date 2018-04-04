@@ -16,31 +16,22 @@
 #
 # Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 
-# Requires python 2.4
-
 import asyncore
 import atexit
 import getpass
 import locale
-import optparse
+import argparse
 import os
 import signal
 import sys
 import termios
 import readline
 
-if sys.hexversion < 0x02040000:
-    print('Your python version is too old (%s)' %
-          (sys.version.split()[0]), file=sys.stderr)
-    print('You need at least Python 2.4', file=sys.stderr)
-    sys.exit(1)
-
 from polysh import remote_dispatcher
 from polysh import dispatchers
+from polysh import stdin
 from polysh.console import console_output
-from polysh.stdin import the_stdin_thread
 from polysh.host_syntax import expand_syntax
-from polysh.version import VERSION
 from polysh import control_commands
 
 
@@ -57,38 +48,45 @@ def kill_all():
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
             'Control commands are prefixed by ":". Use :help for the list'
-    parser = optparse.OptionParser(usage, version='polysh ' + VERSION)
-    parser.add_option('--hosts-file', type='str', action='append',
-                      dest='hosts_filenames', metavar='FILE', default=[],
-                      help='read hostnames from given file, one per line')
-    parser.add_option('--command', type='str', dest='command', default=None,
-                      help='command to execute on the remote shells',
-                      metavar='CMD')
+    parser = argparse.ArgumentParser(usage)
+    parser.add_argument(
+        '--hosts-file', type=str, action='append',
+        dest='hosts_filenames', metavar='FILE', default=[],
+        help='read hostnames from given file, one per line')
+    parser.add_argument(
+        '--command', type=str, dest='command', default=None,
+        help='command to execute on the remote shells',
+        metavar='CMD')
     def_ssh = 'exec ssh -oLogLevel=Quiet -t %(host)s exec bash --noprofile'
-    parser.add_option('--ssh', type='str', dest='ssh', default=def_ssh,
-                      metavar='SSH', help='ssh command to use [%s]' % def_ssh)
-    parser.add_option('--user', type='str', dest='user', default=None,
-                      help='remote user to log in as', metavar='USER')
-    parser.add_option('--no-color', action='store_true', dest='disable_color',
-                      help='disable colored hostnames [enabled]')
-    parser.add_option('--password-file', type='str', dest='password_file',
-                      default=None, metavar='FILE',
-                      help='read a password from the specified file. - is ' +
-                           'the tty.')
-    parser.add_option('--log-file', type='str', dest='log_file',
-                      help='file to log each machine conversation [none]')
-    parser.add_option(
-        '--abort-errors',
-        action='store_true',
-        dest='abort_error',
+    parser.add_argument(
+        '--ssh', type=str, dest='ssh', default=def_ssh,
+        metavar='SSH', help='ssh command to use [%s]' % def_ssh)
+    parser.add_argument(
+        '--user', type=str, dest='user', default=None,
+        help='remote user to log in as', metavar='USER')
+    parser.add_argument(
+        '--no-color', action='store_true', dest='disable_color',
+        help='disable colored hostnames [enabled]')
+    parser.add_argument(
+        '--password-file', type=str, dest='password_file',
+        default=None, metavar='FILE',
+        help='read a password from the specified file. - is the tty.')
+    parser.add_argument(
+        '--log-file', type=str, dest='log_file',
+        help='file to log each machine conversation [none]')
+    parser.add_argument(
+        '--abort-errors', action='store_true', dest='abort_error',
         help='abort if some shell fails to initialize [ignore]')
-    parser.add_option('--debug', action='store_true', dest='debug',
-                      help='print debugging information')
-    parser.add_option('--profile', action='store_true', dest='profile',
-                      default=False, help=optparse.SUPPRESS_HELP)
+    parser.add_argument(
+        '--debug', action='store_true', dest='debug',
+        help='print debugging information')
+    parser.add_argument(
+        '--profile', action='store_true', dest='profile',
+        default=False)
+    parser.add_argument('host_names', nargs='*')
+    args = parser.parse_args()
 
-    options, args = parser.parse_args()
-    for filename in options.hosts_filenames:
+    for filename in args.hosts_filenames:
         try:
             hosts_file = open(filename, 'r')
             for line in hosts_file.readlines():
@@ -96,30 +94,30 @@ def parse_cmdline():
                     line = line[:line.index('#')]
                 line = line.strip()
                 if line:
-                    args.append(line)
+                    args.host_names.append(line)
             hosts_file.close()
         except IOError as e:
-            parser.error(e)
+            parser.error(str(e))
 
-    if options.log_file:
+    if args.log_file:
         try:
-            options.log_file = open(options.log_file, 'a')
+            args.log_file = open(args.log_file, 'a')
         except IOError as e:
             print(e)
             sys.exit(1)
 
-    if not args:
+    if not args.host_names:
         parser.error('no hosts given')
 
-    if options.password_file == '-':
-        options.password = getpass.getpass()
-    elif options.password_file is not None:
-        password_file = open(options.password_file, 'r')
-        options.password = password_file.readline().rstrip('\n')
+    if args.password_file == '-':
+        args.password = getpass.getpass()
+    elif args.password_file is not None:
+        password_file = open(args.password_file, 'r')
+        args.password = password_file.readline().rstrip('\n')
     else:
-        options.password = None
+        args.password = None
 
-    return options, args
+    return args
 
 
 def find_non_interactive_command(command):
@@ -160,12 +158,12 @@ def main_loop(interactive):
             if next_signal:
                 current_signal = next_signal
                 next_signal = None
-                sig2chr = {signal.SIGINT: 'c', signal.SIGTSTP: 'z'}
+                sig2chr = {signal.SIGINT: 'C', signal.SIGTSTP: 'Z'}
                 ctrl = sig2chr[current_signal]
-                remote_dispatcher.log('> ^%c\n' % ctrl.upper())
+                remote_dispatcher.log('> ^{}\n'.format(ctrl).encode())
                 control_commands.do_send_ctrl(ctrl)
-                console_output('')
-                the_stdin_thread.prepend_text = None
+                console_output(b'')
+                stdin.the_stdin_thread.prepend_text = None
             while dispatchers.count_awaited_processes()[0] and \
                     remote_dispatcher.main_loop_iteration(timeout=0.2):
                 pass
@@ -174,13 +172,13 @@ def main_loop(interactive):
                 r.print_unfinished_line()
             current_status = dispatchers.count_awaited_processes()
             if current_status != last_status:
-                console_output('')
+                console_output(b'')
             if remote_dispatcher.options.interactive:
-                the_stdin_thread.want_raw_input()
+                stdin.the_stdin_thread.want_raw_input()
             last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
-                console_output('')
+                console_output(b'')
                 raise asyncore.ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
                 # possible race here with the signal handler
@@ -192,51 +190,18 @@ def main_loop(interactive):
                 kill_all()
                 os.kill(0, signal.SIGINT)
         except asyncore.ExitNow as e:
-            console_output('')
+            console_output(b'')
             save_history(histfile)
             sys.exit(e.args[0])
 
 
-def setprocname(name):
-    # From comments on http://davyd.livejournal.com/166352.html
-    try:
-        # For Python-2.5
-        import ctypes
-        libc = ctypes.CDLL(None)
-        # Linux 2.6 PR_SET_NAME
-        if libc.prctl(15, name, 0, 0, 0):
-            # BSD
-            libc.setproctitle(name)
-    except BaseException:
-        try:
-            # For 32 bit
-            import dl
-            libc = dl.open(None)
-            name += '\0'
-            # Linux 2.6 PR_SET_NAME
-            if libc.call('prctl', 15, name, 0, 0, 0):
-                # BSD
-                libc.call('setproctitle', name)
-        except BaseException:
-            pass
-
-
 def _profile(continuation):
     prof_file = 'polysh.prof'
-    try:
-        import cProfile
-        import pstats
-        print('Profiling using cProfile')
-        cProfile.runctx('continuation()', globals(), locals(), prof_file)
-        stats = pstats.Stats(prof_file)
-    except ImportError:
-        import hotshot
-        import hotshot.stats
-        prof = hotshot.Profile(prof_file, lineevents=1)
-        print('Profiling using hotshot')
-        prof.runcall(continuation)
-        prof.close()
-        stats = hotshot.stats.load(prof_file)
+    import cProfile
+    import pstats
+    print('Profiling using cProfile')
+    cProfile.runctx('continuation()', globals(), locals(), prof_file)
+    stats = pstats.Stats(prof_file)
     stats.strip_dirs()
     stats.sort_stats('time', 'calls')
     stats.print_stats(50)
@@ -253,37 +218,39 @@ def restore_tty_on_exit():
 def main():
     """Launch polysh"""
     locale.setlocale(locale.LC_ALL, '')
-    setprocname('polysh')
-    options, args = parse_cmdline()
-
     atexit.register(kill_all)
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-    options.command = find_non_interactive_command(options.command)
-    options.exit_code = 0
-    options.interactive = not options.command and sys.stdin.isatty() and \
-        sys.stdout.isatty()
-    if options.interactive:
+
+    args = parse_cmdline()
+
+    args.command = find_non_interactive_command(args.command)
+    args.exit_code = 0
+    args.interactive = (
+        not args.command
+        and sys.stdin.isatty()
+        and sys.stdout.isatty())
+    if args.interactive:
         restore_tty_on_exit()
 
-    remote_dispatcher.options = options
+    remote_dispatcher.options = args
 
     hosts = []
-    for arg in args:
-        hosts.extend(expand_syntax(arg))
+    for host in args.host_names:
+        hosts.extend(expand_syntax(host))
 
     dispatchers.create_remote_dispatchers(hosts)
 
     signal.signal(signal.SIGWINCH, lambda signum, frame:
                   dispatchers.update_terminal_size())
 
-    the_stdin_thread.activate(options.interactive)
+    stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
 
-    if options.profile:
+    if args.profile:
         def safe_main_loop():
             try:
-                main_loop(options.interactive)
+                main_loop(args.interactive)
             except BaseException:
                 pass
         _profile(safe_main_loop)
     else:
-        main_loop(options.interactive)
+        main_loop(args.interactive)

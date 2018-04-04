@@ -24,7 +24,7 @@ import os
 from polysh.console import console_output
 
 
-class buffered_dispatcher(asyncore.file_dispatcher):
+class BufferedDispatcher(asyncore.file_dispatcher):
     """A dispatcher with a write buffer to allow asynchronous writers, and a
     read buffer to permit line oriented manipulations"""
 
@@ -36,14 +36,16 @@ class buffered_dispatcher(asyncore.file_dispatcher):
         self.fd = fd
         self.read_buffer = b''
         self.write_buffer = b''
-        self.allow_write = True
 
     def handle_read(self):
+        self._handle_read_chunk()
+
+    def _handle_read_chunk(self):
         """Some data can be read"""
         new_data = b''
         buffer_length = len(self.read_buffer)
         try:
-            while buffer_length < buffered_dispatcher.MAX_BUFFER_SIZE:
+            while buffer_length < self.MAX_BUFFER_SIZE:
                 try:
                     piece = self.recv(4096)
                 except OSError as e:
@@ -72,7 +74,7 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def readable(self):
         """No need to ask data if our buffer is already full"""
-        return len(self.read_buffer) < buffered_dispatcher.MAX_BUFFER_SIZE
+        return len(self.read_buffer) < self.MAX_BUFFER_SIZE
 
     def writable(self):
         """Do we have something to write?"""
@@ -80,26 +82,9 @@ class buffered_dispatcher(asyncore.file_dispatcher):
 
     def dispatch_write(self, buf):
         """Augment the buffer with stuff to write when possible"""
-        assert isinstance(buf, bytes)
-        assert self.allow_write
         self.write_buffer += buf
-        if len(self.write_buffer) > buffered_dispatcher.MAX_BUFFER_SIZE:
-            console_output('Buffer too big (%d) for %s\n' %
-                           (len(self.write_buffer), str(self)))
+        if len(self.write_buffer) > self.MAX_BUFFER_SIZE:
+            console_output('Buffer too big ({:d}) for {}\n'.format(
+                len(self.write_buffer), str(self)).encode())
             raise asyncore.ExitNow(1)
-
-    def drain_and_block_writing(self):
-        # set the fd to blocking mode
-        self.allow_write = False
-        flags = fcntl.fcntl(self.fd, fcntl.F_GETFL, 0)
-        flags = flags & ~os.O_NONBLOCK
-        fcntl.fcntl(self.fd, fcntl.F_SETFL, flags)
-        if self.writable():
-            self.handle_write()
-
-    def allow_writing(self):
-        # set the fd to non-blocking mode
-        flags = fcntl.fcntl(self.fd, fcntl.F_GETFL, 0)
-        flags = flags | os.O_NONBLOCK
-        fcntl.fcntl(self.fd, fcntl.F_SETFL, flags)
-        self.allow_write = True
+        return True

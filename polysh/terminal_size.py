@@ -21,7 +21,7 @@ def _ioctl_GWINSZ(fd):  # TABULATION FUNCTIONS
         import fcntl
         import termios
         import struct
-        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, b'1234'))
     except BaseException:
         return
     return cr

@@ -106,7 +106,7 @@ def main():
 
 
 def launch_polysh(args, input_data=None):
-    args = ['polysh'] + args
+    args = ['../polysh.py'] + args
     options, unused_args = parse_cmdline()
     if options.coverage:
         args = ['./coverage.py', '-x', '-p'] + args

@@ -67,3 +67,9 @@ class TestNonInteractive(unittest.TestCase):
             self.assertEqual(child.exitstatus, code)
         CommandCode('true', 0)
         CommandCode('false', 1)
+
+    def testInvalidCharacters(self):
+        child = launch_polysh(
+            ["--command=printf '%b' '\xacfoo\u2018bar\n'", 'localhost'])
+        child.expect('\033\[1;36mlocalhost : \033\[1;m\xacfoo\u2018bar')
+        child.expect(pexpect.EOF)

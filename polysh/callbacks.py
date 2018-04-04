@@ -40,7 +40,7 @@ def random_string(length):
     return ''.join([random_char() for i in range(length)])
 
 
-COMMON_PREFIX = 'polysh-{}:'.format(random_string(5))
+COMMON_PREFIX = 'polysh-{}:'.format(random_string(5)).encode()
 NR_GENERATED_TRIGGERS = 0
 
 # {'random_string()': (function, repeat)}
@@ -48,11 +48,12 @@ CALLBACKS = {}
 
 
 def add(name, function, repeat):
-    name = name.replace('/', '_')
+    name = name.replace(b'/', b'_')
     global NR_GENERATED_TRIGGERS
     nr = NR_GENERATED_TRIGGERS
     NR_GENERATED_TRIGGERS += 1
-    trigger = '%s%s:%s:%d/' % (COMMON_PREFIX, name, random_string(5), nr)
+    trigger = (COMMON_PREFIX + name + b':' + random_string(5).encode() + b':' +
+               str(nr).encode() + b'/')
     CALLBACKS[trigger] = (function, repeat)
     trigger1 = trigger[:int(len(COMMON_PREFIX) / 2)]
     trigger2 = trigger[len(trigger1):]
@@ -60,16 +61,16 @@ def add(name, function, repeat):
 
 
 def any_in(data):
-    return COMMON_PREFIX.encode() in data
+    return COMMON_PREFIX in data
 
 
 def process(line):
-    assert isinstance(line, str)
+    assert isinstance(line, bytes)
     start = line.find(COMMON_PREFIX)
     if start < 0:
         return False
 
-    end = line.find('/', start) + 1
+    end = line.find(b'/', start) + 1
     if end <= 0:
         return False
 

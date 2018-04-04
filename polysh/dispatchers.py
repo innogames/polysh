@@ -30,7 +30,7 @@ from polysh.terminal_size import terminal_size
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
     return sorted([i for i in asyncore.socket_map.values() if
-                   isinstance(i, remote_dispatcher.remote_dispatcher)],
+                   isinstance(i, remote_dispatcher.RemoteDispatcher)],
                   key=lambda i: i.display_name or '')
 
 
@@ -75,24 +75,29 @@ def update_terminal_size():
 
 
 def format_info(info_list):
-    """Turn a 2-dimension list of strings into a 1-dimension list of strings
-    with correct spacing"""
+    """Turn a 2-dimension list of bytes into a 1-dimension list of bytes with
+    correct spacing"""
+
     max_lengths = []
     if info_list:
         nr_columns = len(info_list[0])
     else:
         nr_columns = 0
     for i in range(nr_columns):
-        max_lengths.append(max([len(str(info[i])) for info in info_list]))
+        max_lengths.append(max([len(info[i]) for info in info_list]))
+
+    flattened_info_list = []
     for info_id in range(len(info_list)):
         info = info_list[info_id]
         for str_id in range(len(info) - 1):
             # Don't justify the last column (i.e. the last printed line)
             # as it can get much longer in some shells than in others
-            orig_str = str(info[str_id])
+            orig_str = info[str_id]
             indent = max_lengths[str_id] - len(orig_str)
-            info[str_id] = orig_str + indent * ' '
-        info_list[info_id] = ' '.join(info) + '\n'
+            info[str_id] = orig_str + indent * b' '
+        flattened_info_list.append(b' '.join(info) + b'\n')
+
+    return flattened_info_list
 
 
 def create_remote_dispatchers(hosts):
@@ -103,7 +108,7 @@ def create_remote_dispatchers(hosts):
             sys.stdout.write(last_message)
             sys.stdout.flush()
         try:
-            remote_dispatcher.remote_dispatcher(host)
+            remote_dispatcher.RemoteDispatcher(host)
         except OSError:
             print()
             raise

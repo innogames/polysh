@@ -32,32 +32,29 @@ from polysh import dispatchers, remote_dispatcher
 from polysh.console import console_output, set_last_status_length
 from polysh import completion
 
+the_stdin_thread = None  # type: StdinThread
 
-class input_buffer(object):
+
+class InputBuffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
 
     def __init__(self):
         self.lock = Lock()
-        self.buf = ''
+        self.buf = b''
 
     def add(self, data):
         """Add data to the buffer"""
-        self.lock.acquire()
-        try:
+        assert isinstance(data, bytes)
+        with self.lock:
             self.buf += data
-        finally:
-            self.lock.release()
 
     def get(self):
         """Get the content of the buffer"""
-        self.lock.acquire()
-        try:
-            data = self.buf
-            if data:
-                self.buf = ''
-                return data
-        finally:
-            self.lock.release()
+        data = b''
+        with self.lock:
+            data, self.buf = self.buf, b''
+
+        return data
 
 
 def process_input_buffer():
@@ -65,27 +62,31 @@ def process_input_buffer():
     be called in the main thread"""
     from polysh.control_commands_helpers import handle_control_command
     data = the_stdin_thread.input_buffer.get()
-    remote_dispatcher.log('> ' + data)
+    remote_dispatcher.log(b'> ' + data)
 
-    if data.startswith(':'):
-        handle_control_command(data[1:-1])
+    if data.startswith(b':'):
+        try:
+            handle_control_command(data[1:-1].decode())
+        except UnicodeDecodeError as e:
+            console_output(b'Could not decode command.')
         return
 
-    if data.startswith('!'):
+    if data.startswith(b'!'):
         try:
             retcode = subprocess.call(data[1:], shell=True)
         except OSError as e:
             if e.errno == errno.EINTR:
-                console_output('Child was interrupted\n')
+                console_output(b'Child was interrupted\n')
                 retcode = 0
             else:
                 raise
         if retcode > 128 and retcode <= 192:
             retcode = 128 - retcode
         if retcode > 0:
-            console_output('Child returned %d\n' % retcode)
+            console_output('Child returned {:d}\n'.format(retcode).encode())
         elif retcode < 0:
-            console_output('Child was terminated by signal %d\n' % -retcode)
+            console_output('Child was terminated by signal {:d}\n'.format(
+                -retcode).encode())
         return
 
     for r in dispatchers.all_instances():
@@ -94,9 +95,9 @@ def process_input_buffer():
         except asyncore.ExitNow as e:
             raise e
         except Exception as msg:
-            console_output(
-                '%s for %s, disconnecting\n' %
-                (msg, r.display_name))
+            raise msg
+            console_output('{} for {}, disconnecting\n'.format(
+                str(msg), r.display_name).encode())
             r.disconnect()
         else:
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
@@ -111,15 +112,15 @@ def process_input_buffer():
 # sends the ACK, and the stdin thread can go on.
 
 
-class socket_notification_reader(asyncore.dispatcher):
+class SocketNotificationReader(asyncore.dispatcher):
     """The socket reader in the main thread"""
 
-    def __init__(self):
+    def __init__(self, the_stdin_thread):
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
     def _do(self, c):
-        assert isinstance(c, str)
-        if c == 'd':
+        assert isinstance(c, bytes)
+        if c == b'd':
             process_input_buffer()
         else:
             raise Exception('Unknown code: %s' % (c))
@@ -128,9 +129,9 @@ class socket_notification_reader(asyncore.dispatcher):
         """Handle all the available character commands in the socket"""
         while True:
             try:
-                c = self.recv(1).decode()
-            except socket.error as why:
-                if why.errno == errno.EWOULDBLOCK:
+                c = self.recv(1)
+            except socket.error as e:
+                if e.errno == errno.EWOULDBLOCK:
                     return
                 else:
                     raise
@@ -152,7 +153,7 @@ def write_main_socket(c):
         try:
             the_stdin_thread.socket_write.recv(1)
         except socket.error as e:
-            if e[0] != errno.EINTR:
+            if e.errno != errno.EINTR:
                 raise
         else:
             break
@@ -216,30 +217,27 @@ def set_echo(echo):
         echo_enabled = echo
 
 
-class stdin_thread(Thread):
+class StdinThread(Thread):
     """The stdin thread, used to call raw_input()"""
 
-    def __init__(self):
+    def __init__(self, interactive):
         Thread.__init__(self, name='stdin thread')
         completion.install_completion_handler()
+        self.input_buffer = InputBuffer()
 
-    @staticmethod
-    def activate(interactive):
-        """Activate the thread at initialization time"""
-        the_stdin_thread.input_buffer = input_buffer()
         if interactive:
-            the_stdin_thread.raw_input_wanted = Event()
-            the_stdin_thread.in_raw_input = Event()
-            the_stdin_thread.out_of_raw_input = Event()
-            the_stdin_thread.out_of_raw_input.set()
+            self.raw_input_wanted = Event()
+            self.in_raw_input = Event()
+            self.out_of_raw_input = Event()
+            self.out_of_raw_input.set()
             s1, s2 = socket.socketpair()
-            the_stdin_thread.socket_read, the_stdin_thread.socket_write = s1, s2
-            the_stdin_thread.interrupt_asked = False
-            the_stdin_thread.setDaemon(True)
-            the_stdin_thread.start()
-            the_stdin_thread.socket_notification = socket_notification_reader()
-            the_stdin_thread.prepend_text = None
-            readline.set_pre_input_hook(the_stdin_thread.prepend_previous_text)
+            self.socket_read, self.socket_write = s1, s2
+            self.interrupt_asked = False
+            self.setDaemon(True)
+            self.start()
+            self.socket_notification = SocketNotificationReader(self)
+            self.prepend_text = None  # type: Optional[str]
+            readline.set_pre_input_hook(self.prepend_previous_text)
 
     def prepend_previous_text(self):
         if self.prepend_text:
@@ -256,13 +254,13 @@ class stdin_thread(Thread):
         self.prompt = prompt
         set_last_status_length(len(prompt))
         self.raw_input_wanted.set()
-        while not self.in_raw_input.isSet():
+        while not self.in_raw_input.is_set():
             self.socket_notification.handle_read()
             self.in_raw_input.wait(0.1)
         self.raw_input_wanted.clear()
 
     def no_raw_input(self):
-        if not self.out_of_raw_input.isSet():
+        if not self.out_of_raw_input.is_set():
             interrupt_stdin_thread()
 
     # Beware of races
@@ -292,8 +290,5 @@ class stdin_thread(Thread):
                     completion.remove_last_history_item()
             set_echo(True)
             if cmd is not None:
-                self.input_buffer.add(cmd + '\n')
+                self.input_buffer.add('{}\n'.format(cmd).encode())
                 write_main_socket(b'd')
-
-
-the_stdin_thread = stdin_thread()

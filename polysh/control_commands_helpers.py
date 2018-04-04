@@ -62,7 +62,7 @@ def selected_shells(command):
                         selected.add(i)
                         yield i
         if instance_found and not found:
-            console_output('%s not found\n' % pattern)
+            console_output('{} not found\n'.format(pattern).encode())
 
 
 def complete_shells(line, text, predicate=lambda i: True):
@@ -113,7 +113,8 @@ def handle_control_command(line):
     try:
         cmd_func = get_control_command(cmd_name)
     except AttributeError:
-        console_output('Unknown control command: %s\n' % cmd_name)
+        console_output(
+            'Unknown control command: {}\n'.format(cmd_name).encode())
     else:
         parameters = line[len(cmd_name) + 1:]
         cmd_func(parameters)
