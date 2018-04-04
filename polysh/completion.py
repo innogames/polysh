@@ -109,7 +109,7 @@ def complete(text, state):
 
 def add_to_history(cmd):
     if len(history_words) < 10000:
-        history_words.update([w for w in cmd.split() if len(w) > 1])
+        history_words.update(w for w in cmd.split() if len(w) > 1)
 
 
 def remove_last_history_item():
