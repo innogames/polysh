@@ -45,22 +45,15 @@ class InputBuffer(object):
     def add(self, data):
         """Add data to the buffer"""
         assert isinstance(data, bytes)
-        self.lock.acquire()
-        try:
+        with self.lock:
             self.buf += data
-        finally:
-            self.lock.release()
 
     def get(self):
         """Get the content of the buffer"""
         data = b''
-        self.lock.acquire()
-        try:
-            data = self.buf
-            if data:
-                self.buf = b''
-        finally:
-            self.lock.release()
+        with self.lock:
+            data, self.buf = self.buf, b''
+
         return data
 
 
