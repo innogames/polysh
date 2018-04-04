@@ -83,8 +83,7 @@ def parse_cmdline():
     parser.add_argument(
         '--profile', action='store_true', dest='profile',
         default=False)
-    parser.add_argument(
-        'host_names', nargs='*')
+    parser.add_argument('host_names', nargs='*')
     args = parser.parse_args()
 
     for filename in args.hosts_filenames:
