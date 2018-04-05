@@ -1,2 +1,0 @@
-o "(yes date | head -n 1000; echo ps) | ./polysh.py --ssh='bash;:' dummy" does not
-terminate because of the readline usage in bash.
