@@ -1,6 +1,8 @@
-[![Build Status](https://travis-ci.org/innogames/polysh.svg?branch=master)](https://travis-ci.org/innogames/polysh)
+.. image:: https://travis-ci.org/innogames/polysh.svg?branch=master
+    :target: https://travis-ci.org/innogames/polysh
 
-# Polysh
+Polysh
+======
 
 Polysh (formerly called Group Shell or gsh) is a remote shell multiplexer. It
 lets you control many remote shells at once in a single shell. Unlike other
