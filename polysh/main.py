@@ -274,9 +274,9 @@ def main():
         )
 
         try:
-            main()
+            run()
         except Exception:
             client.captureException()
 
     else:
-        main()
+        run()
