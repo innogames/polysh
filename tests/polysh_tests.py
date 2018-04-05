@@ -17,6 +17,7 @@
 # See the COPYING file for license information.
 #
 # Copyright (c) 2007 Guillaume Chazarain <guichaz@gmail.com>
+# Copyright (c) 2018 InnoGames GmbH
 
 import os
 import unittest
@@ -106,7 +107,7 @@ def main():
 
 
 def launch_polysh(args, input_data=None):
-    args = ['../polysh.py'] + args
+    args = ['../run.py'] + args
     options, unused_args = parse_cmdline()
     if options.coverage:
         args = ['./coverage.py', '-x', '-p'] + args
