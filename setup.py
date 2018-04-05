@@ -7,8 +7,8 @@ from polysh import VERSION
 setup(
     name='polysh',
     version='.'.join(map(str, VERSION)),
-    author='InnoGames System Administration',
-    author_email='it@innogames.com',
+    maintainer='InnoGames System Administration',
+    maintainer_email='it@innogames.com',
     url='https://github.com/innogames/polysh',
     data_files=[('share/man/man1', ['polysh.1'])],
     packages=['polysh'],
