@@ -18,9 +18,6 @@ Copyright (c) 2018 InnoGames GmbH
 
 import asyncore
 import os
-import shutil
-import sys
-import tempfile
 import shlex
 
 from polysh.control_commands_helpers import complete_shells, selected_shells
@@ -29,7 +26,6 @@ from polysh.control_commands_helpers import get_control_command, toggle_shells
 from polysh.control_commands_helpers import expand_local_path
 from polysh.completion import complete_local_path, add_to_history
 from polysh.console import console_output
-from polysh import VERSION
 from polysh import dispatchers
 from polysh import remote_dispatcher
 from polysh import stdin
@@ -265,8 +261,8 @@ def do_hide_password(command):
     Usage: :hide_password
     Do not echo the next typed line.
     This is useful when entering password. If debugging or logging is enabled,
-    it will be disabled to avoid displaying a password. Therefore, you will have
-    to reenable logging or debugging afterwards if need be.
+    it will be disabled to avoid displaying a password. Therefore, you will
+    have to reenable logging or debugging afterwards if need be.
     """
     warned = False
     for i in dispatchers.all_instances():
@@ -320,11 +316,11 @@ def do_export_vars(command):
     """
     Usage: :export_vars
     Export some environment variables on enabled remote shells.
-    POLYSH_NR_SHELLS is the total number of enabled shells. POLYSH_RANK uniquely
-    identifies each shell with a number between 0 and POLYSH_NR_SHELLS - 1.
-    POLYSH_NAME is the hostname as specified on the command line and
-    POLYSH_DISPLAY_NAME the hostname as displayed by :list (most of the time the
-    same as POLYSH_NAME).
+    POLYSH_NR_SHELLS is the total number of enabled shells. POLYSH_RANK
+    uniquely identifies each shell with a number between 0 and
+    POLYSH_NR_SHELLS - 1.  POLYSH_NAME is the hostname as specified on
+    the command line and POLYSH_DISPLAY_NAME the hostname as displayed by
+    :list (most of the time the same as POLYSH_NAME).
     """
     rank = 0
     for shell in dispatchers.all_instances():
@@ -386,56 +382,3 @@ def do_show_read_buffer(command):
         if i.read_in_state_not_started:
             i.print_lines(i.read_in_state_not_started)
             i.read_in_state_not_started = b''
-
-
-def main():
-    """
-    Output a help text of each control command suitable for the man page
-    Run from the polysh top directory: python -m polysh.control_commands
-    """
-    try:
-        man_page = open('polysh.1', 'r')
-    except IOError as e:
-        print(e)
-        print('Please run "python -m polysh.control_commands" from the' +
-              ' polysh top directory')
-        sys.exit(1)
-
-    updated_man_page_fd, updated_man_page_path = tempfile.mkstemp()
-    updated_man_page = os.fdopen(updated_man_page_fd, 'w')
-
-    # The first line is auto-generated as it contains the version number
-    man_page.readline()
-    print('.TH "polysh" "1" "{}" "Guillaume Chazarain" "Remote shells"'.format(
-        '.'.join(map(str, VERSION))
-    ), file=updated_man_page)
-
-    for line in man_page:
-        print(line, end=' ', file=updated_man_page)
-        if 'BEGIN AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
-            break
-
-    for name in list_control_commands():
-        print('.TP', file=updated_man_page)
-        unstripped = get_control_command(name).__doc__.split('\n')
-        lines = [l.strip() for l in unstripped]
-        usage = lines[1].strip()
-        print('\\fB%s\\fR' % usage[7:], file=updated_man_page)
-        help_text = ' '.join(lines[2:]).replace('polysh', '\\fIpolysh\\fR')
-        print(help_text.strip(), file=updated_man_page)
-
-    for line in man_page:
-        if 'END AUTO-GENERATED CONTROL COMMANDS DOCUMENTATION' in line:
-            print(line, end=' ', file=updated_man_page)
-            break
-
-    for line in man_page:
-        print(line, end=' ', file=updated_man_page)
-
-    man_page.close()
-    updated_man_page.close()
-    shutil.move(updated_man_page_path, 'polysh.1')
-
-
-if __name__ == '__main__':
-    main()
