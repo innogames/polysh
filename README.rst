@@ -200,7 +200,9 @@ directed at `polysh` itself instead of the remote shells.  These commands are:
     Print the data read by remote shells.  The special characters * ? and []
     work as expected.
 
-Author
-------
+History
+-------
 
-Guillaume Chazarain <guichaz@gmail.com>
+The tool is authored by Guillaume Chazarain <guichaz@gmail.com>.  The first
+version released in 2006.  It has been maintained by InnoGames GmbH
+since 2018.
