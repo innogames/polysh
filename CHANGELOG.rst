@@ -54,7 +54,12 @@ Version 0.4
       between the remote shells
     * Add option to disable colorized hostnames
 
-Unreleased
+Version 0.5
     * Drop `:upload` and `:replicate` file transfer features
     * Don't forward `Ctrl-Z` to the remote shells
     * Save and restore history from `~/.polysh_hisory`
+    * Support Python 3
+    * Drop Python 2 support
+
+Version 0.8
+    * Improve Python 3 support
