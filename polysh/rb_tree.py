@@ -26,8 +26,6 @@
 
 __version__ = "1.5-polysh"
 
-import string
-
 BLACK = 0
 RED = 1
 

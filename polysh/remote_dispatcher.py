@@ -25,7 +25,6 @@ import sys
 import termios
 import select
 import platform
-from argparse import Namespace
 
 from polysh.buffered_dispatcher import BufferedDispatcher
 from polysh import callbacks

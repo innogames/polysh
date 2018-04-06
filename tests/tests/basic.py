@@ -15,8 +15,8 @@
 # See the COPYING file for license information.
 #
 # Copyright (c) 2007 Guillaume Chazarain <guichaz@gmail.com>
+# Copyright (c) 2018 InnoGames GmbH
 
-import os
 import unittest
 import pexpect
 from polysh_tests import launch_polysh

@@ -19,8 +19,6 @@
 
 import asyncore
 import errno
-import fcntl
-import os
 
 from polysh.console import console_output
 
