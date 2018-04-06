@@ -1,3 +1,20 @@
+"""Polysh - Callbacks
+
+Polysh uses specially crafted strings to communicate out of band data with
+remote shells. This includes detecting the shell prompt, and other events to
+detect.
+
+These strings are built and sent in two parts, the remote shell should send
+back the concatenation of these two strings to trigger the callback. This is
+to insure that the sending of the trigger to the remote shell does not
+trigger the callback.
+
+Example: The trigger FOOBAR could be split into FOO and BAR and sent as
+         echo "FOO""BAR" so that the sent string does not contain FOOBAR.
+
+Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
+Copyright (c) 2018 InnoGames GmbH
+"""
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
@@ -10,20 +27,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
-# Copyright (c) 2018 InnoGames GmbH
-
-# Polysh uses specially crafted strings to communicate out of band data with
-# remote shells. This includes detecting the shell prompt, and other events to
-# detect.
-# These strings are built and sent in two parts, the remote shell should send
-# back the concatenation of these two strings to trigger the callback. This is
-# to insure that the sending of the trigger to the remote shell does not trigger
-# the callback.
-#
-# Example: The trigger FOOBAR could be split into FOO and BAR and sent as
-#          echo "FOO""BAR" so that the sent string does not contain FOOBAR.
 
 import random
 
