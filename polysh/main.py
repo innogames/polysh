@@ -48,7 +48,7 @@ def kill_all():
 
 def parse_cmdline():
     usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
-            'Control commands are prefixed by ":". Use :help for the list'
+            'Control commands are prefixed by ":".'
     parser = argparse.ArgumentParser(usage)
     parser.add_argument(
         '--hosts-file', type=str, action='append',
@@ -129,7 +129,8 @@ def find_non_interactive_command(command):
     if stdin and command:
         print(
             '--command and reading from stdin are incompatible',
-            file=sys.stderr)
+            file=sys.stderr,
+        )
         sys.exit(1)
     if stdin and not stdin.endswith('\n'):
         stdin += '\n'

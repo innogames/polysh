@@ -100,7 +100,8 @@ def complete_control_command(line, text):
         # Completing control command parameters
         cmd = line.split()[0][1:]
 
-        def def_compl(line): return []
+        def def_compl(line):
+            return []
         compl_func = getattr(control_commands, 'complete_' + cmd, def_compl)
         matches = compl_func(line, text)
     return matches

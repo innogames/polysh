@@ -148,9 +148,6 @@ directed at `polysh` itself instead of the remote shells.  These commands are:
     the command line and POLYSH_DISPLAY_NAME the hostname as displayed
     by :list (most of the time the same as POLYSH_NAME).
 
-`:help [COMMAND]`
-    List control commands or show their documentations.
-
 `:hide_password`
     Do not echo the next typed line.  This is useful when entering password.
     If debugging or logging is enabled, it will be disabled to avoid
