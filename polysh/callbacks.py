@@ -1,32 +1,32 @@
-# This program is free software; you can redistribute it and/or modify
+"""Polysh - Callbacks
+
+Polysh uses specially crafted strings to communicate out of band data with
+remote shells. This includes detecting the shell prompt, and other events to
+detect.
+
+These strings are built and sent in two parts, the remote shell should send
+back the concatenation of these two strings to trigger the callback. This is
+to insure that the sending of the trigger to the remote shell does not
+trigger the callback.
+
+Example: The trigger FOOBAR could be split into FOO and BAR and sent as
+         echo "FOO""BAR" so that the sent string does not contain FOOBAR.
+
+Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
+Copyright (c) 2018 InnoGames GmbH
+"""
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Library General Public License for more details.
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-#
-# See the COPYING file for license information.
-#
-# Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
-# Copyright (c) 2018 InnoGames GmbH
-
-# Polysh uses specially crafted strings to communicate out of band data with
-# remote shells. This includes detecting the shell prompt, and other events to
-# detect.
-# These strings are built and sent in two parts, the remote shell should send
-# back the concatenation of these two strings to trigger the callback. This is
-# to insure that the sending of the trigger to the remote shell does not trigger
-# the callback.
-#
-# Example: The trigger FOOBAR could be split into FOO and BAR and sent as
-#          echo "FOO""BAR" so that the sent string does not contain FOOBAR.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
 

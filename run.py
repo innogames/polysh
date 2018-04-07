@@ -1,4 +1,5 @@
-"""Polysh - Library Entry Point
+#!/usr/bin/env python3
+"""Polysh - Convenience Script for Testing
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 Copyright (c) 2018 InnoGames GmbH
@@ -16,4 +17,6 @@ Copyright (c) 2018 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = (0, 8)
+from polysh.main import run
+
+run()
