@@ -29,6 +29,12 @@ import re
 syntax_pattern = re.compile('<([0-9,-]+)>')
 interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
 
+def _get_port(hostname):
+    s = hostname.split(':')
+    if len(s) > 1:
+        return s[0], s[1]
+    else:
+        return s[0], '22'
 
 def _iter_numbers(start, end):
     int_start = int(start)
@@ -64,4 +70,4 @@ def expand_syntax(string):
                     for expanded in expand_syntax(prefix + i + suffix):
                         yield expanded
     else:
-        yield string
+        yield _get_port(string)
