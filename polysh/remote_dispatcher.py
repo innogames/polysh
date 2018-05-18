@@ -73,11 +73,14 @@ def log(msg):
 class RemoteDispatcher(BufferedDispatcher):
     """A RemoteDispatcher is a ssh process we communicate with"""
 
-    def __init__(self, host):
-        assert isinstance(host, tuple)
-        hostname, port = host
+    def __init__(self, hostname, port):
         assert isinstance(hostname, str)
         assert isinstance(port, str)
+
+        if port != "22":
+            port = "-p " + port
+        else:
+            port = ''
 
         self.pid, fd = pty.fork()
         if self.pid == 0:
@@ -114,6 +117,7 @@ class RemoteDispatcher(BufferedDispatcher):
         evaluated = options.ssh % {'host': name, 'port': port}
         if evaluated == options.ssh:
             evaluated = '%s %s' % (evaluated, name)
+        print(evaluated)
         os.execlp('/bin/sh', 'sh', '-c', evaluated)
 
     def set_enabled(self, enabled):
