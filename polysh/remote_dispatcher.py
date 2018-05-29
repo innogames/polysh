@@ -117,7 +117,6 @@ class RemoteDispatcher(BufferedDispatcher):
         evaluated = options.ssh % {'host': name, 'port': port}
         if evaluated == options.ssh:
             evaluated = '%s %s' % (evaluated, name)
-        print(evaluated)
         os.execlp('/bin/sh', 'sh', '-c', evaluated)
 
     def set_enabled(self, enabled):
