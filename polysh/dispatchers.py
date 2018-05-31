@@ -26,6 +26,15 @@ from polysh import remote_dispatcher
 from polysh import display_names
 from polysh.terminal_size import terminal_size
 
+def _split_port(hostname):
+    """ Splits a string(hostname, given by the user) into hostname and port, 
+    returns a tuple """
+    s = hostname.split(':', 1)
+    if len(s) > 1:
+        return s[0], s[1]
+    else:
+        return s[0], '22'
+
 
 def all_instances():
     """Iterator over all the remote_dispatcher instances"""
@@ -108,7 +117,8 @@ def create_remote_dispatchers(hosts):
             sys.stdout.write(last_message)
             sys.stdout.flush()
         try:
-            remote_dispatcher.RemoteDispatcher(host)
+            hostname, port = _split_port(host)
+            remote_dispatcher.RemoteDispatcher(hostname, port)
         except OSError:
             print()
             raise

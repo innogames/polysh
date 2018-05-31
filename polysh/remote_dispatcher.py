@@ -73,18 +73,26 @@ def log(msg):
 class RemoteDispatcher(BufferedDispatcher):
     """A RemoteDispatcher is a ssh process we communicate with"""
 
-    def __init__(self, hostname):
+    def __init__(self, hostname, port):
         assert isinstance(hostname, str)
+        assert isinstance(port, str)
+
+        if port != "22":
+            port = "-p " + port
+        else:
+            port = ''
+
         self.pid, fd = pty.fork()
         if self.pid == 0:
             # Child
-            self.launch_ssh(hostname)
+            self.launch_ssh(hostname, port)
             sys.exit(1)
 
         # Parent
         super().__init__(fd)
         self.temporary = False
         self.hostname = hostname
+        self.port = port
         self.debug = options.debug
         self.enabled = True  # shells can be enabled and disabled
         self.state = STATE_NOT_STARTED
@@ -102,11 +110,11 @@ class RemoteDispatcher(BufferedDispatcher):
         else:
             self.color_code = None
 
-    def launch_ssh(self, name):
+    def launch_ssh(self, name, port):
         """Launch the ssh command in the child process"""
         if options.user:
             name = '%s@%s' % (options.user, name)
-        evaluated = options.ssh % {'host': name}
+        evaluated = options.ssh % {'host': name, 'port': port}
         if evaluated == options.ssh:
             evaluated = '%s %s' % (evaluated, name)
         os.execlp('/bin/sh', 'sh', '-c', evaluated)

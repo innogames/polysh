@@ -29,6 +29,12 @@ import re
 syntax_pattern = re.compile('<([0-9,-]+)>')
 interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
 
+def _split_port(hostname):
+    s = hostname.split(':', 1)
+    if len(s) > 1:
+        return s[0], s[1]
+    else:
+        return s[0], '22'
 
 def _iter_numbers(start, end):
     int_start = int(start)
