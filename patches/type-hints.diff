@@ -1,8 +1,8 @@
 diff --git a/polysh/buffered_dispatcher.py b/polysh/buffered_dispatcher.py
-index 5d81f55..7afb02f 100644
+index 6a2e152..4a036ba 100644
 --- a/polysh/buffered_dispatcher.py
 +++ b/polysh/buffered_dispatcher.py
-@@ -31,16 +31,16 @@ class BufferedDispatcher(asyncore.file_dispatcher):
+@@ -29,16 +29,16 @@ class BufferedDispatcher(asyncore.file_dispatcher):
      # 1 MiB should be enough for everybody
      MAX_BUFFER_SIZE = 1 * 1024 * 1024
  
@@ -22,7 +22,7 @@ index 5d81f55..7afb02f 100644
          """Some data can be read"""
          new_data = b''
          buffer_length = len(self.read_buffer)
-@@ -72,15 +72,15 @@ class BufferedDispatcher(asyncore.file_dispatcher):
+@@ -70,15 +70,15 @@ class BufferedDispatcher(asyncore.file_dispatcher):
              self.read_buffer += new_data
          return new_data
  
@@ -42,11 +42,11 @@ index 5d81f55..7afb02f 100644
          self.write_buffer += buf
          if len(self.write_buffer) > self.MAX_BUFFER_SIZE:
 diff --git a/polysh/callbacks.py b/polysh/callbacks.py
-index 3fbf8ea..2c6eb54 100644
+index 6eb654b..31b280e 100644
 --- a/polysh/callbacks.py
 +++ b/polysh/callbacks.py
-@@ -28,14 +28,16 @@
- #          echo "FOO""BAR" so that the sent string does not contain FOOBAR.
+@@ -29,14 +29,16 @@ Copyright (c) 2018 InnoGames GmbH
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
  import random
 +from typing import Callable
@@ -64,7 +64,7 @@ index 3fbf8ea..2c6eb54 100644
          return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
      return ''.join([random_char() for i in range(length)])
  
-@@ -47,7 +49,7 @@ NR_GENERATED_TRIGGERS = 0
+@@ -48,7 +50,7 @@ NR_GENERATED_TRIGGERS = 0
  CALLBACKS = {}
  
  
@@ -73,7 +73,7 @@ index 3fbf8ea..2c6eb54 100644
      name = name.replace(b'/', b'_')
      global NR_GENERATED_TRIGGERS
      nr = NR_GENERATED_TRIGGERS
-@@ -60,12 +62,11 @@ def add(name, function, repeat):
+@@ -61,12 +63,11 @@ def add(name, function, repeat):
      return trigger1, trigger2
  
  
@@ -89,10 +89,10 @@ index 3fbf8ea..2c6eb54 100644
      if start < 0:
          return False
 diff --git a/polysh/completion.py b/polysh/completion.py
-index 4780816..591cab8 100644
+index 5f3f209..36892bf 100644
 --- a/polysh/completion.py
 +++ b/polysh/completion.py
-@@ -19,13 +19,14 @@
+@@ -19,13 +19,14 @@ Copyright (c) 2018 InnoGames GmbH
  import glob
  import os
  import readline
@@ -172,10 +172,10 @@ index 4780816..591cab8 100644
      readline.parse_and_bind('tab: complete')
      readline.set_completer_delims(' \t\n')
 diff --git a/polysh/console.py b/polysh/console.py
-index b099410..742a48b 100644
+index c2ea14c..752b5ba 100644
 --- a/polysh/console.py
 +++ b/polysh/console.py
-@@ -18,16 +18,16 @@
+@@ -18,16 +18,16 @@ Copyright (c) 2018 InnoGames GmbH
  
  import errno
  import os
@@ -217,42 +217,19 @@ index b099410..742a48b 100644
      global last_status_length
      last_status_length = length
 diff --git a/polysh/control_commands.py b/polysh/control_commands.py
-index b212a43..3786d43 100644
+index 285cfc3..05ce53a 100644
 --- a/polysh/control_commands.py
 +++ b/polysh/control_commands.py
-@@ -22,6 +22,7 @@ import shutil
- import sys
- import tempfile
+@@ -21,6 +21,7 @@ Copyright (c) 2018 InnoGames GmbH
+ import asyncore
+ import os
  import shlex
 +from typing import List
  
- from polysh.control_commands_helpers import complete_shells, selected_shells
- from polysh.control_commands_helpers import list_control_commands
-@@ -35,7 +36,7 @@ from polysh import remote_dispatcher
+ from polysh.control_commands_helpers import (
+     complete_shells,
+@@ -35,32 +36,32 @@ from polysh import remote_dispatcher
  from polysh import stdin
- 
- 
--def complete_help(line, text):
-+def complete_help(line, text: str) -> List[str]:
-     colon = text.startswith(':')
-     text = text.lstrip(':')
-     res = [cmd + ' ' for cmd in list_control_commands() if
-@@ -45,12 +46,11 @@ def complete_help(line, text):
-     return res
- 
- 
--def do_help(command):
-+def do_help(command: str) -> None:
-     """
-     Usage: :help [COMMAND]
-     List control commands or show their documentations.
-     """
--    assert isinstance(command, str)
-     command = command.strip()
-     if command:
-         texts = []
-@@ -77,11 +77,11 @@ def do_help(command):
-             console_output(txt.encode())
  
  
 -def complete_list(line, text):
@@ -262,19 +239,13 @@ index b212a43..3786d43 100644
  
 -def do_list(command):
 +def do_list(command: str) -> None:
-     """
-     Usage: :list [SHELLS...]
-     List remote shells and their states.
-@@ -93,7 +93,7 @@ def do_list(command):
+     instances = [i.get_info() for i in selected_shells(command)]
+     flat_instances = dispatchers.format_info(instances)
      console_output(b''.join(flat_instances))
  
  
 -def do_quit(command):
 +def do_quit(command: str) -> None:
-     """
-     Usage: :quit
-     Quit polysh.
-@@ -101,11 +101,11 @@ def do_quit(command):
      raise asyncore.ExitNow(0)
  
  
@@ -285,10 +256,9 @@ index b212a43..3786d43 100644
  
 -def do_chdir(command):
 +def do_chdir(command: str) -> None:
-     """
-     Usage: :chdir LOCAL_PATH
-     Change the current directory of polysh (not the remote shells).
-@@ -116,7 +116,7 @@ def do_chdir(command):
+     try:
+         os.chdir(expand_local_path(command.strip()))
+     except OSError as e:
          console_output('{}\n'.format(str(e)).encode())
  
  
@@ -297,16 +267,16 @@ index b212a43..3786d43 100644
      if len(line[:-1].split()) >= 2:
          # Control letter already given in command line
          return complete_shells(line, text, lambda i: i.enabled)
-@@ -125,7 +125,7 @@ def complete_send_ctrl(line, text):
+@@ -69,7 +70,7 @@ def complete_send_ctrl(line, text):
      return ['c ', 'd ', 'z ']
  
  
 -def do_send_ctrl(command):
 +def do_send_ctrl(command: str) -> None:
-     """
-     Usage: :send_ctrl LETTER [SHELLS...]
-     Send a control character to remote shells.
-@@ -150,11 +150,11 @@ def do_send_ctrl(command):
+     split = command.split()
+     if not split:
+         console_output(b'Expected at least a letter\n')
+@@ -85,39 +86,40 @@ def do_send_ctrl(command):
              i.dispatch_write(control_letter.encode())
  
  
@@ -317,10 +287,7 @@ index b212a43..3786d43 100644
  
 -def do_reset_prompt(command):
 +def do_reset_prompt(command: str) -> None:
-     """
-     Usage: :reset_prompt [SHELLS...]
-     Change the prompt to be recognized by polysh.
-@@ -164,12 +164,12 @@ def do_reset_prompt(command):
+     for i in selected_shells(command):
          i.dispatch_command(i.init_string)
  
  
@@ -332,10 +299,6 @@ index b212a43..3786d43 100644
  
 -def do_enable(command):
 +def do_enable(command: str) -> None:
-     """
-     Usage: :enable [SHELLS...]
-     Enable sending commands to remote shells.
-@@ -181,12 +181,12 @@ def do_enable(command):
      toggle_shells(command, True)
  
  
@@ -346,11 +309,8 @@ index b212a43..3786d43 100644
  
  
 -def do_disable(command):
++
 +def do_disable(command: str) -> None:
-     """
-     Usage: :disable [SHELLS...]
-     Disable sending commands to remote shells.
-@@ -198,12 +198,12 @@ def do_disable(command):
      toggle_shells(command, False)
  
  
@@ -362,19 +322,15 @@ index b212a43..3786d43 100644
  
 -def do_reconnect(command):
 +def do_reconnect(command: str) -> None:
-     """
-     Usage: :reconnect [SHELLS...]
-     Try to reconnect to disconnected remote shells.
-@@ -220,7 +220,7 @@ def do_reconnect(command):
+     selec = selected_shells(command)
+     to_reconnect = [i for i in selec if i.state ==
+                     remote_dispatcher.STATE_DEAD]
+@@ -129,15 +131,15 @@ def do_reconnect(command):
      dispatchers.create_remote_dispatchers(hosts)
  
  
 -def do_add(command):
 +def do_add(command: str) -> None:
-     """
-     Usage: :add NAMES...
-     Add one or many remote shells.
-@@ -228,11 +228,11 @@ def do_add(command):
      dispatchers.create_remote_dispatchers(command.split())
  
  
@@ -385,28 +341,26 @@ index b212a43..3786d43 100644
  
 -def do_purge(command):
 +def do_purge(command: str) -> None:
-     """
-     Usage: :purge [SHELLS...]
-     Delete disabled remote shells.
-@@ -248,7 +248,7 @@ def do_purge(command):
+     to_delete = []
+     for i in selected_shells(command):
+         if not i.enabled:
+@@ -147,13 +149,13 @@ def do_purge(command):
          i.close()
  
  
 -def do_rename(command):
 +def do_rename(command: str) -> None:
-     """
-     Usage: :rename [NEW_NAME]
-     Rename all enabled remote shells with the argument.
-@@ -260,7 +260,7 @@ def do_rename(command):
+     for i in dispatchers.all_instances():
+         if i.enabled:
              i.rename(command.encode())
  
  
 -def do_hide_password(command):
 +def do_hide_password(command: str) -> None:
-     """
-     Usage: :hide_password
-     Do not echo the next typed line.
-@@ -283,7 +283,7 @@ def do_hide_password(command):
+     warned = False
+     for i in dispatchers.all_instances():
+         if i.enabled and i.debug:
+@@ -169,7 +171,7 @@ def do_hide_password(command):
          remote_dispatcher.options.log_file = None
  
  
@@ -415,33 +369,26 @@ index b212a43..3786d43 100644
      if len(line[:-1].split()) >= 2:
          # Debug value already given in command line
          return complete_shells(line, text)
-@@ -292,7 +292,7 @@ def complete_set_debug(line, text):
+@@ -178,8 +180,7 @@ def complete_set_debug(line, text):
      return ['y ', 'n ']
  
  
 -def do_set_debug(command):
-+def do_set_debug(command: str) -> None:
-     """
-     Usage: :set_debug y|n [SHELLS...]
-     Enable or disable debugging output for remote shells.
-@@ -301,7 +301,6 @@ def do_set_debug(command):
-     The remaining optional arguments are the selected shells.
-     The special characters * ? and [] work as expected.
-     """
 -    assert isinstance(command, str)
++def do_set_debug(command: str) -> None:
      split = command.split()
      if not split:
          console_output(b'Expected at least a letter\n')
-@@ -316,7 +315,7 @@ def do_set_debug(command):
+@@ -194,7 +195,7 @@ def do_set_debug(command):
          i.debug = debug
  
  
 -def do_export_vars(command):
 +def do_export_vars(command: str) -> None:
-     """
-     Usage: :export_vars
-     Export some environment variables on enabled remote shells.
-@@ -349,11 +348,11 @@ add_to_history('$POLYSH_RANK $POLYSH_NAME $POLYSH_DISPLAY_NAME')
+     rank = 0
+     for shell in dispatchers.all_instances():
+         if shell.enabled:
+@@ -218,11 +219,11 @@ add_to_history('$POLYSH_RANK $POLYSH_NAME $POLYSH_DISPLAY_NAME')
  add_to_history('$POLYSH_NR_SHELLS')
  
  
@@ -452,10 +399,10 @@ index b212a43..3786d43 100644
  
 -def do_set_log(command):
 +def do_set_log(command: str) -> None:
-     """
-     Usage: :set_log [LOCAL_PATH]
-     Duplicate every console I/O into the given local file.
-@@ -371,12 +370,12 @@ def do_set_log(command):
+     command = command.strip()
+     if command:
+         try:
+@@ -235,12 +236,12 @@ def do_set_log(command):
          console_output(b'Logging disabled\n')
  
  
@@ -467,23 +414,14 @@ index b212a43..3786d43 100644
  
 -def do_show_read_buffer(command):
 +def do_show_read_buffer(command: str) -> None:
-     """
-     Usage: :show_read_buffer [SHELLS...]
-     Print the data read by remote shells.
-@@ -388,7 +387,7 @@ def do_show_read_buffer(command):
-             i.read_in_state_not_started = b''
- 
- 
--def main():
-+def main() -> None:
-     """
-     Output a help text of each control command suitable for the man page
-     Run from the polysh top directory: python -m polysh.control_commands
+     for i in selected_shells(command):
+         if i.read_in_state_not_started:
+             i.print_lines(i.read_in_state_not_started)
 diff --git a/polysh/control_commands_helpers.py b/polysh/control_commands_helpers.py
-index c49b05f..8478a08 100644
+index 75bbc4b..d3b22c5 100644
 --- a/polysh/control_commands_helpers.py
 +++ b/polysh/control_commands_helpers.py
-@@ -19,6 +19,7 @@
+@@ -19,6 +19,7 @@ Copyright (c) 2018 InnoGames GmbH
  import os
  from fnmatch import fnmatch
  import readline
@@ -555,7 +493,7 @@ index c49b05f..8478a08 100644
      from polysh import control_commands
      if readline.get_begidx() == 0:
          # Completing control command name
-@@ -106,7 +109,7 @@ def complete_control_command(line, text):
+@@ -107,7 +110,7 @@ def complete_control_command(line, text):
      return matches
  
  
@@ -565,10 +503,10 @@ index c49b05f..8478a08 100644
          return
      cmd_name = line.split()[0]
 diff --git a/polysh/dispatchers.py b/polysh/dispatchers.py
-index b6577e5..345c06b 100644
+index 7f17bba..873645b 100644
 --- a/polysh/dispatchers.py
 +++ b/polysh/dispatchers.py
-@@ -21,20 +21,22 @@ import fcntl
+@@ -21,6 +21,8 @@ import fcntl
  import struct
  import sys
  import termios
@@ -577,7 +515,8 @@ index b6577e5..345c06b 100644
  
  from polysh import remote_dispatcher
  from polysh import display_names
- from polysh.terminal_size import terminal_size
+@@ -36,14 +38,14 @@ def _split_port(hostname):
+         return s[0], '22'
  
  
 -def all_instances():
@@ -593,7 +532,7 @@ index b6577e5..345c06b 100644
      """Return a tuple with the number of awaited processes and the total
      number"""
      awaited = 0
-@@ -47,7 +49,7 @@ def count_awaited_processes():
+@@ -56,7 +58,7 @@ def count_awaited_processes():
      return awaited, total
  
  
@@ -602,7 +541,7 @@ index b6577e5..345c06b 100644
      """For each remote shell determine if its terminated"""
      instances_found = False
      for i in all_instances():
-@@ -58,7 +60,7 @@ def all_terminated():
+@@ -67,7 +69,7 @@ def all_terminated():
      return instances_found
  
  
@@ -611,7 +550,7 @@ index b6577e5..345c06b 100644
      """Propagate the terminal size to the remote shells accounting for the
      place taken by the longest name"""
      w, h = terminal_size()
-@@ -74,10 +76,9 @@ def update_terminal_size():
+@@ -83,10 +85,9 @@ def update_terminal_size():
              fcntl.ioctl(i.fd, bug, packed_size)
  
  
@@ -625,7 +564,7 @@ index b6577e5..345c06b 100644
      max_lengths = []
      if info_list:
          nr_columns = len(info_list[0])
-@@ -86,7 +87,7 @@ def format_info(info_list):
+@@ -95,7 +96,7 @@ def format_info(info_list):
      for i in range(nr_columns):
          max_lengths.append(max([len(info[i]) for info in info_list]))
  
@@ -634,7 +573,7 @@ index b6577e5..345c06b 100644
      for info_id in range(len(info_list)):
          info = info_list[info_id]
          for str_id in range(len(info) - 1):
-@@ -100,7 +101,7 @@ def format_info(info_list):
+@@ -109,7 +110,7 @@ def format_info(info_list):
      return flattened_info_list
  
  
@@ -644,11 +583,11 @@ index b6577e5..345c06b 100644
      for i, host in enumerate(hosts):
          if remote_dispatcher.options.interactive:
 diff --git a/polysh/display_names.py b/polysh/display_names.py
-index 8b2dcef..1ddc3cf 100644
+index 55ce46a..393bc0b 100644
 --- a/polysh/display_names.py
 +++ b/polysh/display_names.py
-@@ -17,9 +17,9 @@
- # Copyright (c) 2008 Guillaume Chazarain <guichaz@gmail.com>
+@@ -17,9 +17,9 @@ Copyright (c) 2018 InnoGames GmbH
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
  from polysh.rb_tree import RBTree
 +from typing import Optional, Dict
@@ -735,11 +674,11 @@ index 8b2dcef..1ddc3cf 100644
      node = NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.findNode(length)
      if enabled:
 diff --git a/polysh/host_syntax.py b/polysh/host_syntax.py
-index 8599336..9e6bc29 100644
+index 4dfc9d3..2981897 100644
 --- a/polysh/host_syntax.py
 +++ b/polysh/host_syntax.py
-@@ -17,6 +17,8 @@
- # Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
+@@ -17,6 +17,8 @@ Copyright (c) 2018 InnoGames GmbH
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
  import re
 +from typing import Iterator
@@ -747,16 +686,16 @@ index 8599336..9e6bc29 100644
  
  # Currently the only expansion is <START_NUMBER-END_NUMBER>
  # <1-10> => 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-@@ -30,7 +32,7 @@ syntax_pattern = re.compile('<([0-9,-]+)>')
- interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
- 
+@@ -36,7 +38,7 @@ def _split_port(hostname):
+     else:
+         return s[0], '22'
  
 -def _iter_numbers(start, end):
 +def _iter_numbers(start: str, end: str) -> Iterator[str]:
      int_start = int(start)
      int_end = int(end)
      if int_start < int_end:
-@@ -48,7 +50,7 @@ def _iter_numbers(start, end):
+@@ -54,7 +56,7 @@ def _iter_numbers(start, end):
          yield s
  
  
@@ -766,7 +705,7 @@ index 8599336..9e6bc29 100644
      match = syntax_pattern.search(string)
      if match:
 diff --git a/polysh/main.py b/polysh/main.py
-index 3ac9098..796ce3c 100644
+index 6fc4fae..585189e 100644
 --- a/polysh/main.py
 +++ b/polysh/main.py
 @@ -26,6 +26,7 @@ import signal
@@ -777,8 +716,8 @@ index 3ac9098..796ce3c 100644
  
  from polysh import remote_dispatcher
  from polysh import dispatchers
-@@ -35,7 +36,7 @@ from polysh.host_syntax import expand_syntax
- from polysh import control_commands
+@@ -36,7 +37,7 @@ from polysh import control_commands
+ from polysh import VERSION
  
  
 -def kill_all():
@@ -786,16 +725,16 @@ index 3ac9098..796ce3c 100644
      """When polysh quits, we kill all the remote shells we started"""
      for i in dispatchers.all_instances():
          try:
-@@ -45,7 +46,7 @@ def kill_all():
+@@ -46,7 +47,7 @@ def kill_all():
              pass
  
  
 -def parse_cmdline():
 +def parse_cmdline() -> argparse.Namespace:
      usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
-             'Control commands are prefixed by ":". Use :help for the list'
+             'Control commands are prefixed by ":".'
      parser = argparse.ArgumentParser(usage)
-@@ -120,7 +121,7 @@ def parse_cmdline():
+@@ -121,7 +122,7 @@ def parse_cmdline():
      return args
  
  
@@ -804,7 +743,7 @@ index 3ac9098..796ce3c 100644
      if sys.stdin.isatty():
          return command
  
-@@ -135,7 +136,7 @@ def find_non_interactive_command(command):
+@@ -137,7 +138,7 @@ def find_non_interactive_command(command):
      return command or stdin
  
  
@@ -813,7 +752,7 @@ index 3ac9098..796ce3c 100644
      if hasattr(readline, "read_history_file"):
          try:
              readline.read_history_file(histfile)
-@@ -143,12 +144,12 @@ def init_history(histfile):
+@@ -145,12 +146,12 @@ def init_history(histfile):
              pass
  
  
@@ -823,12 +762,12 @@ index 3ac9098..796ce3c 100644
      readline.write_history_file(histfile)
  
  
--def main_loop(interactive):
-+def main_loop(interactive: bool) -> None:
+-def loop(interactive):
++def loop(interactive: bool) -> None:
      histfile = os.path.expanduser("~/.polysh_history")
      init_history(histfile)
      next_signal = None
-@@ -195,7 +196,7 @@ def main_loop(interactive):
+@@ -197,7 +198,7 @@ def loop(interactive):
              sys.exit(e.args[0])
  
  
@@ -837,7 +776,7 @@ index 3ac9098..796ce3c 100644
      prof_file = 'polysh.prof'
      import cProfile
      import pstats
-@@ -209,13 +210,13 @@ def _profile(continuation):
+@@ -211,13 +212,13 @@ def _profile(continuation):
      os.remove(prof_file)
  
  
@@ -848,12 +787,12 @@ index 3ac9098..796ce3c 100644
      atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
  
  
--def main():
-+def main() -> None:
+-def run():
++def run() -> None:
      """Launch polysh"""
      locale.setlocale(locale.LC_ALL, '')
      atexit.register(kill_all)
-@@ -234,7 +235,7 @@ def main():
+@@ -236,7 +237,7 @@ def run():
  
      remote_dispatcher.options = args
  
@@ -862,28 +801,28 @@ index 3ac9098..796ce3c 100644
      for host in args.host_names:
          hosts.extend(expand_syntax(host))
  
-@@ -246,7 +247,7 @@ def main():
+@@ -248,7 +249,7 @@ def run():
      stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
  
      if args.profile:
--        def safe_main_loop():
-+        def safe_main_loop() -> None:
+-        def safe_loop():
++        def safe_loop() -> None:
              try:
-                 main_loop(args.interactive)
+                 loop(args.interactive)
              except BaseException:
 diff --git a/polysh/rb_tree.py b/polysh/rb_tree.py
-index aa6733e..36400a6 100644
+index 2a3644f..8120989 100644
 --- a/polysh/rb_tree.py
 +++ b/polysh/rb_tree.py
-@@ -27,6 +27,7 @@
+@@ -42,26 +42,32 @@ Copyright (c) 2018 InnoGames GmbH
+ 
  __version__ = "1.5-polysh"
  
- import string
 +from typing import Optional
- 
++
  BLACK = 0
  RED = 1
-@@ -34,20 +35,24 @@ RED = 1
+ 
  
  class RBNode(object):
  
@@ -912,7 +851,7 @@ index aa6733e..36400a6 100644
          self.sentinel = RBNode()
          self.sentinel.left = self.sentinel.right = self.sentinel
          self.sentinel.color = BLACK
-@@ -55,10 +60,10 @@ class RBTree(object):
+@@ -69,10 +75,10 @@ class RBTree(object):
          self.root = self.sentinel
          self.count = 0
  
@@ -925,7 +864,7 @@ index aa6733e..36400a6 100644
  
          y = x.right
  
-@@ -83,7 +88,7 @@ class RBTree(object):
+@@ -97,7 +103,7 @@ class RBTree(object):
          if x != self.sentinel:
              x.parent = y
  
@@ -934,7 +873,7 @@ index aa6733e..36400a6 100644
  
          #***************************
          #  rotate node x to right
-@@ -112,7 +117,7 @@ class RBTree(object):
+@@ -126,7 +132,7 @@ class RBTree(object):
          if x != self.sentinel:
              x.parent = y
  
@@ -943,7 +882,7 @@ index aa6733e..36400a6 100644
          #************************************
          #  maintain Red-Black tree balance  *
          #  after inserting node x           *
-@@ -171,7 +176,7 @@ class RBTree(object):
+@@ -185,7 +191,7 @@ class RBTree(object):
  
          self.root.color = BLACK
  
@@ -952,7 +891,7 @@ index aa6733e..36400a6 100644
          #**********************************************
          #  allocate node for data and insert in tree  *
          #**********************************************
-@@ -211,7 +216,7 @@ class RBTree(object):
+@@ -225,7 +231,7 @@ class RBTree(object):
          self.insertFixup(x)
          return x
  
@@ -961,7 +900,7 @@ index aa6733e..36400a6 100644
          #************************************
          #  maintain Red-Black tree balance  *
          #  after deleting node x            *
-@@ -268,7 +273,7 @@ class RBTree(object):
+@@ -282,7 +288,7 @@ class RBTree(object):
  
          x.color = BLACK
  
@@ -970,7 +909,7 @@ index aa6733e..36400a6 100644
          #****************************
          #  delete node z from tree  *
          #****************************
-@@ -311,7 +316,7 @@ class RBTree(object):
+@@ -325,7 +331,7 @@ class RBTree(object):
          del y
          self.count = self.count - 1
  
@@ -979,7 +918,7 @@ index aa6733e..36400a6 100644
          #******************************
          #  find node containing data
          #******************************
-@@ -333,13 +338,13 @@ class RBTree(object):
+@@ -347,13 +353,13 @@ class RBTree(object):
  
          return None
  
@@ -996,18 +935,18 @@ index aa6733e..36400a6 100644
          while cur.right:
              cur = cur.right
 diff --git a/polysh/remote_dispatcher.py b/polysh/remote_dispatcher.py
-index 607baff..7477b3c 100644
+index 1b28fb6..257bc7c 100644
 --- a/polysh/remote_dispatcher.py
 +++ b/polysh/remote_dispatcher.py
-@@ -25,6 +25,7 @@ import termios
+@@ -24,6 +24,7 @@ import sys
+ import termios
  import select
  import platform
- from argparse import Namespace
 +from typing import Optional, List
  
  from polysh.buffered_dispatcher import BufferedDispatcher
  from polysh import callbacks
-@@ -49,7 +50,7 @@ COLORS = [1] + list(range(30, 37))
+@@ -48,7 +49,7 @@ COLORS = [1] + list(range(30, 37))
  nr_handle_read = 0
  
  
@@ -1016,7 +955,7 @@ index 607baff..7477b3c 100644
      """Return the number of RemoteDispatcher.handle_read() calls made by this
      iteration"""
      prev_nr_read = nr_handle_read
-@@ -57,8 +58,7 @@ def main_loop_iteration(timeout=None):
+@@ -56,8 +57,7 @@ def main_loop_iteration(timeout=None):
      return nr_handle_read - prev_nr_read
  
  
@@ -1026,17 +965,19 @@ index 607baff..7477b3c 100644
      if options.log_file:
          fd = options.log_file.fileno()
          while msg:
-@@ -74,8 +74,7 @@ def log(msg):
+@@ -73,10 +73,7 @@ def log(msg):
  class RemoteDispatcher(BufferedDispatcher):
      """A RemoteDispatcher is a ssh process we communicate with"""
  
--    def __init__(self, hostname):
+-    def __init__(self, hostname, port):
 -        assert isinstance(hostname, str)
-+    def __init__(self, hostname: str) -> None:
-         self.pid, fd = pty.fork()
-         if self.pid == 0:
-             # Child
-@@ -90,7 +89,7 @@ class RemoteDispatcher(BufferedDispatcher):
+-        assert isinstance(port, str)
+-
++    def __init__(self, hostname: str, port: str) -> None:
+         if port != "22":
+             port = "-p " + port
+         else:
+@@ -97,7 +94,7 @@ class RemoteDispatcher(BufferedDispatcher):
          self.enabled = True  # shells can be enabled and disabled
          self.state = STATE_NOT_STARTED
          self.term_size = (-1, -1)
@@ -1045,16 +986,16 @@ index 607baff..7477b3c 100644
          self.change_name(self.hostname.encode())
          self.init_string = self.configure_tty() + self.set_prompt()
          self.init_string_sent = False
-@@ -103,7 +102,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -110,7 +107,7 @@ class RemoteDispatcher(BufferedDispatcher):
          else:
              self.color_code = None
  
--    def launch_ssh(self, name):
-+    def launch_ssh(self, name: str) -> None:
+-    def launch_ssh(self, name, port):
++    def launch_ssh(self, name: str, port: str) -> None:
          """Launch the ssh command in the child process"""
          if options.user:
              name = '%s@%s' % (options.user, name)
-@@ -112,7 +111,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -119,7 +116,7 @@ class RemoteDispatcher(BufferedDispatcher):
              evaluated = '%s %s' % (evaluated, name)
          os.execlp('/bin/sh', 'sh', '-c', evaluated)
  
@@ -1063,7 +1004,7 @@ index 607baff..7477b3c 100644
          if enabled != self.enabled and options.interactive:
              # In non-interactive mode, remote processes leave as soon
              # as they are terminated, but we don't want to break the
-@@ -120,7 +119,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -127,7 +124,7 @@ class RemoteDispatcher(BufferedDispatcher):
              display_names.set_enabled(self.display_name, enabled)
          self.enabled = enabled
  
@@ -1072,7 +1013,7 @@ index 607baff..7477b3c 100644
          """Change the state of the remote process, logging the change"""
          if state is not self.state:
              if self.debug:
-@@ -129,7 +128,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -136,7 +133,7 @@ class RemoteDispatcher(BufferedDispatcher):
                  self.read_in_state_not_started = b''
              self.state = state
  
@@ -1081,7 +1022,7 @@ index 607baff..7477b3c 100644
          """We are no more interested in this remote process"""
          try:
              os.kill(-self.pid, signal.SIGKILL)
-@@ -146,7 +145,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -153,7 +150,7 @@ class RemoteDispatcher(BufferedDispatcher):
              raise asyncore.ExitNow(1)
          self.change_state(STATE_DEAD)
  
@@ -1090,7 +1031,7 @@ index 607baff..7477b3c 100644
          """We don't want \n to be replaced with \r\n, and we disable the echo"""
          attr = termios.tcgetattr(self.fd)
          attr[1] &= ~termios.ONLCR  # oflag
-@@ -155,7 +154,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -162,7 +159,7 @@ class RemoteDispatcher(BufferedDispatcher):
          # unsetopt zle prevents Zsh from resetting the tty
          return b'unsetopt zle 2> /dev/null;stty -echo -onlcr -ctlecho;'
  
@@ -1099,7 +1040,7 @@ index 607baff..7477b3c 100644
          if options.interactive:
              self.change_state(STATE_IDLE)
          elif self.command:
-@@ -165,7 +164,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -172,7 +169,7 @@ class RemoteDispatcher(BufferedDispatcher):
              self.dispatch_command(b'exit 2>/dev/null\n')
              self.command = None
  
@@ -1108,7 +1049,7 @@ index 607baff..7477b3c 100644
          """The prompt is important because we detect the readyness of a process
          by waiting for its prompt."""
          # No right prompt
-@@ -177,13 +176,13 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -184,13 +181,13 @@ class RemoteDispatcher(BufferedDispatcher):
          command_line += b'PS1="' + prompt1 + b'""' + prompt2 + b'\n"\n'
          return command_line
  
@@ -1124,7 +1065,7 @@ index 607baff..7477b3c 100644
          # Dirty hack to ignore POLLPRI flag that is raised on Mac OS, but not
          # on linux. asyncore calls this method in case POLLPRI flag is set, but
          # self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR) == 0
-@@ -192,7 +191,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -199,7 +196,7 @@ class RemoteDispatcher(BufferedDispatcher):
  
          self.handle_close()
  
@@ -1133,7 +1074,7 @@ index 607baff..7477b3c 100644
          if self.state is STATE_DEAD:
              # This connection has already been killed. Asyncore has probably
              # called handle_close() or handle_expt() on this connection twice.
-@@ -208,8 +207,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -215,8 +212,7 @@ class RemoteDispatcher(BufferedDispatcher):
          if self.temporary:
              self.close()
  
@@ -1143,7 +1084,7 @@ index 607baff..7477b3c 100644
          from polysh.display_names import max_display_name_length
          lines = lines.strip(b'\n')
          while True:
-@@ -233,7 +231,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -240,7 +236,7 @@ class RemoteDispatcher(BufferedDispatcher):
          console_output(console_data, logging_msg=log_data)
          self.last_printed_line = lines[lines.rfind(b'\n') + 1:]
  
@@ -1152,7 +1093,7 @@ index 607baff..7477b3c 100644
          """If we are in a fast case we'll avoid the long processing of each
          line"""
          if self.state is not STATE_RUNNING or callbacks.any_in(data):
-@@ -248,7 +246,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -255,7 +251,7 @@ class RemoteDispatcher(BufferedDispatcher):
          self.print_lines(data[:last_nl])
          return True
  
@@ -1161,7 +1102,7 @@ index 607baff..7477b3c 100644
          """We got some output from a remote shell, this is one of the state
          machine"""
          if self.state == STATE_DEAD:
-@@ -302,19 +300,19 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -309,19 +305,19 @@ class RemoteDispatcher(BufferedDispatcher):
              self.dispatch_write(self.init_string)
              self.init_string_sent = True
  
@@ -1184,7 +1125,7 @@ index 607baff..7477b3c 100644
          """Let's write as much as we can"""
          num_sent = self.send(self.write_buffer)
          if self.debug:
-@@ -322,32 +320,31 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -329,32 +325,31 @@ class RemoteDispatcher(BufferedDispatcher):
                  self.print_debug(b'<== ' + self.write_buffer[:num_sent])
          self.write_buffer = self.write_buffer[num_sent:]
  
@@ -1222,7 +1163,7 @@ index 607baff..7477b3c 100644
          """Change the name of the shell, possibly updating the maximum name
          length"""
          if not new_name:
-@@ -357,7 +354,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -364,7 +359,7 @@ class RemoteDispatcher(BufferedDispatcher):
          self.display_name = display_names.change(
              self.display_name, name)
  
@@ -1231,7 +1172,7 @@ index 607baff..7477b3c 100644
          """Send to the remote shell, its new name to be shell expanded"""
          if name:
              # defug callback add?
-@@ -368,6 +365,6 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -375,6 +370,6 @@ class RemoteDispatcher(BufferedDispatcher):
          else:
              self.change_name(self.hostname.encode())
  
@@ -1240,7 +1181,7 @@ index 607baff..7477b3c 100644
          display_names.change(self.display_name, None)
          super().close()
 diff --git a/polysh/stdin.py b/polysh/stdin.py
-index 7561bdd..fcfa96a 100644
+index 984f0b4..6933d07 100644
 --- a/polysh/stdin.py
 +++ b/polysh/stdin.py
 @@ -31,6 +31,7 @@ from threading import Thread, Event, Lock
@@ -1385,10 +1326,10 @@ index 7561bdd..fcfa96a 100644
              self.raw_input_wanted.wait()
              self.out_of_raw_input.set()
 diff --git a/polysh/terminal_size.py b/polysh/terminal_size.py
-index c5ea931..283f5d6 100644
+index 0f181a0..662904b 100644
 --- a/polysh/terminal_size.py
 +++ b/polysh/terminal_size.py
-@@ -14,20 +14,21 @@
+@@ -32,20 +32,21 @@ Copyright (c) 2018 InnoGames GmbH
  
  
  import os
@@ -1414,7 +1355,7 @@ index c5ea931..283f5d6 100644
      """Return (lines, columns)."""
      cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(
          1) or _ioctl_GWINSZ(2)  # try open fds
-@@ -40,7 +41,7 @@ def terminal_size():  # decide on *some* terminal size
+@@ -58,7 +59,7 @@ def terminal_size():  # decide on *some* terminal size
              pass
          if not cr:                            # env vars or finally defaults
              try:
