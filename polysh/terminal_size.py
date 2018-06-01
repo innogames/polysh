@@ -32,20 +32,21 @@ Copyright (c) 2018 InnoGames GmbH
 
 
 import os
+from typing import Tuple, Optional
 
 
-def _ioctl_GWINSZ(fd):  # TABULATION FUNCTIONS
+def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
     try:  # Discover terminal width
         import fcntl
         import termios
         import struct
         cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, b'1234'))
     except BaseException:
-        return
-    return cr
+        return None
+    return int(cr[0]), int(cr[1])
 
 
-def terminal_size():  # decide on *some* terminal size
+def terminal_size() -> Tuple[int, int]:  # decide on *some* terminal size
     """Return (lines, columns)."""
     cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(
         1) or _ioctl_GWINSZ(2)  # try open fds
@@ -58,7 +59,7 @@ def terminal_size():  # decide on *some* terminal size
             pass
         if not cr:                            # env vars or finally defaults
             try:
-                cr = os.environ['LINES'], os.environ['COLUMNS']
+                cr = int(os.environ['LINES']), int(os.environ['COLUMNS'])
             except BaseException:
                 cr = 25, 80
-    return int(cr[1]), int(cr[0])         # reverse rows, cols
+    return cr[1], cr[0]         # reverse rows, cols

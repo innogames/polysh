@@ -26,6 +26,7 @@ import signal
 import sys
 import termios
 import readline
+from typing import Callable, List
 
 from polysh import remote_dispatcher
 from polysh import dispatchers
@@ -36,7 +37,7 @@ from polysh import control_commands
 from polysh import VERSION
 
 
-def kill_all():
+def kill_all() -> None:
     """When polysh quits, we kill all the remote shells we started"""
     for i in dispatchers.all_instances():
         try:
@@ -46,7 +47,7 @@ def kill_all():
             pass
 
 
-def parse_cmdline():
+def parse_cmdline() -> argparse.Namespace:
     usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
             'Control commands are prefixed by ":".'
     parser = argparse.ArgumentParser(usage)
@@ -121,7 +122,7 @@ def parse_cmdline():
     return args
 
 
-def find_non_interactive_command(command):
+def find_non_interactive_command(command: str) -> str:
     if sys.stdin.isatty():
         return command
 
@@ -137,7 +138,7 @@ def find_non_interactive_command(command):
     return command or stdin
 
 
-def init_history(histfile):
+def init_history(histfile: str) -> None:
     if hasattr(readline, "read_history_file"):
         try:
             readline.read_history_file(histfile)
@@ -145,12 +146,12 @@ def init_history(histfile):
             pass
 
 
-def save_history(histfile):
+def save_history(histfile: str) -> None:
     readline.set_history_length(1000)
     readline.write_history_file(histfile)
 
 
-def loop(interactive):
+def loop(interactive: bool) -> None:
     histfile = os.path.expanduser("~/.polysh_history")
     init_history(histfile)
     next_signal = None
@@ -197,7 +198,7 @@ def loop(interactive):
             sys.exit(e.args[0])
 
 
-def _profile(continuation):
+def _profile(continuation: Callable) -> None:
     prof_file = 'polysh.prof'
     import cProfile
     import pstats
@@ -211,13 +212,13 @@ def _profile(continuation):
     os.remove(prof_file)
 
 
-def restore_tty_on_exit():
+def restore_tty_on_exit() -> None:
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
 
 
-def run():
+def run() -> None:
     """Launch polysh"""
     locale.setlocale(locale.LC_ALL, '')
     atexit.register(kill_all)
@@ -236,7 +237,7 @@ def run():
 
     remote_dispatcher.options = args
 
-    hosts = []
+    hosts = []  # type: List[str]
     for host in args.host_names:
         hosts.extend(expand_syntax(host))
 
@@ -248,7 +249,7 @@ def run():
     stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
 
     if args.profile:
-        def safe_loop():
+        def safe_loop() -> None:
             try:
                 loop(args.interactive)
             except BaseException:

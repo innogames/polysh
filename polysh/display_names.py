@@ -17,9 +17,9 @@ Copyright (c) 2018 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from polysh.rb_tree import RBTree
+from typing import Optional, Dict
 
-# {'prefix': <DisplayNamePrefix object>}
-PREFIXES = {}
+PREFIXES = {}  # type: Dict[str, 'DisplayNamePrefix']
 
 # Red/black tree with key:len(display_name) value:nr of enabled shells with a
 # display_name of such a length
@@ -30,11 +30,11 @@ max_display_name_length = 0
 
 
 class DisplayNamePrefix(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.next_suffix = 0
         self.holes = RBTree()
 
-    def new_suffix(self):
+    def new_suffix(self) -> int:
         if len(self.holes) == 0:
             suffix = self.next_suffix
             self.next_suffix += 1
@@ -44,7 +44,7 @@ class DisplayNamePrefix(object):
             self.holes.deleteNode(first_node)
         return suffix
 
-    def putback_suffix(self, suffix):
+    def putback_suffix(self, suffix: int) -> None:
         if suffix + 1 != self.next_suffix:
             self.holes.insertNode(suffix, suffix)
             return
@@ -58,11 +58,11 @@ class DisplayNamePrefix(object):
             self.holes.deleteNode(prev_suffix_node)
             self.next_suffix = prev_suffix
 
-    def empty(self):
+    def empty(self) -> bool:
         return self.next_suffix == 0
 
 
-def make_unique_name(prefix):
+def make_unique_name(prefix: str) -> str:
     prefix_obj = PREFIXES.get(prefix, None)
     if prefix_obj is None:
         prefix_obj = DisplayNamePrefix()
@@ -77,7 +77,7 @@ def make_unique_name(prefix):
     return name
 
 
-def update_max_display_name_length():
+def update_max_display_name_length() -> None:
     from polysh import dispatchers
     if len(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH) == 0:
         new_max = 0
@@ -89,9 +89,7 @@ def update_max_display_name_length():
         dispatchers.update_terminal_size()
 
 
-def change(prev_display_name, new_prefix):
-    assert isinstance(prev_display_name, str) or prev_display_name is None
-    assert isinstance(new_prefix, str) or new_prefix is None
+def change(prev_display_name: Optional[str], new_prefix: Optional[str]) -> str:
     if new_prefix and '#' in new_prefix:
         raise Exception('Names cannot contain #')
 
@@ -109,7 +107,7 @@ def change(prev_display_name, new_prefix):
         if prefix_obj.empty():
             del PREFIXES[prev_prefix]
         if new_prefix is None:
-            return
+            return None
 
     name = make_unique_name(new_prefix)
     set_enabled(name, True)
@@ -117,7 +115,7 @@ def change(prev_display_name, new_prefix):
     return name
 
 
-def set_enabled(display_name, enabled):
+def set_enabled(display_name: str, enabled: bool) -> None:
     length = len(display_name)
     node = NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.findNode(length)
     if enabled:

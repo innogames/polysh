@@ -31,6 +31,7 @@ from threading import Thread, Event, Lock
 from polysh import dispatchers, remote_dispatcher
 from polysh.console import console_output, set_last_status_length
 from polysh import completion
+from typing import Optional
 
 the_stdin_thread = None  # type: StdinThread
 
@@ -38,17 +39,16 @@ the_stdin_thread = None  # type: StdinThread
 class InputBuffer(object):
     """The shared input buffer between the main thread and the stdin thread"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.lock = Lock()
         self.buf = b''
 
-    def add(self, data):
+    def add(self, data: bytes) -> None:
         """Add data to the buffer"""
-        assert isinstance(data, bytes)
         with self.lock:
             self.buf += data
 
-    def get(self):
+    def get(self) -> bytes:
         """Get the content of the buffer"""
         data = b''
         with self.lock:
@@ -57,7 +57,7 @@ class InputBuffer(object):
         return data
 
 
-def process_input_buffer():
+def process_input_buffer() -> None:
     """Send the content of the input buffer to all remote processes, this must
     be called in the main thread"""
     from polysh.control_commands_helpers import handle_control_command
@@ -115,17 +115,16 @@ def process_input_buffer():
 class SocketNotificationReader(asyncore.dispatcher):
     """The socket reader in the main thread"""
 
-    def __init__(self, the_stdin_thread):
+    def __init__(self, the_stdin_thread: 'StdinThread') -> None:
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
-    def _do(self, c):
-        assert isinstance(c, bytes)
+    def _do(self, c: bytes) -> None:
         if c == b'd':
             process_input_buffer()
         else:
             raise Exception('Unknown code: %s' % (c))
 
-    def handle_read(self):
+    def handle_read(self) -> None:
         """Handle all the available character commands in the socket"""
         while True:
             try:
@@ -141,12 +140,12 @@ class SocketNotificationReader(asyncore.dispatcher):
                 self.send(b'A')
                 self.socket.setblocking(False)
 
-    def writable(self):
+    def writable(self) -> bool:
         """Our writes are blocking"""
         return False
 
 
-def write_main_socket(c):
+def write_main_socket(c: bytes) -> None:
     """Synchronous write to the main socket, wait for ACK"""
     the_stdin_thread.socket_write.send(c)
     while True:
@@ -169,7 +168,7 @@ os.remove(tempfile_name)
 os.write(tempfile_fd, b'\x03')
 
 
-def get_stdin_pid(cached_result=None):
+def get_stdin_pid(cached_result: Optional[int]=None) -> int:
     """Try to get the PID of the stdin thread, otherwise get the whole process
     ID"""
     if cached_result is None:
@@ -186,7 +185,7 @@ def get_stdin_pid(cached_result=None):
     return cached_result
 
 
-def interrupt_stdin_thread():
+def interrupt_stdin_thread() -> None:
     """The stdin thread may be in raw_input(), get out of it"""
     dupped_stdin = os.dup(0)  # Backup the stdin fd
     assert not the_stdin_thread.interrupt_asked  # Sanity check
@@ -204,7 +203,7 @@ def interrupt_stdin_thread():
 echo_enabled = True
 
 
-def set_echo(echo):
+def set_echo(echo: bool) -> None:
     global echo_enabled
     if echo != echo_enabled:
         fd = sys.stdin.fileno()
@@ -220,7 +219,7 @@ def set_echo(echo):
 class StdinThread(Thread):
     """The stdin thread, used to call raw_input()"""
 
-    def __init__(self, interactive):
+    def __init__(self, interactive: bool) -> None:
         Thread.__init__(self, name='stdin thread')
         completion.install_completion_handler()
         self.input_buffer = InputBuffer()
@@ -239,13 +238,13 @@ class StdinThread(Thread):
             self.prepend_text = None  # type: Optional[str]
             readline.set_pre_input_hook(self.prepend_previous_text)
 
-    def prepend_previous_text(self):
+    def prepend_previous_text(self) -> None:
         if self.prepend_text:
             readline.insert_text(self.prepend_text)
             readline.redisplay()
             self.prepend_text = None
 
-    def want_raw_input(self):
+    def want_raw_input(self) -> None:
         nr, total = dispatchers.count_awaited_processes()
         if nr:
             prompt = 'waiting (%d/%d)> ' % (nr, total)
@@ -259,12 +258,12 @@ class StdinThread(Thread):
             self.in_raw_input.wait(0.1)
         self.raw_input_wanted.clear()
 
-    def no_raw_input(self):
+    def no_raw_input(self) -> None:
         if not self.out_of_raw_input.is_set():
             interrupt_stdin_thread()
 
     # Beware of races
-    def run(self):
+    def run(self) -> None:
         while True:
             self.raw_input_wanted.wait()
             self.out_of_raw_input.set()
