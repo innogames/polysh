@@ -50,24 +50,23 @@ RED = 1
 
 class RBNode(object):
 
-    def __init__(
-            self,
-            key: Optional[int]=None,
-            value: Optional[int]=None,
-            color: int=RED) -> None:
+    def __init__(self, key=None, value=None, color=RED):
+        # type: (Optional[int], Optional[int], int) -> None
         self.left = self.right = self.parent = None  # type: Optional[RBNode]
         self.color = color
         self.key = key
         self.value = value
         self.nonzero = True
 
-    def __bool__(self) -> bool:
+    def __bool__(self):
+        # type: () -> bool
         return self.nonzero
 
 
 class RBTree(object):
 
-    def __init__(self) -> None:
+    def __init__(self):
+        # type: () -> None
         self.sentinel = RBNode()
         self.sentinel.left = self.sentinel.right = self.sentinel
         self.sentinel.color = BLACK
@@ -75,10 +74,12 @@ class RBTree(object):
         self.root = self.sentinel
         self.count = 0
 
-    def __len__(self) -> int:
+    def __len__(self):
+        # type: () -> int
         return self.count
 
-    def rotateLeft(self, x: RBNode) -> None:
+    def rotateLeft(self, x):
+        # type: (RBNode) -> None
 
         y = x.right
 
@@ -103,7 +104,8 @@ class RBTree(object):
         if x != self.sentinel:
             x.parent = y
 
-    def rotateRight(self, x: RBNode) -> None:
+    def rotateRight(self, x):
+        # type: (RBNode) -> None
 
         #***************************
         #  rotate node x to right
@@ -132,7 +134,8 @@ class RBTree(object):
         if x != self.sentinel:
             x.parent = y
 
-    def insertFixup(self, x: RBNode) -> None:
+    def insertFixup(self, x):
+        # type: (RBNode) -> None
         #************************************
         #  maintain Red-Black tree balance  *
         #  after inserting node x           *
@@ -191,7 +194,8 @@ class RBTree(object):
 
         self.root.color = BLACK
 
-    def insertNode(self, key: int, value: int) -> RBNode:
+    def insertNode(self, key, value):
+        # type: (int, int) -> RBNode
         #**********************************************
         #  allocate node for data and insert in tree  *
         #**********************************************
@@ -231,7 +235,8 @@ class RBTree(object):
         self.insertFixup(x)
         return x
 
-    def deleteFixup(self, x: RBNode) -> None:
+    def deleteFixup(self, x):
+        # type: (RBNode) -> None
         #************************************
         #  maintain Red-Black tree balance  *
         #  after deleting node x            *
@@ -288,7 +293,8 @@ class RBTree(object):
 
         x.color = BLACK
 
-    def deleteNode(self, z: RBNode) -> None:
+    def deleteNode(self, z):
+        # type: (RBNode) -> None
         #****************************
         #  delete node z from tree  *
         #****************************
@@ -331,7 +337,8 @@ class RBTree(object):
         del y
         self.count = self.count - 1
 
-    def findNode(self, key: int) -> Optional[RBNode]:
+    def findNode(self, key):
+        # type: (int) -> Optional[RBNode]
         #******************************
         #  find node containing data
         #******************************
@@ -353,13 +360,15 @@ class RBTree(object):
 
         return None
 
-    def firstNode(self) -> RBNode:
+    def firstNode(self):
+        # type: () -> RBNode
         cur = self.root
         while cur.left:
             cur = cur.left
         return cur
 
-    def lastNode(self) -> RBNode:
+    def lastNode(self):
+        # type: () -> RBNode
         cur = self.root
         while cur.right:
             cur = cur.right

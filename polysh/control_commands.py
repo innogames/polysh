@@ -36,32 +36,38 @@ from polysh import remote_dispatcher
 from polysh import stdin
 
 
-def complete_list(line: str, text: str) -> List[str]:
+def complete_list(line, text):
+    # type: (str, str) -> List[str]
     return complete_shells(line, text)
 
 
-def do_list(command: str) -> None:
+def do_list(command):
+    # type: (str) -> None
     instances = [i.get_info() for i in selected_shells(command)]
     flat_instances = dispatchers.format_info(instances)
     console_output(b''.join(flat_instances))
 
 
-def do_quit(command: str) -> None:
+def do_quit(command):
+    # type: (str) -> None
     raise asyncore.ExitNow(0)
 
 
-def complete_chdir(line: str, text: str) -> List[bool]:
+def complete_chdir(line, text):
+    # type: (str, str) -> List[bool]
     return list(filter(os.path.isdir, complete_local_path(text)))
 
 
-def do_chdir(command: str) -> None:
+def do_chdir(command):
+    # type: (str) -> None
     try:
         os.chdir(expand_local_path(command.strip()))
     except OSError as e:
         console_output('{}\n'.format(str(e)).encode())
 
 
-def complete_send_ctrl(line: str, text: str) -> List[str]:
+def complete_send_ctrl(line, text):
+    # type: (str, str) -> List[str]
     if len(line[:-1].split()) >= 2:
         # Control letter already given in command line
         return complete_shells(line, text, lambda i: i.enabled)
@@ -70,7 +76,8 @@ def complete_send_ctrl(line: str, text: str) -> List[str]:
     return ['c ', 'd ', 'z ']
 
 
-def do_send_ctrl(command: str) -> None:
+def do_send_ctrl(command):
+    # type: (str) -> None
     split = command.split()
     if not split:
         console_output(b'Expected at least a letter\n')
@@ -86,40 +93,47 @@ def do_send_ctrl(command: str) -> None:
             i.dispatch_write(control_letter.encode())
 
 
-def complete_reset_prompt(line: str, text: str) -> List[str]:
+def complete_reset_prompt(line, text):
+    # type: (str, str) -> List[str]
     return complete_shells(line, text, lambda i: i.enabled)
 
 
-def do_reset_prompt(command: str) -> None:
+def do_reset_prompt(command):
+    # type: (str) -> None
     for i in selected_shells(command):
         i.dispatch_command(i.init_string)
 
 
-def complete_enable(line: str, text: str) -> List[str]:
+def complete_enable(line, text):
+    # type: (str, str) -> List[str]
     return complete_shells(line, text, lambda i:
                            i.state != remote_dispatcher.STATE_DEAD)
 
 
-def do_enable(command: str) -> None:
+def do_enable(command):
+    # type: (str) -> None
     toggle_shells(command, True)
 
 
-def complete_disable(line: str, text: str) -> List[str]:
+def complete_disable(line, text):
+    # type: (str, str) -> List[str]
     return complete_shells(line, text, lambda i:
                            i.state != remote_dispatcher.STATE_DEAD)
 
 
-
-def do_disable(command: str) -> None:
+def do_disable(command):
+    # type: (str) -> None
     toggle_shells(command, False)
 
 
-def complete_reconnect(line: str, text: str) -> List[str]:
+def complete_reconnect(line, text):
+    # type: (str, str) -> List[str]
     return complete_shells(line, text, lambda i:
                            i.state == remote_dispatcher.STATE_DEAD)
 
 
-def do_reconnect(command: str) -> None:
+def do_reconnect(command):
+    # type: (str) -> None
     selec = selected_shells(command)
     to_reconnect = [i for i in selec if i.state ==
                     remote_dispatcher.STATE_DEAD]
@@ -131,15 +145,18 @@ def do_reconnect(command: str) -> None:
     dispatchers.create_remote_dispatchers(hosts)
 
 
-def do_add(command: str) -> None:
+def do_add(command):
+    # type: (str) -> None
     dispatchers.create_remote_dispatchers(command.split())
 
 
-def complete_purge(line: str, text: str) -> List[str]:
+def complete_purge(line, text):
+    # type: (str, str) -> List[str]
     return complete_shells(line, text, lambda i: not i.enabled)
 
 
-def do_purge(command: str) -> None:
+def do_purge(command):
+    # type: (str) -> None
     to_delete = []
     for i in selected_shells(command):
         if not i.enabled:
@@ -149,13 +166,15 @@ def do_purge(command: str) -> None:
         i.close()
 
 
-def do_rename(command: str) -> None:
+def do_rename(command):
+    # type: (str) -> None
     for i in dispatchers.all_instances():
         if i.enabled:
             i.rename(command.encode())
 
 
-def do_hide_password(command: str) -> None:
+def do_hide_password(command):
+    # type: (str) -> None
     warned = False
     for i in dispatchers.all_instances():
         if i.enabled and i.debug:
@@ -171,7 +190,8 @@ def do_hide_password(command: str) -> None:
         remote_dispatcher.options.log_file = None
 
 
-def complete_set_debug(line: str, text: str) -> List[str]:
+def complete_set_debug(line, text):
+    # type: (str, str) -> List[str]
     if len(line[:-1].split()) >= 2:
         # Debug value already given in command line
         return complete_shells(line, text)
@@ -180,7 +200,8 @@ def complete_set_debug(line: str, text: str) -> List[str]:
     return ['y ', 'n ']
 
 
-def do_set_debug(command: str) -> None:
+def do_set_debug(command):
+    # type: (str) -> None
     split = command.split()
     if not split:
         console_output(b'Expected at least a letter\n')
@@ -195,7 +216,8 @@ def do_set_debug(command: str) -> None:
         i.debug = debug
 
 
-def do_export_vars(command: str) -> None:
+def do_export_vars(command):
+    # type: (str) -> None
     rank = 0
     for shell in dispatchers.all_instances():
         if shell.enabled:
@@ -219,11 +241,13 @@ add_to_history('$POLYSH_RANK $POLYSH_NAME $POLYSH_DISPLAY_NAME')
 add_to_history('$POLYSH_NR_SHELLS')
 
 
-def complete_set_log(line: str, text: str) -> List[str]:
+def complete_set_log(line, text):
+    # type: (str, str) -> List[str]
     return complete_local_path(text)
 
 
-def do_set_log(command: str) -> None:
+def do_set_log(command):
+    # type: (str) -> None
     command = command.strip()
     if command:
         try:
@@ -236,12 +260,14 @@ def do_set_log(command: str) -> None:
         console_output(b'Logging disabled\n')
 
 
-def complete_show_read_buffer(line: str, text: str) -> List[str]:
+def complete_show_read_buffer(line, text):
+    # type: (str, str) -> List[str]
     return complete_shells(line, text, lambda i: i.read_buffer or
                            i.read_in_state_not_started)
 
 
-def do_show_read_buffer(command: str) -> None:
+def do_show_read_buffer(command):
+    # type: (str) -> None
     for i in selected_shells(command):
         if i.read_in_state_not_started:
             i.print_lines(i.read_in_state_not_started)

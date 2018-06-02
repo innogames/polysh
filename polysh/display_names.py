@@ -30,11 +30,13 @@ max_display_name_length = 0
 
 
 class DisplayNamePrefix(object):
-    def __init__(self) -> None:
+    def __init__(self):
+        # type: () -> None
         self.next_suffix = 0
         self.holes = RBTree()
 
-    def new_suffix(self) -> int:
+    def new_suffix(self):
+        # type: () -> int
         if len(self.holes) == 0:
             suffix = self.next_suffix
             self.next_suffix += 1
@@ -44,7 +46,8 @@ class DisplayNamePrefix(object):
             self.holes.deleteNode(first_node)
         return suffix
 
-    def putback_suffix(self, suffix: int) -> None:
+    def putback_suffix(self, suffix):
+        # type: (int) -> None
         if suffix + 1 != self.next_suffix:
             self.holes.insertNode(suffix, suffix)
             return
@@ -58,11 +61,13 @@ class DisplayNamePrefix(object):
             self.holes.deleteNode(prev_suffix_node)
             self.next_suffix = prev_suffix
 
-    def empty(self) -> bool:
+    def empty(self):
+        # type: () -> bool
         return self.next_suffix == 0
 
 
-def make_unique_name(prefix: str) -> str:
+def make_unique_name(prefix):
+    # type: (str) -> str
     prefix_obj = PREFIXES.get(prefix, None)
     if prefix_obj is None:
         prefix_obj = DisplayNamePrefix()
@@ -77,7 +82,8 @@ def make_unique_name(prefix: str) -> str:
     return name
 
 
-def update_max_display_name_length() -> None:
+def update_max_display_name_length():
+    # type: () -> None
     from polysh import dispatchers
     if len(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH) == 0:
         new_max = 0
@@ -89,7 +95,8 @@ def update_max_display_name_length() -> None:
         dispatchers.update_terminal_size()
 
 
-def change(prev_display_name: Optional[str], new_prefix: Optional[str]) -> str:
+def change(prev_display_name, new_prefix):
+    # type: (Optional[str], Optional[str]) -> str
     if new_prefix and '#' in new_prefix:
         raise Exception('Names cannot contain #')
 
@@ -115,7 +122,8 @@ def change(prev_display_name: Optional[str], new_prefix: Optional[str]) -> str:
     return name
 
 
-def set_enabled(display_name: str, enabled: bool) -> None:
+def set_enabled(display_name, enabled):
+    # type: (str, bool) -> None
     length = len(display_name)
     node = NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.findNode(length)
     if enabled:

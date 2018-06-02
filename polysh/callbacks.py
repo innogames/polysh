@@ -37,8 +37,10 @@ DIGITS_LETTERS = list(map(str, list(range(10)))) + \
     list(map(chr, list(range(ord('A'), ord('Z') + 1))))
 
 
-def random_string(length: int) -> str:
-    def random_char() -> str:
+def random_string(length):
+    # type: (int) -> str
+    def random_char():
+        # type: () -> str
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
     return ''.join([random_char() for i in range(length)])
 
@@ -50,7 +52,8 @@ NR_GENERATED_TRIGGERS = 0
 CALLBACKS = {}
 
 
-def add(name: bytes, function: Callable, repeat: bool) -> Tuple[bytes, bytes]:
+def add(name, function, repeat):
+    # type: (bytes, Callable, bool) -> Tuple[bytes, bytes]
     name = name.replace(b'/', b'_')
     global NR_GENERATED_TRIGGERS
     nr = NR_GENERATED_TRIGGERS
@@ -63,11 +66,13 @@ def add(name: bytes, function: Callable, repeat: bool) -> Tuple[bytes, bytes]:
     return trigger1, trigger2
 
 
-def any_in(data: bytes) -> bool:
+def any_in(data):
+    # type: (bytes) -> bool
     return COMMON_PREFIX in data
 
 
-def process(line: bytes) -> bool:
+def process(line):
+    # type: (bytes) -> bool
     start = line.find(COMMON_PREFIX)
     if start < 0:
         return False

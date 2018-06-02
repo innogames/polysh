@@ -37,7 +37,8 @@ from polysh import control_commands
 from polysh import VERSION
 
 
-def kill_all() -> None:
+def kill_all():
+    # type: () -> None
     """When polysh quits, we kill all the remote shells we started"""
     for i in dispatchers.all_instances():
         try:
@@ -47,7 +48,8 @@ def kill_all() -> None:
             pass
 
 
-def parse_cmdline() -> argparse.Namespace:
+def parse_cmdline():
+    # type: () -> argparse.Namespace
     usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
             'Control commands are prefixed by ":".'
     parser = argparse.ArgumentParser(usage)
@@ -122,7 +124,8 @@ def parse_cmdline() -> argparse.Namespace:
     return args
 
 
-def find_non_interactive_command(command: str) -> str:
+def find_non_interactive_command(command):
+    # type: (str) -> str
     if sys.stdin.isatty():
         return command
 
@@ -138,7 +141,8 @@ def find_non_interactive_command(command: str) -> str:
     return command or stdin
 
 
-def init_history(histfile: str) -> None:
+def init_history(histfile):
+    # type: (str) -> None
     if hasattr(readline, "read_history_file"):
         try:
             readline.read_history_file(histfile)
@@ -146,12 +150,14 @@ def init_history(histfile: str) -> None:
             pass
 
 
-def save_history(histfile: str) -> None:
+def save_history(histfile):
+    # type: (str) -> None
     readline.set_history_length(1000)
     readline.write_history_file(histfile)
 
 
-def loop(interactive: bool) -> None:
+def loop(interactive):
+    # type: (bool) -> None
     histfile = os.path.expanduser("~/.polysh_history")
     init_history(histfile)
     next_signal = None
@@ -198,7 +204,8 @@ def loop(interactive: bool) -> None:
             sys.exit(e.args[0])
 
 
-def _profile(continuation: Callable) -> None:
+def _profile(continuation):
+    # type: (Callable) -> None
     prof_file = 'polysh.prof'
     import cProfile
     import pstats
@@ -212,13 +219,15 @@ def _profile(continuation: Callable) -> None:
     os.remove(prof_file)
 
 
-def restore_tty_on_exit() -> None:
+def restore_tty_on_exit():
+    # type: () -> None
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     atexit.register(lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old))
 
 
-def run() -> None:
+def run():
+    # type: () -> None
     """Launch polysh"""
     locale.setlocale(locale.LC_ALL, '')
     atexit.register(kill_all)
@@ -249,7 +258,8 @@ def run() -> None:
     stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
 
     if args.profile:
-        def safe_loop() -> None:
+        def safe_loop():
+            # type: () -> None
             try:
                 loop(args.interactive)
             except BaseException:

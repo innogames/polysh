@@ -25,8 +25,10 @@ from polysh.control_commands_helpers import complete_control_command
 from polysh.control_commands_helpers import expand_local_path
 
 
-def complete_local_path(path: str) -> List[str]:
-    def get_suffix(p: str) -> str:
+def complete_local_path(path):
+    # type: (str) -> List[str]
+    def get_suffix(p):
+        # type: (str) -> str
         if os.path.isdir(p):
             return '/'
         return ''
@@ -35,7 +37,8 @@ def complete_local_path(path: str) -> List[str]:
     return paths
 
 
-def remove_dupes(words: List[str]) -> List[str]:
+def remove_dupes(words):
+    # type: (List[str]) -> List[str]
     added = set()  # type: Set[str]
     results = list()
     for w in words:
@@ -46,7 +49,8 @@ def remove_dupes(words: List[str]) -> List[str]:
     return results
 
 
-def read_commands_in_path() -> List[str]:
+def read_commands_in_path():
+    # type: () -> List[str]
     commands = set()  # type: Set[str]
 
     for path in (os.getenv('PATH') or '').split(':'):
@@ -73,7 +77,8 @@ completion_results = None
 user_commands_in_path = read_commands_in_path()
 
 
-def complete(text: str, state: int) -> Optional[str]:
+def complete(text, state):
+    # type: (str, int) -> Optional[str]
     """On tab press, return the next possible completion"""
     global completion_results
     if state == 0:
@@ -108,18 +113,21 @@ def complete(text: str, state: int) -> Optional[str]:
     return None
 
 
-def add_to_history(cmd: str) -> None:
+def add_to_history(cmd):
+    # type(str) -> None
     if len(history_words) < 10000:
         history_words.update(w for w in cmd.split() if len(w) > 1)
 
 
-def remove_last_history_item() -> None:
+def remove_last_history_item():
+    # type() -> None
     """The user just typed a password..."""
     last = readline.get_current_history_length() - 1
     readline.remove_history_item(last)
 
 
-def install_completion_handler() -> None:
+def install_completion_handler():
+    # type: () -> None
     readline.set_completer(complete)
     readline.parse_and_bind('tab: complete')
     readline.set_completer_delims(' \t\n')

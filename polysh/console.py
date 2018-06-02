@@ -25,7 +25,8 @@ from typing import Optional
 last_status_length = None
 
 
-def safe_write(buf: bytes) -> None:
+def safe_write(buf):
+    # type: (bytes) -> None
     """We can get a SIGWINCH when printing, which will cause write to raise
     an EINTR. That's not a reason to stop printing."""
     while True:
@@ -37,7 +38,8 @@ def safe_write(buf: bytes) -> None:
                 raise
 
 
-def console_output(msg: bytes, logging_msg: Optional[bytes] = None) -> None:
+def console_output(msg, logging_msg=None):
+    # type: (bytes, Optional[bytes]) -> None
     """Use instead of print, to clear the status information before printing"""
     from polysh import remote_dispatcher
 
@@ -53,7 +55,8 @@ def console_output(msg: bytes, logging_msg: Optional[bytes] = None) -> None:
     safe_write(msg)
 
 
-def set_last_status_length(length: int) -> None:
+def set_last_status_length(length):
+    # type: (int) -> None
     """The length of the prefix to be cleared when printing something"""
     global last_status_length
     last_status_length = length

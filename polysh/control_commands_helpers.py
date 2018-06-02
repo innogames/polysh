@@ -27,7 +27,8 @@ from polysh import dispatchers
 from polysh import remote_dispatcher
 
 
-def toggle_shells(command: str, enable: bool) -> None:
+def toggle_shells(command, enable):
+    # type: (str, bool) -> None
     """Enable or disable the specified shells. If the command would have
     no effect, it changes all other shells to the inverse enable value."""
     selection = list(selected_shells(command))
@@ -43,7 +44,8 @@ def toggle_shells(command: str, enable: bool) -> None:
             i.set_enabled(enable)
 
 
-def selected_shells(command: str) -> Iterator[remote_dispatcher.RemoteDispatcher]:
+def selected_shells(command):
+    # type: (str) -> Iterator[remote_dispatcher.RemoteDispatcher]
     """Iterator over the shells with names matching the patterns.
     An empty patterns matches all the shells"""
     if not command or command == '*':
@@ -66,9 +68,8 @@ def selected_shells(command: str) -> Iterator[remote_dispatcher.RemoteDispatcher
             console_output('{} not found\n'.format(pattern).encode())
 
 
-def complete_shells(
-        line: str, text: str,
-        predicate: Callable=lambda i: True) -> List[str]:
+def complete_shells(line, text, predicate=lambda i: True):
+    # type: (str, str, Callable) -> List[str]
     """Return the shell names to include in the completion"""
     res = [i.display_name + ' ' for i in dispatchers.all_instances() if
            i.display_name.startswith(text) and
@@ -77,22 +78,26 @@ def complete_shells(
     return res
 
 
-def expand_local_path(path: str) -> str:
+def expand_local_path(path):
+    # type: (str) -> str
     return os.path.expanduser(os.path.expandvars(path) or '~')
 
 
-def list_control_commands() -> List[str]:
+def list_control_commands():
+    # type: () -> List[str]
     from polysh import control_commands
     return [c[3:] for c in dir(control_commands) if c.startswith('do_')]
 
 
-def get_control_command(name: str) -> Callable:
+def get_control_command(name):
+    # type: (str) -> Callable
     from polysh import control_commands
     func = getattr(control_commands, 'do_' + name)
     return func
 
 
-def complete_control_command(line: str, text: str) -> List[str]:
+def complete_control_command(line, text):
+    # type: (str, str) -> List[str]
     from polysh import control_commands
     if readline.get_begidx() == 0:
         # Completing control command name
@@ -110,7 +115,8 @@ def complete_control_command(line: str, text: str) -> List[str]:
     return matches
 
 
-def handle_control_command(line: str) -> None:
+def handle_control_command(line):
+    # type: (str) -> None
     if not line:
         return
     cmd_name = line.split()[0]

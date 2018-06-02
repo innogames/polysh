@@ -38,7 +38,8 @@ def _split_port(hostname):
     else:
         return s[0], '22'
 
-def _iter_numbers(start: str, end: str) -> Iterator[str]:
+def _iter_numbers(start, end):
+    # type: (str, str) -> Iterator[str]
     int_start = int(start)
     int_end = int(end)
     if int_start < int_end:
@@ -56,7 +57,8 @@ def _iter_numbers(start: str, end: str) -> Iterator[str]:
         yield s
 
 
-def expand_syntax(string: str) -> Iterator[str]:
+def expand_syntax(string):
+    # type: (str) -> Iterator[str]
     """Iterator over all the strings in the expansion of the argument"""
     match = syntax_pattern.search(string)
     if match:

@@ -35,7 +35,8 @@ import os
 from typing import Tuple, Optional
 
 
-def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
+def _ioctl_GWINSZ(fd):
+    # type: (int) -> Optional[Tuple[int, int]]
     try:  # Discover terminal width
         import fcntl
         import termios
@@ -46,7 +47,9 @@ def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
     return int(cr[0]), int(cr[1])
 
 
-def terminal_size() -> Tuple[int, int]:  # decide on *some* terminal size
+# decide on *some* terminal size
+def terminal_size():
+    # type: () -> Tuple[int, int]
     """Return (lines, columns)."""
     cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(
         1) or _ioctl_GWINSZ(2)  # try open fds
