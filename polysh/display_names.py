@@ -17,7 +17,6 @@ Copyright (c) 2018 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import defaultdict
-from polysh.dispatchers import update_terminal_size
 # The prefix is the key, the value is a list of booleans. A boolean at an
 # index is True if that index is currently in use.
 PREFIXES = defaultdict(lambda: [])  # type: Dict[str, List[bool]]
@@ -80,6 +79,7 @@ def make_unique_name(prefix):
 
 
 def update_max_display_name_length():
+    from polysh.dispatchers import update_terminal_size
     new_max = max(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.keys(), default=0)
     global max_display_name_length
     if new_max != max_display_name_length:
