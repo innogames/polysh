@@ -16,21 +16,21 @@ Copyright (c) 2018 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The prefix is the key, the value is a list of suffixes in use or None as padding
-PREFIXES = dict()  # type: Dict[str, List[bool]]
+from collections import defaultdict
+from polysh.dispatchers import update_terminal_size
+# The prefix is the key, the value is a list of booleans. A boolean at an
+# index is True if that index is currently in use.
+PREFIXES = defaultdict(lambda: [])  # type: Dict[str, List[bool]]
 
 # dict with key:len(display_name) value:nr of enabled shells with a
 # display_name of such a length
-NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = dict()
+NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = defaultdict(lambda: [])
 
-# Used for terminal sizes and layouting
+# Used for terminal size and layout
 max_display_name_length = 0
 
 
 def acquire_prefix_index(prefix):
-    if prefix not in PREFIXES:
-        PREFIXES[prefix] = list()
-
     # Search and reuse removed host suffix
     for idx, item in enumerate(PREFIXES[prefix]):
         if not item:
@@ -39,11 +39,11 @@ def acquire_prefix_index(prefix):
 
     # Add new suffix if no old suffix can be reused
     PREFIXES[prefix].append(True)
-    return len(PREFIXES[prefix]) -1
+    return len(PREFIXES[prefix]) - 1
 
 
 def release_prefix_index(prev_display_name):
-    split = prev_display_name.split('#')
+    split = prev_display_name.split('#', 1)
     prefix = split[0]
     if len(split) == 1:
         suffix = 0
@@ -52,21 +52,22 @@ def release_prefix_index(prev_display_name):
 
     # We are not deleting the host with the highest suffix. Therefore we need
     # to mark the current suffix index as unused.
-    if suffix != len(PREFIXES[prefix]) -1:
+    if suffix < len(PREFIXES[prefix]) - 1:
         PREFIXES[prefix][suffix] = False
         return
 
-    # We are deleting the host with thte highest suffix. Therefore we need to
+    # We are deleting the host with the highest suffix. Therefore we need to
     # delete it.
-    PREFIXES[prefix].pop(suffix)
+    del PREFIXES[prefix][suffix]
 
     # Remove holes previously left.
-    for idx in reversed(range(len(PREFIXES[prefix]))):
-        if PREFIXES[prefix][idx]:
+    for idx, in_use in reversed(list(enumerate(PREFIXES[prefix]))):
+        if in_use:
             return
-        PREFIXES[prefix].pop(idx)
+        del PREFIXES[prefix][idx]
 
-    # If we arrived here, we just deleted the last item with a specific prefix. Therefore we need to delete the whole prefix now.
+    # If we arrived here, we just deleted the last item with a specific
+    # prefix. Therefore we need to delete the whole prefix now.
     del PREFIXES[prefix]
 
 
@@ -74,17 +75,16 @@ def make_unique_name(prefix):
     suffix = acquire_prefix_index(prefix)
     if suffix:
         return '{}#{}'.format(prefix, suffix)
-    else:
-        return prefix
+
+    return prefix
 
 
 def update_max_display_name_length():
-    from polysh import dispatchers
     new_max = max(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.keys(), default=0)
     global max_display_name_length
     if new_max != max_display_name_length:
         max_display_name_length = new_max
-        dispatchers.update_terminal_size()
+        update_terminal_size()
 
 
 def change(prev_display_name, new_prefix):
@@ -116,6 +116,6 @@ def set_enabled(display_name, enabled):
     else:
         NR_ENABLED_DISPLAY_NAMES_BY_LENGTH[length] -= 1
         if not NR_ENABLED_DISPLAY_NAMES_BY_LENGTH[length]:
-            NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.pop(length)
+            del NR_ENABLED_DISPLAY_NAMES_BY_LENGTH[length]
 
     update_max_display_name_length()
