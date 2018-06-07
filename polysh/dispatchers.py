@@ -26,8 +26,9 @@ from polysh import remote_dispatcher
 from polysh import display_names
 from polysh.terminal_size import terminal_size
 
+
 def _split_port(hostname):
-    """ Splits a string(hostname, given by the user) into hostname and port, 
+    """ Splits a string(hostname, given by the user) into hostname and port,
     returns a tuple """
     s = hostname.split(':', 1)
     if len(s) > 1:
