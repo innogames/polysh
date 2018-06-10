@@ -58,8 +58,22 @@ Version 0.5
     * Drop `:upload` and `:replicate` file transfer features
     * Don't forward `Ctrl-Z` to the remote shells
     * Save and restore history from `~/.polysh_hisory`
-    * Support Python 3
-    * Drop Python 2 support
+    * Start supporting Python >= 3.4
+    * Stop supporting Python 2
+    * Add Travic CI testing
+
+Version 0.6
+    * Python 3 fixes, code style fixes
+    * Fix crashes caused by decoding non UTF8 data received from remote shells
+    * Add patch with type hints
+
+Version 0.7
+    * Add basic (optional) sentry logging
 
 Version 0.8
-    * Improve Python 3 support
+    * Fix infinite recursion in polysh entrance function
+
+Version 0.9
+    * Python 3 fixes, code style fixes, cleanup repository structure
+    * Implementing destination port passing via host:port like `polysh 10.0.1.<7-13>:20`
+    * Prepare for pypi release

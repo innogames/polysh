@@ -8,6 +8,7 @@ python:
   - "3.5"
   - "3.6"
 install:
+  - pip install setuptools pip --upgrade
   - pip install -r tests/requirements.txt
   - ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
   - cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys

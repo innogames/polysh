@@ -17,6 +17,17 @@ Copyright (c) 2018 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from setuptools import setup
+
+# Make sure we have a recent setuptools version otherwise the installation will
+# fail anyway.
+from pkg_resources import parse_version
+from setuptools import setup, __version__
+
+if parse_version(__version__) < parse_version('39.2.0'):
+    from sys import exit
+    print(
+        'Aborting polysh installation! Please upgrade your setuptools first: ',
+        '"pip3 install setuptools pip --upgrade"')
+    exit(1)
 
 setup()
