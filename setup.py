@@ -17,17 +17,59 @@ Copyright (c) 2018 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from setuptools import setup
+from os import path
+from sys import exit, version_info as PYTHON_VERSION
+from polysh import VERSION as POLYSH_VERSION
 
-# Make sure we have a recent setuptools version otherwise the installation will
-# fail anyway.
-from pkg_resources import parse_version
-from setuptools import setup, __version__
-
-if parse_version(__version__) < parse_version('39.2.0'):
-    from sys import exit
-    print(
-        'Aborting polysh installation! Please upgrade your setuptools first: ',
-        '"pip3 install setuptools pip --upgrade"')
+if PYTHON_VERSION < (3, 4):
+    print('Aborting polysh installation! Polysh requires python 3.4 or later.')
     exit(1)
 
-setup()
+# Get the long description from the README file
+here = path.abspath(path.dirname(__file__))
+with open(path.join(here, 'README.rst')) as file:
+    long_description = file.read()
+
+setup(
+    name='polysh',
+    version='.'.join(str(d) for d in POLYSH_VERSION),
+    description='Control thousands of ssh sesions from a single prompt',
+    long_description=long_description,
+    url='http://github.com/innogames/polysh/',
+    maintainer='InnoGames System Administration',
+    maintainer_email='it@innogames.com',
+
+    keywords='gsh group shell cluster ssh multiplexer',
+    # For a list of valid classifiers, see https://pypi.org/classifiers/
+    classifiers=[  # Optional
+        'Intended Audience :: System Administrators',
+        'Intended Audience :: Developers',
+        'Topic :: System :: Systems Administration',
+        'Topic :: System :: Shells',
+        'Topic :: System :: Clustering',
+        'Topic :: System :: Distributed Computing',
+
+        'Environment :: Console',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS :: MacOS X',
+
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+        'Development Status :: 5 - Production/Stable',
+
+        # This does not influence pip when choosing what to install. It is used
+        # for the package list on the pypi website.
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+    ],
+    python_requires='>=3.4',
+
+    packages=['polysh'],
+    entry_points={
+        'console_scripts': [
+            'polysh=polysh.main:main',
+        ],
+    },
+)
