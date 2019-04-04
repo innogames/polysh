@@ -66,15 +66,15 @@ Options
 `--ssh=SSH`
     Command to use for SSH
 
-    By default, `exec ssh -oLogLevel=Quiet -t %(host)s exec bash --noprofile`.
-    `polysh` spawns lightweight remote shells using
-    the ssh command, but another shell command can be specified here.
-    For example, with `--ssh='usleep $((RANDOM*50)); exec ssh'` a delay
-    will be introduced to avoid all hosts accessing a NFS server at
-    the same time.  If the hostname should not be added at the end of
-    the command, the macro `%(host)s` can be inserted where the hostname
-    should be placed.  Also, make sure the command you use launches a `pty`,
-    this may need the `-t` option for `ssh`.
+    By default, `exec ssh -oLogLevel=Quiet -t %(host)s %(port)s`.
+    `polysh` spawns ssh for each connection which may spawn your default login
+    shell on the remote, but another shell command can be specified here. For
+    example, with `--ssh='usleep $((RANDOM*50)); exec ssh'` a delay will be
+    introduced to avoid all hosts accessing a NFS server at the same time.  If
+    the hostname should not be added at the end of the command, the macro
+    `%(host)s` can be inserted where the hostname should be placed.  Also, make
+    sure the command you use launches a `pty`, this may need the `-t` option for
+    `ssh`.
 
 `--user=USER`
     Remote user to log in as
