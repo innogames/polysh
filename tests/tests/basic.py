@@ -39,7 +39,7 @@ class TestBasic(unittest.TestCase):
             child = start_child()
             child.sendline('exit')
             for i in range(nr_localhost):
-                child.expect('exit')
+                child.expect('logout')
             child.expect(pexpect.EOF)
 
         test_eof()
@@ -79,7 +79,9 @@ class TestBasic(unittest.TestCase):
         child = launch_polysh(['localhost', 'localhost'])
         child.expect('ready \(2\)> ')
         child.sendeof()
-        idx = child.expect(['Error talking to localhost', 'exit'])
+        # We test for logout as this is the expected response of sending EOF to
+        # a non login shell
+        idx = child.expect(['Error talking to localhost', 'logout'])
         self.assertEqual(idx, 1)
         idx = child.expect(['Error talking to localhost', pexpect.EOF])
         self.assertEqual(idx, 1)
