@@ -19,6 +19,7 @@ Copyright (c) 2018 InnoGames GmbH
 import unittest
 import pexpect
 from polysh_tests import launch_polysh
+from time import sleep
 
 
 class TestBasic(unittest.TestCase):
@@ -59,6 +60,7 @@ class TestBasic(unittest.TestCase):
         child.expect('ready \(1\)> ')
         child.sendline('sleep 1')
         child.expect('waiting \(1/1\)> ')
+        sleep(1)
         child.send('echo begin-')
         child.expect('ready \(1\)> ')
         child.sendline('end')
