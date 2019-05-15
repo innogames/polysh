@@ -179,6 +179,7 @@ class RemoteDispatcher(BufferedDispatcher):
         command_line = b'PS2=;RPS1=;RPROMPT=;'
         command_line += b'PROMPT_COMMAND=;'
         command_line += b'TERM=ansi;'
+        command_line += b'unset precmd_functions;'
         command_line += b'unset HISTFILE;'
         prompt1, prompt2 = callbacks.add(b'prompt', self.seen_prompt_cb, True)
         command_line += b'PS1="' + prompt1 + b'""' + prompt2 + b'\n"\n'
