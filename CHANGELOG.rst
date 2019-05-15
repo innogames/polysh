@@ -77,3 +77,6 @@ Version 0.9
     * Python 3 fixes, code style fixes, cleanup repository structure
     * Implementing destination port passing via host:port like `polysh 10.0.1.<7-13>:20`
     * Prepare for pypi release
+
+Version 0.10
+    * Stop overwriting the users shell to support aliases and other shells such as zsh
