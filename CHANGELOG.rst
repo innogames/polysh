@@ -1,17 +1,51 @@
-Version 0.1
-    * First release
+Version 0.10
+    * Stop overwriting the users shell to support aliases and other shells such as zsh
 
-Version 0.2
-    * Use readline to provide fancy command line edition and completion from
-      history
-    * Print incomplete lines after some delay
-    * Support dynamically adding/deleting/renaming remote shells
-    * New option `--quick-sh` to avoid launching a full blown session
-    * Add hostname expansion: for example `host<1-100>` and `host<001-100>`
-    * Add an option to read hostnames from a file
-    * Remove useless option to print only the first line of output
-    * Miscellaneous bug fixes and optimizations
-    * Add man page
+Version 0.9
+    * Python 3 fixes, code style fixes, cleanup repository structure
+    * Implementing destination port passing via host:port like `polysh 10.0.1.<7-13>:20`
+    * Prepare for pypi release
+
+Version 0.8
+    * Fix infinite recursion in polysh entrance function
+
+Version 0.7
+    * Add basic (optional) sentry logging
+
+Version 0.6
+    * Python 3 fixes, code style fixes
+    * Fix crashes caused by decoding non UTF8 data received from remote shells
+    * Add patch with type hints
+
+Version 0.5
+    * Drop `:upload` and `:replicate` file transfer features
+    * Don't forward `Ctrl-Z` to the remote shells
+    * Save and restore history from `~/.polysh_hisory`
+    * Start supporting Python >= 3.4
+    * Stop supporting Python 2
+    * Add Travic CI testing
+
+Version 0.4
+    * Rename project to Polysh
+    * Add `--user` option to specify the remote user to login as
+    * New file transfer code that does not assume additional connectivity
+      between the host and the remote shells but still assumes connectivity
+      between the remote shells
+    * Add option to disable colorized hostnames
+
+Version 0.3.1
+    * If the `:{en|dis}able` command would have no effect, change all other
+      shells to the inverse enable value
+    * Consistently add a space between the shell name and the colon to ease
+      parsing the output
+    * Provide exit code aggregated from all remote shells by taking
+      the maximum
+    * Rename `:export_rank` to `:export_vars` as it now also exports
+      the hostname
+    * Add `--password-file` to login using a password
+    * Support `.zip` files on file transfer
+    * Switch from `setuptools` to `distutils`
+    * Color hostnames in the output
 
 Version 0.3
     * Remove `--log-dir=LOG_DIR` option as it is less useful than expected
@@ -32,51 +66,18 @@ Version 0.3
     * New completion from the local filesystem
     * Simplify `:list` output, and added the last printed line
 
-Version 0.3.1
-    * If the `:{en|dis}able` command would have no effect, change all other
-      shells to the inverse enable value
-    * Consistently add a space between the shell name and the colon to ease
-      parsing the output
-    * Provide exit code aggregated from all remote shells by taking
-      the maximum
-    * Rename `:export_rank` to `:export_vars` as it now also exports
-      the hostname
-    * Add `--password-file` to login using a password
-    * Support `.zip` files on file transfer
-    * Switch from `setuptools` to `distutils`
-    * Color hostnames in the output
+Version 0.2
+    * Use readline to provide fancy command line edition and completion from
+      history
+    * Print incomplete lines after some delay
+    * Support dynamically adding/deleting/renaming remote shells
+    * New option `--quick-sh` to avoid launching a full blown session
+    * Add hostname expansion: for example `host<1-100>` and `host<001-100>`
+    * Add an option to read hostnames from a file
+    * Remove useless option to print only the first line of output
+    * Miscellaneous bug fixes and optimizations
+    * Add man page
 
-Version 0.4
-    * Rename project to Polysh
-    * Add `--user` option to specify the remote user to login as
-    * New file transfer code that does not assume additional connectivity
-      between the host and the remote shells but still assumes connectivity
-      between the remote shells
-    * Add option to disable colorized hostnames
+Version 0.1
+    * First release
 
-Version 0.5
-    * Drop `:upload` and `:replicate` file transfer features
-    * Don't forward `Ctrl-Z` to the remote shells
-    * Save and restore history from `~/.polysh_hisory`
-    * Start supporting Python >= 3.4
-    * Stop supporting Python 2
-    * Add Travic CI testing
-
-Version 0.6
-    * Python 3 fixes, code style fixes
-    * Fix crashes caused by decoding non UTF8 data received from remote shells
-    * Add patch with type hints
-
-Version 0.7
-    * Add basic (optional) sentry logging
-
-Version 0.8
-    * Fix infinite recursion in polysh entrance function
-
-Version 0.9
-    * Python 3 fixes, code style fixes, cleanup repository structure
-    * Implementing destination port passing via host:port like `polysh 10.0.1.<7-13>:20`
-    * Prepare for pypi release
-
-Version 0.10
-    * Stop overwriting the users shell to support aliases and other shells such as zsh
