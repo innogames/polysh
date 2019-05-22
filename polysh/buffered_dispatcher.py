@@ -29,16 +29,16 @@ class BufferedDispatcher(asyncore.file_dispatcher):
     # 1 MiB should be enough for everybody
     MAX_BUFFER_SIZE = 1 * 1024 * 1024
 
-    def __init__(self, fd):
+    def __init__(self, fd: int) -> None:
         asyncore.file_dispatcher.__init__(self, fd)
         self.fd = fd
         self.read_buffer = b''
         self.write_buffer = b''
 
-    def handle_read(self):
+    def handle_read(self) -> None:
         self._handle_read_chunk()
 
-    def _handle_read_chunk(self):
+    def _handle_read_chunk(self) -> bytes:
         """Some data can be read"""
         new_data = b''
         buffer_length = len(self.read_buffer)
@@ -70,15 +70,15 @@ class BufferedDispatcher(asyncore.file_dispatcher):
             self.read_buffer += new_data
         return new_data
 
-    def readable(self):
+    def readable(self) -> bool:
         """No need to ask data if our buffer is already full"""
         return len(self.read_buffer) < self.MAX_BUFFER_SIZE
 
-    def writable(self):
+    def writable(self) -> bool:
         """Do we have something to write?"""
         return self.write_buffer != b''
 
-    def dispatch_write(self, buf):
+    def dispatch_write(self, buf: bytes) -> bool:
         """Augment the buffer with stuff to write when possible"""
         self.write_buffer += buf
         if len(self.write_buffer) > self.MAX_BUFFER_SIZE:

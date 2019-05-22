@@ -22,8 +22,8 @@ from os import path
 from sys import exit, version_info as PYTHON_VERSION
 from polysh import VERSION as POLYSH_VERSION
 
-if PYTHON_VERSION < (3, 4):
-    print('Aborting polysh installation! Polysh requires python 3.4 or later.')
+if PYTHON_VERSION < (3, 5):
+    print('Aborting polysh installation! Polysh requires python 3.5 or later.')
     exit(1)
 
 # Get the long description from the README file
@@ -60,11 +60,10 @@ setup(
         # This does not influence pip when choosing what to install. It is used
         # for the package list on the pypi website.
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    python_requires='>=3.4',
+    python_requires='>=3.5',
 
     packages=['polysh'],
     entry_points={

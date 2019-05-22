@@ -16,6 +16,7 @@ Copyright (c) 2018 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Dict, List, Optional
 from collections import defaultdict
 # The prefix is the key, the value is a list of booleans. A boolean at an
 # index is True if that index is currently in use.
@@ -23,13 +24,13 @@ PREFIXES = defaultdict(lambda: [])  # type: Dict[str, List[bool]]
 
 # dict with key:len(display_name) value:nr of enabled shells with a
 # display_name of such a length
-NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = defaultdict(lambda: [])
+NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = dict()  # type: Dict[int, int]
 
 # Used for terminal size and layout
 max_display_name_length = 0
 
 
-def acquire_prefix_index(prefix):
+def acquire_prefix_index(prefix: str) -> int:
     # Search and reuse removed host suffix
     for idx, item in enumerate(PREFIXES[prefix]):
         if not item:
@@ -41,7 +42,7 @@ def acquire_prefix_index(prefix):
     return len(PREFIXES[prefix]) - 1
 
 
-def release_prefix_index(prev_display_name):
+def release_prefix_index(prev_display_name: str) -> None:
     split = prev_display_name.split('#', 1)
     prefix = split[0]
     if len(split) == 1:
@@ -53,7 +54,7 @@ def release_prefix_index(prev_display_name):
     # to mark the current suffix index as unused.
     if suffix < len(PREFIXES[prefix]) - 1:
         PREFIXES[prefix][suffix] = False
-        return
+        return None
 
     # We are deleting the host with the highest suffix. Therefore we need to
     # delete it.
@@ -62,7 +63,7 @@ def release_prefix_index(prev_display_name):
     # Remove holes previously left.
     for idx, in_use in reversed(list(enumerate(PREFIXES[prefix]))):
         if in_use:
-            return
+            return None
         del PREFIXES[prefix][idx]
 
     # If we arrived here, we just deleted the last item with a specific
@@ -70,7 +71,7 @@ def release_prefix_index(prev_display_name):
     del PREFIXES[prefix]
 
 
-def make_unique_name(prefix):
+def make_unique_name(prefix: str) -> str:
     suffix = acquire_prefix_index(prefix)
     if suffix:
         return '{}#{}'.format(prefix, suffix)
@@ -78,7 +79,7 @@ def make_unique_name(prefix):
     return prefix
 
 
-def update_max_display_name_length():
+def update_max_display_name_length() -> None:
     from polysh.dispatchers import update_terminal_size
     new_max = max(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.keys(), default=0)
     global max_display_name_length
@@ -87,9 +88,10 @@ def update_max_display_name_length():
         update_terminal_size()
 
 
-def change(prev_display_name, new_prefix):
-    assert isinstance(prev_display_name, str) or prev_display_name is None
-    assert isinstance(new_prefix, str) or new_prefix is None
+def change(
+    prev_display_name: Optional[str],
+    new_prefix: Optional[str]
+) -> Optional[str]:
     if new_prefix and '#' in new_prefix:
         raise Exception('Names cannot contain #')
 
@@ -98,7 +100,7 @@ def change(prev_display_name, new_prefix):
             set_enabled(prev_display_name, False)
         release_prefix_index(prev_display_name)
         if new_prefix is None:
-            return
+            return None
 
     name = make_unique_name(new_prefix)
     set_enabled(name, True)
@@ -106,7 +108,7 @@ def change(prev_display_name, new_prefix):
     return name
 
 
-def set_enabled(display_name, enabled):
+def set_enabled(display_name: str, enabled: bool) -> None:
     length = len(display_name)
     if enabled:
         if length in NR_ENABLED_DISPLAY_NAMES_BY_LENGTH:

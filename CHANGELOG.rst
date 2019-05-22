@@ -1,3 +1,7 @@
+Version 0.11
+    * Add Python 3.5 style type hints
+    * Drop Python 3.4 support
+
 Version 0.10
     * Stop overwriting the users shell to support aliases and other shells such as zsh
 

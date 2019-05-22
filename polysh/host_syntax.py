@@ -17,6 +17,8 @@ Copyright (c) 2018 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from typing import Iterator
+from typing import Tuple
 
 # Currently the only expansion is <START_NUMBER-END_NUMBER>
 # <1-10> => 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
@@ -29,14 +31,16 @@ import re
 syntax_pattern = re.compile('<([0-9,-]+)>')
 interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
 
-def _split_port(hostname):
+
+def _split_port(hostname: str) -> Tuple[str, str]:
     s = hostname.split(':', 1)
     if len(s) > 1:
         return s[0], s[1]
     else:
         return s[0], '22'
 
-def _iter_numbers(start, end):
+
+def _iter_numbers(start: str, end: str) -> Iterator[str]:
     int_start = int(start)
     int_end = int(end)
     if int_start < int_end:
@@ -54,7 +58,7 @@ def _iter_numbers(start, end):
         yield s
 
 
-def expand_syntax(string):
+def expand_syntax(string: str) -> Iterator[str]:
     """Iterator over all the strings in the expansion of the argument"""
     match = syntax_pattern.search(string)
     if match:
