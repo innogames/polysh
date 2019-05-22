@@ -1,3 +1,27 @@
+diff --git a/.travis.yml b/.travis.yml
+index ddb80d6..dd52f18 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -4,7 +4,6 @@
+ sudo: true
+ language: python
+ python:
+-  - "3.4"
+   - "3.5"
+   - "3.6"
+ install:
+diff --git a/CHANGELOG.rst b/CHANGELOG.rst
+index 277f4b2..3d41ff4 100644
+--- a/CHANGELOG.rst
++++ b/CHANGELOG.rst
+@@ -1,3 +1,7 @@
++Version 0.11
++    * Add Python 3.5 style type hints
++    * Drop Python 3.4 support
++
+ Version 0.10
+     * Stop overwriting the users shell to support aliases and other shells such as zsh
+ 
 diff --git a/polysh/buffered_dispatcher.py b/polysh/buffered_dispatcher.py
 index 6a2e152..4a036ba 100644
 --- a/polysh/buffered_dispatcher.py
@@ -217,7 +241,7 @@ index c2ea14c..752b5ba 100644
      global last_status_length
      last_status_length = length
 diff --git a/polysh/control_commands.py b/polysh/control_commands.py
-index 285cfc3..05ce53a 100644
+index 285cfc3..2e1170e 100644
 --- a/polysh/control_commands.py
 +++ b/polysh/control_commands.py
 @@ -21,6 +21,7 @@ Copyright (c) 2018 InnoGames GmbH
@@ -250,7 +274,7 @@ index 285cfc3..05ce53a 100644
  
  
 -def complete_chdir(line, text):
-+def complete_chdir(line: str, text: str) -> List[bool]:
++def complete_chdir(line: str, text: str) -> List[str]:
      return list(filter(os.path.isdir, complete_local_path(text)))
  
  
@@ -418,7 +442,7 @@ index 285cfc3..05ce53a 100644
          if i.read_in_state_not_started:
              i.print_lines(i.read_in_state_not_started)
 diff --git a/polysh/control_commands_helpers.py b/polysh/control_commands_helpers.py
-index 75bbc4b..d3b22c5 100644
+index 75bbc4b..de71cd2 100644
 --- a/polysh/control_commands_helpers.py
 +++ b/polysh/control_commands_helpers.py
 @@ -19,6 +19,7 @@ Copyright (c) 2018 InnoGames GmbH
@@ -438,12 +462,14 @@ index 75bbc4b..d3b22c5 100644
      """Enable or disable the specified shells. If the command would have
      no effect, it changes all other shells to the inverse enable value."""
      selection = list(selected_shells(command))
-@@ -42,14 +43,14 @@ def toggle_shells(command, enable):
+@@ -42,14 +43,16 @@ def toggle_shells(command, enable):
              i.set_enabled(enable)
  
  
 -def selected_shells(command):
-+def selected_shells(command: str) -> Iterator[remote_dispatcher.RemoteDispatcher]:
++def selected_shells(
++    command: str
++) -> Iterator[remote_dispatcher.RemoteDispatcher]:
      """Iterator over the shells with names matching the patterns.
      An empty patterns matches all the shells"""
      if not command or command == '*':
@@ -455,18 +481,18 @@ index 75bbc4b..d3b22c5 100644
      instance_found = False
      for pattern in command.split():
          found = False
-@@ -65,7 +66,9 @@ def selected_shells(command):
+@@ -65,7 +68,9 @@ def selected_shells(command):
              console_output('{} not found\n'.format(pattern).encode())
  
  
 -def complete_shells(line, text, predicate=lambda i: True):
 +def complete_shells(
 +        line: str, text: str,
-+        predicate: Callable=lambda i: True) -> List[str]:
++        predicate: Callable = lambda i: True) -> List[str]:
      """Return the shell names to include in the completion"""
      res = [i.display_name + ' ' for i in dispatchers.all_instances() if
             i.display_name.startswith(text) and
-@@ -74,22 +77,22 @@ def complete_shells(line, text, predicate=lambda i: True):
+@@ -74,22 +79,22 @@ def complete_shells(line, text, predicate=lambda i: True):
      return res
  
  
@@ -493,7 +519,15 @@ index 75bbc4b..d3b22c5 100644
      from polysh import control_commands
      if readline.get_begidx() == 0:
          # Completing control command name
-@@ -107,7 +110,7 @@ def complete_control_command(line, text):
+@@ -100,14 +105,14 @@ def complete_control_command(line, text):
+         # Completing control command parameters
+         cmd = line.split()[0][1:]
+ 
+-        def def_compl(line):
++        def def_compl(line: str) -> List:
+             return []
+         compl_func = getattr(control_commands, 'complete_' + cmd, def_compl)
+         matches = compl_func(line, text)
      return matches
  
  
@@ -503,10 +537,10 @@ index 75bbc4b..d3b22c5 100644
          return
      cmd_name = line.split()[0]
 diff --git a/polysh/dispatchers.py b/polysh/dispatchers.py
-index 7f17bba..873645b 100644
+index 8037b42..e0327ba 100644
 --- a/polysh/dispatchers.py
 +++ b/polysh/dispatchers.py
-@@ -21,6 +21,8 @@ import fcntl
+@@ -21,13 +21,15 @@ import fcntl
  import struct
  import sys
  import termios
@@ -515,7 +549,15 @@ index 7f17bba..873645b 100644
  
  from polysh import remote_dispatcher
  from polysh import display_names
-@@ -36,14 +38,14 @@ def _split_port(hostname):
+ from polysh.terminal_size import terminal_size
+ 
+ 
+-def _split_port(hostname):
++def _split_port(hostname: str) -> Tuple[str, str]:
+     """ Splits a string(hostname, given by the user) into hostname and port,
+     returns a tuple """
+     s = hostname.split(':', 1)
+@@ -37,14 +39,14 @@ def _split_port(hostname):
          return s[0], '22'
  
  
@@ -532,7 +574,7 @@ index 7f17bba..873645b 100644
      """Return a tuple with the number of awaited processes and the total
      number"""
      awaited = 0
-@@ -56,7 +58,7 @@ def count_awaited_processes():
+@@ -57,7 +59,7 @@ def count_awaited_processes():
      return awaited, total
  
  
@@ -541,7 +583,7 @@ index 7f17bba..873645b 100644
      """For each remote shell determine if its terminated"""
      instances_found = False
      for i in all_instances():
-@@ -67,7 +69,7 @@ def all_terminated():
+@@ -68,7 +70,7 @@ def all_terminated():
      return instances_found
  
  
@@ -550,7 +592,7 @@ index 7f17bba..873645b 100644
      """Propagate the terminal size to the remote shells accounting for the
      place taken by the longest name"""
      w, h = terminal_size()
-@@ -83,10 +85,9 @@ def update_terminal_size():
+@@ -84,10 +86,9 @@ def update_terminal_size():
              fcntl.ioctl(i.fd, bug, packed_size)
  
  
@@ -564,7 +606,7 @@ index 7f17bba..873645b 100644
      max_lengths = []
      if info_list:
          nr_columns = len(info_list[0])
-@@ -95,7 +96,7 @@ def format_info(info_list):
+@@ -96,7 +97,7 @@ def format_info(info_list):
      for i in range(nr_columns):
          max_lengths.append(max([len(info[i]) for info in info_list]))
  
@@ -573,7 +615,7 @@ index 7f17bba..873645b 100644
      for info_id in range(len(info_list)):
          info = info_list[info_id]
          for str_id in range(len(info) - 1):
-@@ -109,7 +110,7 @@ def format_info(info_list):
+@@ -110,7 +111,7 @@ def format_info(info_list):
      return flattened_info_list
  
  
@@ -583,98 +625,112 @@ index 7f17bba..873645b 100644
      for i, host in enumerate(hosts):
          if remote_dispatcher.options.interactive:
 diff --git a/polysh/display_names.py b/polysh/display_names.py
-index 55ce46a..393bc0b 100644
+index 35480e0..87696fb 100644
 --- a/polysh/display_names.py
 +++ b/polysh/display_names.py
-@@ -17,9 +17,9 @@ Copyright (c) 2018 InnoGames GmbH
+@@ -16,6 +16,7 @@ Copyright (c) 2018 InnoGames GmbH
+ # You should have received a copy of the GNU General Public License
  # along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
- from polysh.rb_tree import RBTree
-+from typing import Optional, Dict
++from typing import Dict, List, Optional
+ from collections import defaultdict
+ # The prefix is the key, the value is a list of booleans. A boolean at an
+ # index is True if that index is currently in use.
+@@ -23,13 +24,13 @@ PREFIXES = defaultdict(lambda: [])  # type: Dict[str, List[bool]]
  
--# {'prefix': <DisplayNamePrefix object>}
--PREFIXES = {}
-+PREFIXES = {}  # type: Dict[str, 'DisplayNamePrefix']
- 
- # Red/black tree with key:len(display_name) value:nr of enabled shells with a
+ # dict with key:len(display_name) value:nr of enabled shells with a
  # display_name of such a length
-@@ -30,11 +30,11 @@ max_display_name_length = 0
+-NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = defaultdict(lambda: [])
++NR_ENABLED_DISPLAY_NAMES_BY_LENGTH = dict()  # type: Dict[int, int]
+ 
+ # Used for terminal size and layout
+ max_display_name_length = 0
  
  
- class DisplayNamePrefix(object):
--    def __init__(self):
-+    def __init__(self) -> None:
-         self.next_suffix = 0
-         self.holes = RBTree()
+-def acquire_prefix_index(prefix):
++def acquire_prefix_index(prefix: str) -> int:
+     # Search and reuse removed host suffix
+     for idx, item in enumerate(PREFIXES[prefix]):
+         if not item:
+@@ -41,7 +42,7 @@ def acquire_prefix_index(prefix):
+     return len(PREFIXES[prefix]) - 1
  
--    def new_suffix(self):
-+    def new_suffix(self) -> int:
-         if len(self.holes) == 0:
-             suffix = self.next_suffix
-             self.next_suffix += 1
-@@ -44,7 +44,7 @@ class DisplayNamePrefix(object):
-             self.holes.deleteNode(first_node)
-         return suffix
  
--    def putback_suffix(self, suffix):
-+    def putback_suffix(self, suffix: int) -> None:
-         if suffix + 1 != self.next_suffix:
-             self.holes.insertNode(suffix, suffix)
-             return
-@@ -58,11 +58,11 @@ class DisplayNamePrefix(object):
-             self.holes.deleteNode(prev_suffix_node)
-             self.next_suffix = prev_suffix
+-def release_prefix_index(prev_display_name):
++def release_prefix_index(prev_display_name: str) -> None:
+     split = prev_display_name.split('#', 1)
+     prefix = split[0]
+     if len(split) == 1:
+@@ -53,7 +54,7 @@ def release_prefix_index(prev_display_name):
+     # to mark the current suffix index as unused.
+     if suffix < len(PREFIXES[prefix]) - 1:
+         PREFIXES[prefix][suffix] = False
+-        return
++        return None
  
--    def empty(self):
-+    def empty(self) -> bool:
-         return self.next_suffix == 0
+     # We are deleting the host with the highest suffix. Therefore we need to
+     # delete it.
+@@ -62,7 +63,7 @@ def release_prefix_index(prev_display_name):
+     # Remove holes previously left.
+     for idx, in_use in reversed(list(enumerate(PREFIXES[prefix]))):
+         if in_use:
+-            return
++            return None
+         del PREFIXES[prefix][idx]
+ 
+     # If we arrived here, we just deleted the last item with a specific
+@@ -70,7 +71,7 @@ def release_prefix_index(prev_display_name):
+     del PREFIXES[prefix]
  
  
 -def make_unique_name(prefix):
 +def make_unique_name(prefix: str) -> str:
-     prefix_obj = PREFIXES.get(prefix, None)
-     if prefix_obj is None:
-         prefix_obj = DisplayNamePrefix()
-@@ -77,7 +77,7 @@ def make_unique_name(prefix):
-     return name
+     suffix = acquire_prefix_index(prefix)
+     if suffix:
+         return '{}#{}'.format(prefix, suffix)
+@@ -78,7 +79,7 @@ def make_unique_name(prefix):
+     return prefix
  
  
 -def update_max_display_name_length():
 +def update_max_display_name_length() -> None:
-     from polysh import dispatchers
-     if len(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH) == 0:
-         new_max = 0
-@@ -89,9 +89,7 @@ def update_max_display_name_length():
-         dispatchers.update_terminal_size()
+     from polysh.dispatchers import update_terminal_size
+     new_max = max(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.keys(), default=0)
+     global max_display_name_length
+@@ -87,9 +88,10 @@ def update_max_display_name_length():
+         update_terminal_size()
  
  
 -def change(prev_display_name, new_prefix):
 -    assert isinstance(prev_display_name, str) or prev_display_name is None
 -    assert isinstance(new_prefix, str) or new_prefix is None
-+def change(prev_display_name: Optional[str], new_prefix: Optional[str]) -> str:
++def change(
++    prev_display_name: Optional[str],
++    new_prefix: Optional[str]
++) -> Optional[str]:
      if new_prefix and '#' in new_prefix:
          raise Exception('Names cannot contain #')
  
-@@ -109,7 +107,7 @@ def change(prev_display_name, new_prefix):
-         if prefix_obj.empty():
-             del PREFIXES[prev_prefix]
+@@ -98,7 +100,7 @@ def change(prev_display_name, new_prefix):
+             set_enabled(prev_display_name, False)
+         release_prefix_index(prev_display_name)
          if new_prefix is None:
 -            return
 +            return None
  
      name = make_unique_name(new_prefix)
      set_enabled(name, True)
-@@ -117,7 +115,7 @@ def change(prev_display_name, new_prefix):
+@@ -106,7 +108,7 @@ def change(prev_display_name, new_prefix):
      return name
  
  
 -def set_enabled(display_name, enabled):
 +def set_enabled(display_name: str, enabled: bool) -> None:
      length = len(display_name)
-     node = NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.findNode(length)
      if enabled:
+         if length in NR_ENABLED_DISPLAY_NAMES_BY_LENGTH:
 diff --git a/polysh/host_syntax.py b/polysh/host_syntax.py
-index 4dfc9d3..2981897 100644
+index 4dfc9d3..40374dd 100644
 --- a/polysh/host_syntax.py
 +++ b/polysh/host_syntax.py
 @@ -17,6 +17,8 @@ Copyright (c) 2018 InnoGames GmbH
@@ -682,20 +738,30 @@ index 4dfc9d3..2981897 100644
  
  import re
 +from typing import Iterator
-+from typing import Union
++from typing import Tuple
  
  # Currently the only expansion is <START_NUMBER-END_NUMBER>
  # <1-10> => 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-@@ -36,7 +38,7 @@ def _split_port(hostname):
+@@ -29,14 +31,16 @@ import re
+ syntax_pattern = re.compile('<([0-9,-]+)>')
+ interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
+ 
+-def _split_port(hostname):
++
++def _split_port(hostname: str) -> Tuple[str, str]:
+     s = hostname.split(':', 1)
+     if len(s) > 1:
+         return s[0], s[1]
      else:
          return s[0], '22'
  
 -def _iter_numbers(start, end):
++
 +def _iter_numbers(start: str, end: str) -> Iterator[str]:
      int_start = int(start)
      int_end = int(end)
      if int_start < int_end:
-@@ -54,7 +56,7 @@ def _iter_numbers(start, end):
+@@ -54,7 +58,7 @@ def _iter_numbers(start, end):
          yield s
  
  
@@ -705,7 +771,7 @@ index 4dfc9d3..2981897 100644
      match = syntax_pattern.search(string)
      if match:
 diff --git a/polysh/main.py b/polysh/main.py
-index 6fc4fae..585189e 100644
+index f3e7691..1143585 100644
 --- a/polysh/main.py
 +++ b/polysh/main.py
 @@ -26,6 +26,7 @@ import signal
@@ -810,152 +876,29 @@ index 6fc4fae..585189e 100644
              try:
                  loop(args.interactive)
              except BaseException:
-diff --git a/polysh/rb_tree.py b/polysh/rb_tree.py
-index 2a3644f..8120989 100644
---- a/polysh/rb_tree.py
-+++ b/polysh/rb_tree.py
-@@ -42,26 +42,32 @@ Copyright (c) 2018 InnoGames GmbH
- 
- __version__ = "1.5-polysh"
- 
-+from typing import Optional
-+
- BLACK = 0
- RED = 1
- 
- 
- class RBNode(object):
- 
--    def __init__(self, key=None, value=None, color=RED):
--        self.left = self.right = self.parent = None
-+    def __init__(
-+            self,
-+            key: Optional[int]=None,
-+            value: Optional[int]=None,
-+            color: int=RED) -> None:
-+        self.left = self.right = self.parent = None  # type: Optional[RBNode]
-         self.color = color
-         self.key = key
-         self.value = value
-         self.nonzero = True
- 
--    def __bool__(self):
-+    def __bool__(self) -> bool:
-         return self.nonzero
- 
- 
- class RBTree(object):
- 
--    def __init__(self):
-+    def __init__(self) -> None:
-         self.sentinel = RBNode()
-         self.sentinel.left = self.sentinel.right = self.sentinel
-         self.sentinel.color = BLACK
-@@ -69,10 +75,10 @@ class RBTree(object):
-         self.root = self.sentinel
-         self.count = 0
- 
--    def __len__(self):
-+    def __len__(self) -> int:
-         return self.count
- 
--    def rotateLeft(self, x):
-+    def rotateLeft(self, x: RBNode) -> None:
- 
-         y = x.right
- 
-@@ -97,7 +103,7 @@ class RBTree(object):
-         if x != self.sentinel:
-             x.parent = y
- 
--    def rotateRight(self, x):
-+    def rotateRight(self, x: RBNode) -> None:
- 
-         #***************************
-         #  rotate node x to right
-@@ -126,7 +132,7 @@ class RBTree(object):
-         if x != self.sentinel:
-             x.parent = y
- 
--    def insertFixup(self, x):
-+    def insertFixup(self, x: RBNode) -> None:
-         #************************************
-         #  maintain Red-Black tree balance  *
-         #  after inserting node x           *
-@@ -185,7 +191,7 @@ class RBTree(object):
- 
-         self.root.color = BLACK
- 
--    def insertNode(self, key, value):
-+    def insertNode(self, key: int, value: int) -> RBNode:
-         #**********************************************
-         #  allocate node for data and insert in tree  *
-         #**********************************************
-@@ -225,7 +231,7 @@ class RBTree(object):
-         self.insertFixup(x)
-         return x
- 
--    def deleteFixup(self, x):
-+    def deleteFixup(self, x: RBNode) -> None:
-         #************************************
-         #  maintain Red-Black tree balance  *
-         #  after deleting node x            *
-@@ -282,7 +288,7 @@ class RBTree(object):
- 
-         x.color = BLACK
- 
--    def deleteNode(self, z):
-+    def deleteNode(self, z: RBNode) -> None:
-         #****************************
-         #  delete node z from tree  *
-         #****************************
-@@ -325,7 +331,7 @@ class RBTree(object):
-         del y
-         self.count = self.count - 1
- 
--    def findNode(self, key):
-+    def findNode(self, key: int) -> Optional[RBNode]:
-         #******************************
-         #  find node containing data
-         #******************************
-@@ -347,13 +353,13 @@ class RBTree(object):
- 
-         return None
- 
--    def firstNode(self):
-+    def firstNode(self) -> RBNode:
-         cur = self.root
-         while cur.left:
-             cur = cur.left
-         return cur
- 
--    def lastNode(self):
-+    def lastNode(self) -> RBNode:
-         cur = self.root
-         while cur.right:
-             cur = cur.right
 diff --git a/polysh/remote_dispatcher.py b/polysh/remote_dispatcher.py
-index 1b28fb6..257bc7c 100644
+index b9a27ae..360d245 100644
 --- a/polysh/remote_dispatcher.py
 +++ b/polysh/remote_dispatcher.py
-@@ -24,6 +24,7 @@ import sys
+@@ -24,6 +24,8 @@ import sys
  import termios
  import select
  import platform
 +from typing import Optional, List
++from argparse import Namespace
  
  from polysh.buffered_dispatcher import BufferedDispatcher
  from polysh import callbacks
-@@ -48,7 +49,7 @@ COLORS = [1] + list(range(30, 37))
+@@ -48,7 +50,7 @@ COLORS = [1] + list(range(30, 37))
  nr_handle_read = 0
  
  
 -def main_loop_iteration(timeout=None):
-+def main_loop_iteration(timeout: Optional[float]=None) -> int:
++def main_loop_iteration(timeout: Optional[float] = None) -> int:
      """Return the number of RemoteDispatcher.handle_read() calls made by this
      iteration"""
      prev_nr_read = nr_handle_read
-@@ -56,8 +57,7 @@ def main_loop_iteration(timeout=None):
+@@ -56,8 +58,7 @@ def main_loop_iteration(timeout=None):
      return nr_handle_read - prev_nr_read
  
  
@@ -965,7 +908,7 @@ index 1b28fb6..257bc7c 100644
      if options.log_file:
          fd = options.log_file.fileno()
          while msg:
-@@ -73,10 +73,7 @@ def log(msg):
+@@ -73,10 +74,7 @@ def log(msg):
  class RemoteDispatcher(BufferedDispatcher):
      """A RemoteDispatcher is a ssh process we communicate with"""
  
@@ -977,7 +920,7 @@ index 1b28fb6..257bc7c 100644
          if port != "22":
              port = "-p " + port
          else:
-@@ -97,7 +94,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -97,20 +95,19 @@ class RemoteDispatcher(BufferedDispatcher):
          self.enabled = True  # shells can be enabled and disabled
          self.state = STATE_NOT_STARTED
          self.term_size = (-1, -1)
@@ -986,9 +929,15 @@ index 1b28fb6..257bc7c 100644
          self.change_name(self.hostname.encode())
          self.init_string = self.configure_tty() + self.set_prompt()
          self.init_string_sent = False
-@@ -110,7 +107,7 @@ class RemoteDispatcher(BufferedDispatcher):
-         else:
-             self.color_code = None
+         self.read_in_state_not_started = b''
+         self.command = options.command
+         self.last_printed_line = b''
++        self.color_code = None
+         if sys.stdout.isatty() and not options.disable_color:
+             COLORS.insert(0, COLORS.pop())  # Rotate the colors
+             self.color_code = COLORS[0]
+-        else:
+-            self.color_code = None
  
 -    def launch_ssh(self, name, port):
 +    def launch_ssh(self, name: str, port: str) -> None:
@@ -1022,7 +971,7 @@ index 1b28fb6..257bc7c 100644
          """We are no more interested in this remote process"""
          try:
              os.kill(-self.pid, signal.SIGKILL)
-@@ -153,7 +150,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -153,16 +150,19 @@ class RemoteDispatcher(BufferedDispatcher):
              raise asyncore.ExitNow(1)
          self.change_state(STATE_DEAD)
  
@@ -1030,8 +979,14 @@ index 1b28fb6..257bc7c 100644
 +    def configure_tty(self) -> bytes:
          """We don't want \n to be replaced with \r\n, and we disable the echo"""
          attr = termios.tcgetattr(self.fd)
-         attr[1] &= ~termios.ONLCR  # oflag
-@@ -162,7 +159,7 @@ class RemoteDispatcher(BufferedDispatcher):
+-        attr[1] &= ~termios.ONLCR  # oflag
+-        attr[3] &= ~termios.ECHO  # lflag
++        # The following raises a mypy warning, as python type hints don't allow
++        # per list item granularity.  The last item in attr is List[bytes], but
++        # we don't access that here.
++        attr[1] &= ~termios.ONLCR  # type: ignore # oflag
++        attr[3] &= ~termios.ECHO  # type: ignore # lflag
+         termios.tcsetattr(self.fd, termios.TCSANOW, attr)
          # unsetopt zle prevents Zsh from resetting the tty
          return b'unsetopt zle 2> /dev/null;stty -echo -onlcr -ctlecho;'
  
@@ -1040,7 +995,7 @@ index 1b28fb6..257bc7c 100644
          if options.interactive:
              self.change_state(STATE_IDLE)
          elif self.command:
-@@ -172,7 +169,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -172,7 +172,7 @@ class RemoteDispatcher(BufferedDispatcher):
              self.dispatch_command(b'exit 2>/dev/null\n')
              self.command = None
  
@@ -1049,7 +1004,7 @@ index 1b28fb6..257bc7c 100644
          """The prompt is important because we detect the readyness of a process
          by waiting for its prompt."""
          # No right prompt
-@@ -184,13 +181,13 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -185,13 +185,13 @@ class RemoteDispatcher(BufferedDispatcher):
          command_line += b'PS1="' + prompt1 + b'""' + prompt2 + b'\n"\n'
          return command_line
  
@@ -1065,7 +1020,7 @@ index 1b28fb6..257bc7c 100644
          # Dirty hack to ignore POLLPRI flag that is raised on Mac OS, but not
          # on linux. asyncore calls this method in case POLLPRI flag is set, but
          # self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR) == 0
-@@ -199,7 +196,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -200,7 +200,7 @@ class RemoteDispatcher(BufferedDispatcher):
  
          self.handle_close()
  
@@ -1074,7 +1029,7 @@ index 1b28fb6..257bc7c 100644
          if self.state is STATE_DEAD:
              # This connection has already been killed. Asyncore has probably
              # called handle_close() or handle_expt() on this connection twice.
-@@ -215,8 +212,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -216,8 +216,7 @@ class RemoteDispatcher(BufferedDispatcher):
          if self.temporary:
              self.close()
  
@@ -1084,7 +1039,7 @@ index 1b28fb6..257bc7c 100644
          from polysh.display_names import max_display_name_length
          lines = lines.strip(b'\n')
          while True:
-@@ -240,7 +236,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -241,7 +240,7 @@ class RemoteDispatcher(BufferedDispatcher):
          console_output(console_data, logging_msg=log_data)
          self.last_printed_line = lines[lines.rfind(b'\n') + 1:]
  
@@ -1093,7 +1048,7 @@ index 1b28fb6..257bc7c 100644
          """If we are in a fast case we'll avoid the long processing of each
          line"""
          if self.state is not STATE_RUNNING or callbacks.any_in(data):
-@@ -255,7 +251,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -256,7 +255,7 @@ class RemoteDispatcher(BufferedDispatcher):
          self.print_lines(data[:last_nl])
          return True
  
@@ -1102,7 +1057,7 @@ index 1b28fb6..257bc7c 100644
          """We got some output from a remote shell, this is one of the state
          machine"""
          if self.state == STATE_DEAD:
-@@ -309,19 +305,19 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -310,19 +309,19 @@ class RemoteDispatcher(BufferedDispatcher):
              self.dispatch_write(self.init_string)
              self.init_string_sent = True
  
@@ -1125,7 +1080,7 @@ index 1b28fb6..257bc7c 100644
          """Let's write as much as we can"""
          num_sent = self.send(self.write_buffer)
          if self.debug:
-@@ -329,32 +325,31 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -330,32 +329,31 @@ class RemoteDispatcher(BufferedDispatcher):
                  self.print_debug(b'<== ' + self.write_buffer[:num_sent])
          self.write_buffer = self.write_buffer[num_sent:]
  
@@ -1163,7 +1118,7 @@ index 1b28fb6..257bc7c 100644
          """Change the name of the shell, possibly updating the maximum name
          length"""
          if not new_name:
-@@ -364,7 +359,7 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -365,7 +363,7 @@ class RemoteDispatcher(BufferedDispatcher):
          self.display_name = display_names.change(
              self.display_name, name)
  
@@ -1172,7 +1127,7 @@ index 1b28fb6..257bc7c 100644
          """Send to the remote shell, its new name to be shell expanded"""
          if name:
              # defug callback add?
-@@ -375,6 +370,6 @@ class RemoteDispatcher(BufferedDispatcher):
+@@ -376,6 +374,6 @@ class RemoteDispatcher(BufferedDispatcher):
          else:
              self.change_name(self.hostname.encode())
  
@@ -1181,7 +1136,7 @@ index 1b28fb6..257bc7c 100644
          display_names.change(self.display_name, None)
          super().close()
 diff --git a/polysh/stdin.py b/polysh/stdin.py
-index 984f0b4..6933d07 100644
+index 984f0b4..d448542 100644
 --- a/polysh/stdin.py
 +++ b/polysh/stdin.py
 @@ -31,6 +31,7 @@ from threading import Thread, Event, Lock
@@ -1263,7 +1218,7 @@ index 984f0b4..6933d07 100644
  
  
 -def get_stdin_pid(cached_result=None):
-+def get_stdin_pid(cached_result: Optional[int]=None) -> int:
++def get_stdin_pid(cached_result: Optional[int] = None) -> int:
      """Try to get the PID of the stdin thread, otherwise get the whole process
      ID"""
      if cached_result is None:
@@ -1276,7 +1231,7 @@ index 984f0b4..6933d07 100644
      """The stdin thread may be in raw_input(), get out of it"""
      dupped_stdin = os.dup(0)  # Backup the stdin fd
      assert not the_stdin_thread.interrupt_asked  # Sanity check
-@@ -204,7 +203,7 @@ def interrupt_stdin_thread():
+@@ -204,15 +203,18 @@ def interrupt_stdin_thread():
  echo_enabled = True
  
  
@@ -1285,7 +1240,20 @@ index 984f0b4..6933d07 100644
      global echo_enabled
      if echo != echo_enabled:
          fd = sys.stdin.fileno()
-@@ -220,7 +219,7 @@ def set_echo(echo):
+         attr = termios.tcgetattr(fd)
++        # The following raises a mypy warning, as python type hints don't allow
++        # per list item granularity.  The last item in attr is List[bytes], but
++        # we don't access that here.
+         if echo:
+-            attr[3] |= termios.ECHO
++            attr[3] |= termios.ECHO  # type: ignore
+         else:
+-            attr[3] &= ~termios.ECHO
++            attr[3] &= ~termios.ECHO  # type: ignore
+         termios.tcsetattr(fd, termios.TCSANOW, attr)
+         echo_enabled = echo
+ 
+@@ -220,7 +222,7 @@ def set_echo(echo):
  class StdinThread(Thread):
      """The stdin thread, used to call raw_input()"""
  
@@ -1294,7 +1262,7 @@ index 984f0b4..6933d07 100644
          Thread.__init__(self, name='stdin thread')
          completion.install_completion_handler()
          self.input_buffer = InputBuffer()
-@@ -239,13 +238,13 @@ class StdinThread(Thread):
+@@ -239,13 +241,13 @@ class StdinThread(Thread):
              self.prepend_text = None  # type: Optional[str]
              readline.set_pre_input_hook(self.prepend_previous_text)
  
@@ -1310,7 +1278,7 @@ index 984f0b4..6933d07 100644
          nr, total = dispatchers.count_awaited_processes()
          if nr:
              prompt = 'waiting (%d/%d)> ' % (nr, total)
-@@ -259,12 +258,12 @@ class StdinThread(Thread):
+@@ -259,12 +261,12 @@ class StdinThread(Thread):
              self.in_raw_input.wait(0.1)
          self.raw_input_wanted.clear()
  
@@ -1365,3 +1333,31 @@ index 0f181a0..662904b 100644
                  cr = 25, 80
 -    return int(cr[1]), int(cr[0])         # reverse rows, cols
 +    return cr[1], cr[0]         # reverse rows, cols
+diff --git a/setup.py b/setup.py
+index cf6d53d..983138e 100755
+--- a/setup.py
++++ b/setup.py
+@@ -22,8 +22,8 @@ from os import path
+ from sys import exit, version_info as PYTHON_VERSION
+ from polysh import VERSION as POLYSH_VERSION
+ 
+-if PYTHON_VERSION < (3, 4):
+-    print('Aborting polysh installation! Polysh requires python 3.4 or later.')
++if PYTHON_VERSION < (3, 5):
++    print('Aborting polysh installation! Polysh requires python 3.5 or later.')
+     exit(1)
+ 
+ # Get the long description from the README file
+@@ -60,11 +60,10 @@ setup(
+         # This does not influence pip when choosing what to install. It is used
+         # for the package list on the pypi website.
+         'Programming Language :: Python :: 3',
+-        'Programming Language :: Python :: 3.4',
+         'Programming Language :: Python :: 3.5',
+         'Programming Language :: Python :: 3.6',
+     ],
+-    python_requires='>=3.4',
++    python_requires='>=3.5',
+ 
+     packages=['polysh'],
+     entry_points={
