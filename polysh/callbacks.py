@@ -29,14 +29,16 @@ Copyright (c) 2018 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+from typing import Callable
+from typing import Tuple
 
 DIGITS_LETTERS = list(map(str, list(range(10)))) + \
     list(map(chr, list(range(ord('a'), ord('z') + 1)))) + \
     list(map(chr, list(range(ord('A'), ord('Z') + 1))))
 
 
-def random_string(length):
-    def random_char():
+def random_string(length: int) -> str:
+    def random_char() -> str:
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
     return ''.join([random_char() for i in range(length)])
 
@@ -48,7 +50,7 @@ NR_GENERATED_TRIGGERS = 0
 CALLBACKS = {}
 
 
-def add(name, function, repeat):
+def add(name: bytes, function: Callable, repeat: bool) -> Tuple[bytes, bytes]:
     name = name.replace(b'/', b'_')
     global NR_GENERATED_TRIGGERS
     nr = NR_GENERATED_TRIGGERS
@@ -61,12 +63,11 @@ def add(name, function, repeat):
     return trigger1, trigger2
 
 
-def any_in(data):
+def any_in(data: bytes) -> bool:
     return COMMON_PREFIX in data
 
 
-def process(line):
-    assert isinstance(line, bytes)
+def process(line: bytes) -> bool:
     start = line.find(COMMON_PREFIX)
     if start < 0:
         return False

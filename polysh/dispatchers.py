@@ -21,13 +21,15 @@ import fcntl
 import struct
 import sys
 import termios
+from typing import List
+from typing import Tuple
 
 from polysh import remote_dispatcher
 from polysh import display_names
 from polysh.terminal_size import terminal_size
 
 
-def _split_port(hostname):
+def _split_port(hostname: str) -> Tuple[str, str]:
     """ Splits a string(hostname, given by the user) into hostname and port,
     returns a tuple """
     s = hostname.split(':', 1)
@@ -37,14 +39,14 @@ def _split_port(hostname):
         return s[0], '22'
 
 
-def all_instances():
+def all_instances() -> List[remote_dispatcher.RemoteDispatcher]:
     """Iterator over all the remote_dispatcher instances"""
     return sorted([i for i in asyncore.socket_map.values() if
                    isinstance(i, remote_dispatcher.RemoteDispatcher)],
                   key=lambda i: i.display_name or '')
 
 
-def count_awaited_processes():
+def count_awaited_processes() -> Tuple[int, int]:
     """Return a tuple with the number of awaited processes and the total
     number"""
     awaited = 0
@@ -57,7 +59,7 @@ def count_awaited_processes():
     return awaited, total
 
 
-def all_terminated():
+def all_terminated() -> bool:
     """For each remote shell determine if its terminated"""
     instances_found = False
     for i in all_instances():
@@ -68,7 +70,7 @@ def all_terminated():
     return instances_found
 
 
-def update_terminal_size():
+def update_terminal_size() -> None:
     """Propagate the terminal size to the remote shells accounting for the
     place taken by the longest name"""
     w, h = terminal_size()
@@ -84,10 +86,9 @@ def update_terminal_size():
             fcntl.ioctl(i.fd, bug, packed_size)
 
 
-def format_info(info_list):
-    """Turn a 2-dimension list of bytes into a 1-dimension list of bytes with
-    correct spacing"""
-
+def format_info(info_list: List[List[bytes]]) -> List[bytes]:
+    """Turn a 2-dimension list of strings into a 1-dimension list of strings
+    with correct spacing"""
     max_lengths = []
     if info_list:
         nr_columns = len(info_list[0])
@@ -96,7 +97,7 @@ def format_info(info_list):
     for i in range(nr_columns):
         max_lengths.append(max([len(info[i]) for info in info_list]))
 
-    flattened_info_list = []
+    flattened_info_list = []  # type: List[bytes]
     for info_id in range(len(info_list)):
         info = info_list[info_id]
         for str_id in range(len(info) - 1):
@@ -110,7 +111,7 @@ def format_info(info_list):
     return flattened_info_list
 
 
-def create_remote_dispatchers(hosts):
+def create_remote_dispatchers(hosts: List[str]) -> None:
     last_message = ''
     for i, host in enumerate(hosts):
         if remote_dispatcher.options.interactive:

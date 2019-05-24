@@ -19,13 +19,14 @@ Copyright (c) 2018 InnoGames GmbH
 import glob
 import os
 import readline
+from typing import Optional, List, Set
 
 from polysh.control_commands_helpers import complete_control_command
 from polysh.control_commands_helpers import expand_local_path
 
 
-def complete_local_path(path):
-    def get_suffix(p):
+def complete_local_path(path: str) -> List[str]:
+    def get_suffix(p: str) -> str:
         if os.path.isdir(p):
             return '/'
         return ''
@@ -34,8 +35,8 @@ def complete_local_path(path):
     return paths
 
 
-def remove_dupes(words):
-    added = set()
+def remove_dupes(words: List[str]) -> List[str]:
+    added = set()  # type: Set[str]
     results = list()
     for w in words:
         stripped = w.rstrip('/ ')
@@ -45,8 +46,8 @@ def remove_dupes(words):
     return results
 
 
-def read_commands_in_path():
-    commands = set()
+def read_commands_in_path() -> List[str]:
+    commands = set()  # type: Set[str]
 
     for path in (os.getenv('PATH') or '').split(':'):
         if path:
@@ -61,7 +62,7 @@ def read_commands_in_path():
 
 # All the words that have been typed in polysh. Used by the completion
 # mechanism.
-history_words = set()
+history_words = set()  # type: Set[str]
 
 # When listing possible completions, the complete() function is called with
 # an increasing state parameter until it returns None. Cache the completion
@@ -72,7 +73,7 @@ completion_results = None
 user_commands_in_path = read_commands_in_path()
 
 
-def complete(text, state):
+def complete(text: str, state: int) -> Optional[str]:
     """On tab press, return the next possible completion"""
     global completion_results
     if state == 0:
@@ -107,18 +108,18 @@ def complete(text, state):
     return None
 
 
-def add_to_history(cmd):
+def add_to_history(cmd: str) -> None:
     if len(history_words) < 10000:
         history_words.update(w for w in cmd.split() if len(w) > 1)
 
 
-def remove_last_history_item():
+def remove_last_history_item() -> None:
     """The user just typed a password..."""
     last = readline.get_current_history_length() - 1
     readline.remove_history_item(last)
 
 
-def install_completion_handler():
+def install_completion_handler() -> None:
     readline.set_completer(complete)
     readline.parse_and_bind('tab: complete')
     readline.set_completer_delims(' \t\n')
