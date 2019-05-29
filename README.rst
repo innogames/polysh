@@ -10,7 +10,7 @@ other commands dispatchers, it is interactive, so shells spawned on
 the remote hosts are persistent.  It requires only a SSH server on the remote
 hosts, or some other way to open a remote shell.
 
-Python >= 3.4 is required.
+Python >= 3.5 is required.
 
 Usage::
 
