@@ -16,4 +16,4 @@ Copyright (c) 2018 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = (0, 10)
+VERSION = (0, 11)
