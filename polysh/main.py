@@ -26,6 +26,7 @@ import signal
 import sys
 import termios
 import readline
+import resource
 from typing import Callable, List
 
 from polysh import remote_dispatcher
@@ -240,6 +241,23 @@ def run() -> None:
     hosts = []  # type: List[str]
     for host in args.host_names:
         hosts.extend(expand_syntax(host))
+
+    try:
+        # stdin, stdout, stderr for polysh and each ssh connection
+        new_soft = 3 + len(hosts) * 3
+        old_soft, old_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        if new_soft > old_soft:
+            # We are allowed to change the soft limit as we please but must be
+            # root to change the hard limit.
+            new_hard = max(new_soft, old_hard)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (new_soft, new_hard))
+    except OSError as e:
+        print(
+            'Failed to change RLIMIT_NOFILE from soft={} hard={} to soft={} '
+            'hard={}: {}'.format(old_soft, old_hard, new_soft, new_hard, e),
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     dispatchers.create_remote_dispatchers(hosts)
 
