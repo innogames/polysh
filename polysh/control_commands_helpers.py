@@ -59,7 +59,10 @@ def selected_shells(
         for expanded_pattern in expand_syntax(pattern):
             for i in dispatchers.all_instances():
                 instance_found = True
-                if fnmatch(i.display_name, expanded_pattern):
+                if (
+                    fnmatch(i.display_name, expanded_pattern) or
+                    fnmatch(str(i.last_printed_line), expanded_pattern)
+                ):
                     found = True
                     if i not in selected:
                         selected.add(i)
