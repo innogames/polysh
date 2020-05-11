@@ -1,3 +1,9 @@
+Version 0.13
+    * Dis/Enable shell base on last output
+
+Version 0.12
+    * Try to increase fd limits if needed for connections
+
 Version 0.11
     * Add Python 3.5 style type hints
     * Drop Python 3.4 support
