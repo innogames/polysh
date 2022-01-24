@@ -49,9 +49,8 @@ def kill_all() -> None:
 
 
 def parse_cmdline() -> argparse.Namespace:
-    usage = '%s [OPTIONS] HOSTS...\n' % (sys.argv[0]) + \
-            'Control commands are prefixed by ":".'
-    parser = argparse.ArgumentParser(usage)
+    description = 'Control commands are prefixed by ":".'
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         '--hosts-file', type=str, action='append',
         dest='hosts_filenames', metavar='FILE', default=[],
@@ -63,7 +62,7 @@ def parse_cmdline() -> argparse.Namespace:
     def_ssh = 'exec ssh -oLogLevel=Quiet -t %(host)s %(port)s'
     parser.add_argument(
         '--ssh', type=str, dest='ssh', default=def_ssh,
-        metavar='SSH', help='ssh command to use [%s]' % def_ssh)
+        metavar='SSH', help='ssh command to use [%(default)s]')
     parser.add_argument(
         '--user', type=str, dest='user', default=None,
         help='remote user to log in as', metavar='USER')
