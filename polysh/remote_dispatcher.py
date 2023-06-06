@@ -160,7 +160,7 @@ class RemoteDispatcher(BufferedDispatcher):
         attr[3] &= ~termios.ECHO  # type: ignore # lflag
         termios.tcsetattr(self.fd, termios.TCSANOW, attr)
         # unsetopt zle prevents Zsh from resetting the tty
-        return b'unsetopt zle 2> /dev/null;stty -echo -onlcr -ctlecho;'
+        return b'unsetopt zle 2> /dev/null;stty -echo -onlcr -ctlecho; bind "set enable-bracketed-paste off" 2> /dev/null;'
 
     def seen_prompt_cb(self, unused: str) -> None:
         if options.interactive:
