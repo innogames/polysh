@@ -1,3 +1,6 @@
+Version 0.14
+    * Fix remote host prompt printed twice in Bash 5.x and readline 8.x
+
 Version 0.13
     * Dis/Enable shell base on last output
 
