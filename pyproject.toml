@@ -1,0 +1,25 @@
+[project]
+name = "polysh"
+version = "0.14.0"
+description = "Remote shell multiplexer"
+readme = "README.rst"
+requires-python = ">=3.5,<=3.12"
+dependencies = []
+
+[project.scripts]
+polysh = "polysh.main:main"
+
+[project.optional-dependencies]
+logging = [
+    "raven>=6.10.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pexpect>=4.9.0",
+    "coverage>=5.5",
+]
