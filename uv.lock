@@ -78,7 +78,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "raven", marker = "extra == 'logging'" }]
+requires-dist = [{ name = "raven", marker = "extra == 'logging'", specifier = ">=6.10.0" }]
 
 [package.metadata.requires-dev]
 dev = [

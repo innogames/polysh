@@ -18,7 +18,8 @@ Copyright (c) 2024 InnoGames GmbH
 
 import unittest
 import pexpect
-from polysh_tests import launch_polysh
+from pexpect.popen_spawn import PopenSpawn
+
 from time import sleep
 
 
@@ -27,7 +28,7 @@ class TestBasic(unittest.TestCase):
         args = nr_localhost * ['localhost']
 
         def start_child():
-            child = launch_polysh(args)
+            child = PopenSpawn(['polysh'] + args)
             child.expect('ready \(%d\)> ' % (nr_localhost))
             return child
 
