@@ -52,48 +52,78 @@ def parse_cmdline() -> argparse.Namespace:
     description = 'Control commands are prefixed by ":".'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
-        '--hosts-file', type=str, action='append',
-        dest='hosts_filenames', metavar='FILE', default=[],
-        help='read hostnames from given file, one per line')
+        "--hosts-file",
+        type=str,
+        action="append",
+        dest="hosts_filenames",
+        metavar="FILE",
+        default=[],
+        help="read hostnames from given file, one per line",
+    )
     parser.add_argument(
-        '--command', type=str, dest='command', default=None,
-        help='command to execute on the remote shells',
-        metavar='CMD')
-    def_ssh = 'exec ssh -oLogLevel=Quiet -t %(host)s %(port)s'
+        "--command",
+        type=str,
+        dest="command",
+        default=None,
+        help="command to execute on the remote shells",
+        metavar="CMD",
+    )
+    def_ssh = "exec ssh -oLogLevel=Quiet -t %(host)s %(port)s"
     parser.add_argument(
-        '--ssh', type=str, dest='ssh', default=def_ssh,
-        metavar='SSH', help='ssh command to use [%(default)s]')
+        "--ssh",
+        type=str,
+        dest="ssh",
+        default=def_ssh,
+        metavar="SSH",
+        help="ssh command to use [%(default)s]",
+    )
     parser.add_argument(
-        '--user', type=str, dest='user', default=None,
-        help='remote user to log in as', metavar='USER')
+        "--user",
+        type=str,
+        dest="user",
+        default=None,
+        help="remote user to log in as",
+        metavar="USER",
+    )
     parser.add_argument(
-        '--no-color', action='store_true', dest='disable_color',
-        help='disable colored hostnames [enabled]')
+        "--no-color",
+        action="store_true",
+        dest="disable_color",
+        help="disable colored hostnames [enabled]",
+    )
     parser.add_argument(
-        '--password-file', type=str, dest='password_file',
-        default=None, metavar='FILE',
-        help='read a password from the specified file. - is the tty.')
+        "--password-file",
+        type=str,
+        dest="password_file",
+        default=None,
+        metavar="FILE",
+        help="read a password from the specified file. - is the tty.",
+    )
     parser.add_argument(
-        '--log-file', type=str, dest='log_file',
-        help='file to log each machine conversation [none]')
+        "--log-file",
+        type=str,
+        dest="log_file",
+        help="file to log each machine conversation [none]",
+    )
     parser.add_argument(
-        '--abort-errors', action='store_true', dest='abort_error',
-        help='abort if some shell fails to initialize [ignore]')
+        "--abort-errors",
+        action="store_true",
+        dest="abort_error",
+        help="abort if some shell fails to initialize [ignore]",
+    )
     parser.add_argument(
-        '--debug', action='store_true', dest='debug',
-        help='print debugging information')
-    parser.add_argument(
-        '--profile', action='store_true', dest='profile',
-        default=False)
-    parser.add_argument('host_names', nargs='*')
+        "--debug", action="store_true", dest="debug", help="print debugging information"
+    )
+    parser.add_argument("--profile", action="store_true", dest="profile", default=False)
+    parser.add_argument("host_names", nargs="*")
     args = parser.parse_args()
 
     for filename in args.hosts_filenames:
         try:
-            hosts_file = open(filename, 'r')
+            hosts_file = open(filename, "r")
             for line in hosts_file.readlines():
-                if '#' in line:
-                    line = line[:line.index('#')]
+                if "#" in line:
+                    line = line[: line.index("#")]
                 line = line.strip()
                 if line:
                     args.host_names.append(line)
@@ -103,19 +133,19 @@ def parse_cmdline() -> argparse.Namespace:
 
     if args.log_file:
         try:
-            args.log_file = open(args.log_file, 'a')
+            args.log_file = open(args.log_file, "a")
         except IOError as e:
             print(e)
             sys.exit(1)
 
     if not args.host_names:
-        parser.error('no hosts given')
+        parser.error("no hosts given")
 
-    if args.password_file == '-':
+    if args.password_file == "-":
         args.password = getpass.getpass()
     elif args.password_file is not None:
-        password_file = open(args.password_file, 'r')
-        args.password = password_file.readline().rstrip('\n')
+        password_file = open(args.password_file, "r")
+        args.password = password_file.readline().rstrip("\n")
     else:
         args.password = None
 
@@ -129,12 +159,12 @@ def find_non_interactive_command(command: str) -> str:
     stdin = sys.stdin.read()
     if stdin and command:
         print(
-            '--command and reading from stdin are incompatible',
+            "--command and reading from stdin are incompatible",
             file=sys.stderr,
         )
         sys.exit(1)
-    if stdin and not stdin.endswith('\n'):
-        stdin += '\n'
+    if stdin and not stdin.endswith("\n"):
+        stdin += "\n"
     return command or stdin
 
 
@@ -161,27 +191,28 @@ def loop(interactive: bool) -> None:
             if next_signal:
                 current_signal = next_signal
                 next_signal = None
-                sig2chr = {signal.SIGINT: 'C', signal.SIGTSTP: 'Z'}
+                sig2chr = {signal.SIGINT: "C", signal.SIGTSTP: "Z"}
                 ctrl = sig2chr[current_signal]
-                remote_dispatcher.log('> ^{}\n'.format(ctrl).encode())
+                remote_dispatcher.log("> ^{}\n".format(ctrl).encode())
                 control_commands.do_send_ctrl(ctrl)
-                console_output(b'')
+                console_output(b"")
                 stdin.the_stdin_thread.prepend_text = None
-            while dispatchers.count_awaited_processes()[0] and \
-                    remote_dispatcher.main_loop_iteration(timeout=0.2):
+            while dispatchers.count_awaited_processes()[
+                0
+            ] and remote_dispatcher.main_loop_iteration(timeout=0.2):
                 pass
             # Now it's quiet
             for r in dispatchers.all_instances():
                 r.print_unfinished_line()
             current_status = dispatchers.count_awaited_processes()
             if current_status != last_status:
-                console_output(b'')
+                console_output(b"")
             if remote_dispatcher.options.interactive:
                 stdin.the_stdin_thread.want_raw_input()
             last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
-                console_output(b'')
+                console_output(b"")
                 raise asyncore.ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
                 # possible race here with the signal handler
@@ -193,20 +224,21 @@ def loop(interactive: bool) -> None:
                 kill_all()
                 os.kill(0, signal.SIGINT)
         except asyncore.ExitNow as e:
-            console_output(b'')
+            console_output(b"")
             save_history(histfile)
             sys.exit(e.args[0])
 
 
 def _profile(continuation: Callable) -> None:
-    prof_file = 'polysh.prof'
+    prof_file = "polysh.prof"
     import cProfile
     import pstats
-    print('Profiling using cProfile')
-    cProfile.runctx('continuation()', globals(), locals(), prof_file)
+
+    print("Profiling using cProfile")
+    cProfile.runctx("continuation()", globals(), locals(), prof_file)
     stats = pstats.Stats(prof_file)
     stats.strip_dirs()
-    stats.sort_stats('time', 'calls')
+    stats.sort_stats("time", "calls")
     stats.print_stats(50)
     stats.print_callees(50)
     os.remove(prof_file)
@@ -220,7 +252,7 @@ def restore_tty_on_exit() -> None:
 
 def run() -> None:
     """Launch polysh"""
-    locale.setlocale(locale.LC_ALL, '')
+    locale.setlocale(locale.LC_ALL, "")
     atexit.register(kill_all)
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
@@ -228,10 +260,7 @@ def run() -> None:
 
     args.command = find_non_interactive_command(args.command)
     args.exit_code = 0
-    args.interactive = (
-        not args.command
-        and sys.stdin.isatty()
-        and sys.stdout.isatty())
+    args.interactive = not args.command and sys.stdin.isatty() and sys.stdout.isatty()
     if args.interactive:
         restore_tty_on_exit()
 
@@ -252,25 +281,28 @@ def run() -> None:
             resource.setrlimit(resource.RLIMIT_NOFILE, (new_soft, new_hard))
     except OSError as e:
         print(
-            'Failed to change RLIMIT_NOFILE from soft={} hard={} to soft={} '
-            'hard={}: {}'.format(old_soft, old_hard, new_soft, new_hard, e),
+            "Failed to change RLIMIT_NOFILE from soft={} hard={} to soft={} "
+            "hard={}: {}".format(old_soft, old_hard, new_soft, new_hard, e),
             file=sys.stderr,
         )
         sys.exit(1)
 
     dispatchers.create_remote_dispatchers(hosts)
 
-    signal.signal(signal.SIGWINCH, lambda signum, frame:
-                  dispatchers.update_terminal_size())
+    signal.signal(
+        signal.SIGWINCH, lambda signum, frame: dispatchers.update_terminal_size()
+    )
 
     stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
 
     if args.profile:
+
         def safe_loop() -> None:
             try:
                 loop(args.interactive)
             except BaseException:
                 pass
+
         _profile(safe_loop)
     else:
         loop(args.interactive)
@@ -279,16 +311,15 @@ def run() -> None:
 def main():
     """Wrapper around run() to setup sentry"""
 
-    sentry_dsn = os.environ.get('POLYSH_SENTRY_DSN')
+    sentry_dsn = os.environ.get("POLYSH_SENTRY_DSN")
 
     if sentry_dsn:
         from raven import Client
+
         client = Client(
             dsn=sentry_dsn,
-            release='.'.join(map(str, VERSION)),
-            ignore_exceptions=[
-                KeyboardInterrupt
-            ]
+            release=".".join(map(str, VERSION)),
+            ignore_exceptions=[KeyboardInterrupt],
         )
 
         try:

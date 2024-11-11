@@ -28,10 +28,11 @@ from polysh.control_commands_helpers import expand_local_path
 def complete_local_path(path: str) -> List[str]:
     def get_suffix(p: str) -> str:
         if os.path.isdir(p):
-            return '/'
-        return ''
+            return "/"
+        return ""
+
     path = expand_local_path(path)
-    paths = [p + get_suffix(p) for p in glob.glob(path + '*')]
+    paths = [p + get_suffix(p) for p in glob.glob(path + "*")]
     return paths
 
 
@@ -39,7 +40,7 @@ def remove_dupes(words: List[str]) -> List[str]:
     added = set()  # type: Set[str]
     results = list()
     for w in words:
-        stripped = w.rstrip('/ ')
+        stripped = w.rstrip("/ ")
         if stripped not in added:
             added.add(stripped)
             results.append(w)
@@ -49,7 +50,7 @@ def remove_dupes(words: List[str]) -> List[str]:
 def read_commands_in_path() -> List[str]:
     commands = set()  # type: Set[str]
 
-    for path in (os.getenv('PATH') or '').split(':'):
+    for path in (os.getenv("PATH") or "").split(":"):
         if path:
             try:
                 listing = os.listdir(path)
@@ -78,11 +79,11 @@ def complete(text: str, state: int) -> Optional[str]:
     global completion_results
     if state == 0:
         line = readline.get_line_buffer()
-        if line.startswith(':'):
+        if line.startswith(":"):
             # Control command completion
             completion_results = complete_control_command(line, text)
         else:
-            if line.startswith('!') and text and line.startswith(text):
+            if line.startswith("!") and text and line.startswith(text):
                 dropped_exclam = True
                 text = text[1:]
             else:
@@ -92,15 +93,19 @@ def complete(text: str, state: int) -> Optional[str]:
             completion_results += complete_local_path(text)
             # Complete from history
             l = len(text)
-            completion_results += [w + ' ' for w in history_words if
-                                   len(w) > l and w.startswith(text)]
+            completion_results += [
+                w + " " for w in history_words if len(w) > l and w.startswith(text)
+            ]
             if readline.get_begidx() == 0:
                 # Completing first word from $PATH
-                completion_results += [w + ' ' for w in user_commands_in_path
-                                           if len(w) > l and w.startswith(text)]
+                completion_results += [
+                    w + " "
+                    for w in user_commands_in_path
+                    if len(w) > l and w.startswith(text)
+                ]
             completion_results = remove_dupes(completion_results)
             if dropped_exclam:
-                completion_results = ['!' + r for r in completion_results]
+                completion_results = ["!" + r for r in completion_results]
 
     if state < len(completion_results):
         return completion_results[state]
@@ -121,5 +126,5 @@ def remove_last_history_item() -> None:
 
 def install_completion_handler() -> None:
     readline.set_completer(complete)
-    readline.parse_and_bind('tab: complete')
-    readline.set_completer_delims(' \t\n')
+    readline.parse_and_bind("tab: complete")
+    readline.set_completer_delims(" \t\n")

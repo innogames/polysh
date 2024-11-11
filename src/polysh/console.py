@@ -44,11 +44,11 @@ def console_output(msg: bytes, logging_msg: Optional[bytes] = None) -> None:
     remote_dispatcher.log(logging_msg or msg)
     if remote_dispatcher.options.interactive:
         from polysh.stdin import the_stdin_thread
+
         the_stdin_thread.no_raw_input()
         global last_status_length
         if last_status_length:
-            safe_write('\r{}\r'.format(
-                last_status_length * ' ').encode())
+            safe_write("\r{}\r".format(last_status_length * " ").encode())
             last_status_length = 0
     safe_write(msg)
 
