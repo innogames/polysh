@@ -1,10 +1,47 @@
 [project]
 name = "polysh"
+authors = [{ email = "it@innogames.com" }]
 version = "0.14.0"
-description = "Remote shell multiplexer"
+description = "Control thousands of SSH sessions from a single prompt"
 readme = "README.rst"
 requires-python = ">=3.5,<=3.12"
 dependencies = []
+classifiers = [  # Optional
+        "Intended Audience :: System Administrators",
+        "Intended Audience :: Developers",
+        "Topic :: System :: Systems Administration",
+        "Topic :: System :: Shells",
+        "Topic :: System :: Clustering",
+        "Topic :: System :: Distributed Computing",
+
+        "Environment :: Console",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS :: MacOS X",
+
+        "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+        "Development Status :: 5 - Production/Stable",
+
+        # This does not influence pip when choosing what to install. It is used
+        # for the package list on the pypi website.
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/innogames/polysh"
+Documentation = "https://github.com/innogames/polysh"
+Repository = "https://github.com/innogames/polysh"
+Issues = "https://github.com/innogames/polysh/issues"
+Changelog = "https://github.com/innogames/polysh/blob/master/CHANGELOG.rst"
+
+[project.license]
+file = "LICENSE"
 
 [project.scripts]
 polysh = "polysh.main:main"
