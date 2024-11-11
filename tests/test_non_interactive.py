@@ -18,7 +18,8 @@ Copyright (c) 2024 InnoGames GmbH
 
 import unittest
 import pexpect
-from polysh_tests import launch_polysh
+
+from tests import launch_polysh
 
 
 class TestNonInteractive(unittest.TestCase):

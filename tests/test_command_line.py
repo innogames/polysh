@@ -20,7 +20,7 @@ import unittest
 import pexpect
 import os
 
-from polysh_tests import launch_polysh
+from tests import launch_polysh
 
 
 class TestCommandLine(unittest.TestCase):

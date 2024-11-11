@@ -19,7 +19,8 @@ Copyright (c) 2024 InnoGames GmbH
 import os
 import unittest
 import pexpect
-from polysh_tests import launch_polysh
+
+from tests import launch_polysh
 
 
 class TestControlCommands(unittest.TestCase):

@@ -22,6 +22,8 @@ from pexpect.popen_spawn import PopenSpawn
 
 from time import sleep
 
+from tests import launch_polysh
+
 
 class TestBasic(unittest.TestCase):
     def localhost(self, nr_localhost):
