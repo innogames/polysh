@@ -179,8 +179,8 @@ class TestControlCommands(unittest.TestCase):
 
         def testEcho(msg):
             child.expect('ready \(1\)> ')
-            child.sendline('echo %s' % msg)
-            child.expect('\033\[1;36mlocalhost : \033\[1;m%s' % msg)
+            child.sendline(f'echo {msg}')
+            child.expect(f'\x1b\\[1;36mlocalhost : \x1b\\[1;m{msg}')
         testEcho('not logging')
         child.sendline(':set_log')
         testEcho('still not logging')

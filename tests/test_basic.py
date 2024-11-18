@@ -31,7 +31,7 @@ class TestBasic(unittest.TestCase):
 
         def start_child():
             child = PopenSpawn(['polysh'] + args)
-            child.expect('ready \(%d\)> ' % (nr_localhost))
+            child.expect(f'ready \({nr_localhost}\)> ')
             return child
 
         def test_eof():

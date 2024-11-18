@@ -60,7 +60,7 @@ class TestNonInteractive(unittest.TestCase):
     def testExitCode(self):
         def CommandCode(command, code):
             child = launch_polysh(
-                ['--command=%s' % command] + ['localhost'] * 5)
+                [f'--command={command}'] + ['localhost'] * 5)
             child.expect(pexpect.EOF)
             while child.isalive():
                 child.wait()

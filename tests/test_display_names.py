@@ -36,6 +36,6 @@ class TestDisplayNames(unittest.TestCase):
         child.expect('ready \(19\)> ')
         for i in range(20, 101):
             child.sendline(':add a')
-            child.expect('ready \(%d\)> ' % i)
+            child.expect(f'ready \\({int(i)}\\)> ')
         child.sendline(':quit')
         child.expect(pexpect.EOF)
