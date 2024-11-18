@@ -17,10 +17,9 @@ Copyright (c) 2024 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-import pexpect
-from pexpect.popen_spawn import PopenSpawn
-
 from time import sleep
+
+import pexpect
 
 from tests import launch_polysh
 
@@ -30,8 +29,9 @@ class TestBasic(unittest.TestCase):
         args = nr_localhost * ['localhost']
 
         def start_child():
-            child = PopenSpawn(['polysh'] + args)
+            child = launch_polysh(args)
             child.expect(f'ready \({nr_localhost}\)> ')
+            child.sendeof()
             return child
 
         def test_eof():
@@ -84,9 +84,9 @@ class TestBasic(unittest.TestCase):
         child = launch_polysh(['localhost', 'localhost'])
         child.expect('ready \(2\)> ')
         child.sendeof()
+
         # We test for logout as this is the expected response of sending EOF to
         # a non login shell
-        idx = child.expect(['Error talking to localhost', 'logout'])
-        self.assertEqual(idx, 1)
-        idx = child.expect(['Error talking to localhost', pexpect.EOF])
-        self.assertEqual(idx, 1)
+        child.expect('logout')
+        child.expect('logout')
+        child.expect(pexpect.EOF)
