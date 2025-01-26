@@ -1,7 +1,7 @@
 """Polysh - Tests - Displaying Names
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,8 @@ Copyright (c) 2018 InnoGames GmbH
 
 import unittest
 import pexpect
-from polysh_tests import launch_polysh
+
+from tests import launch_polysh
 
 
 class TestDisplayNames(unittest.TestCase):
@@ -35,6 +36,6 @@ class TestDisplayNames(unittest.TestCase):
         child.expect('ready \(19\)> ')
         for i in range(20, 101):
             child.sendline(':add a')
-            child.expect('ready \(%d\)> ' % i)
+            child.expect(f'ready \\({int(i)}\\)> ')
         child.sendline(':quit')
         child.expect(pexpect.EOF)

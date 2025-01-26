@@ -1,7 +1,7 @@
 """Polysh - Buffered Dispatcher Class
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@ Copyright (c) 2018 InnoGames GmbH
 # It would be nice (but not necessary) to give me an artistic license credit
 # somewhere in the licensing materials of any derivative product.
 
-
 import os
 from typing import Tuple, Optional
 
@@ -40,7 +39,8 @@ def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
         import fcntl
         import termios
         import struct
-        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, b'1234'))
+
+        cr = struct.unpack("hh", fcntl.ioctl(fd, termios.TIOCGWINSZ, b"1234"))
     except BaseException:
         return None
     return int(cr[0]), int(cr[1])
@@ -48,18 +48,17 @@ def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
 
 def terminal_size() -> Tuple[int, int]:  # decide on *some* terminal size
     """Return (lines, columns)."""
-    cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(
-        1) or _ioctl_GWINSZ(2)  # try open fds
-    if not cr:                                                  # ...then ctty
+    cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)  # try open fds
+    if not cr:  # ...then ctty
         try:
             fd = os.open(os.ctermid(), os.O_RDONLY)
             cr = _ioctl_GWINSZ(fd)
             os.close(fd)
         except BaseException:
             pass
-        if not cr:                            # env vars or finally defaults
+        if not cr:  # env vars or finally defaults
             try:
-                cr = int(os.environ['LINES']), int(os.environ['COLUMNS'])
+                cr = int(os.environ["LINES"]), int(os.environ["COLUMNS"])
             except BaseException:
                 cr = 25, 80
-    return cr[1], cr[0]         # reverse rows, cols
+    return cr[1], cr[0]  # reverse rows, cols

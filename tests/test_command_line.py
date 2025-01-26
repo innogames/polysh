@@ -1,7 +1,7 @@
 """Polysh - Tests - Command Line
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,18 +20,18 @@ import unittest
 import pexpect
 import os
 
-from polysh_tests import launch_polysh
+from tests import launch_polysh
 
 
 class TestCommandLine(unittest.TestCase):
     def testGoodHostsFilename(self):
-        tmp_name = '/tmp/polysh_tests.%d' % (os.getpid())
+        tmp_name = f'/tmp/polysh_tests.{int(os.getpid())}'
         tmp = open(tmp_name, 'w', 0o600)
         print('localhost # Comment', file=tmp)
         print('# Ignore me', file=tmp)
         print('127.0.0.1', file=tmp)
         tmp.close()
-        child = launch_polysh(['--hosts-file=%s' % (tmp_name)])
+        child = launch_polysh([f'--hosts-file={tmp_name}'])
         child.expect('ready \(2\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)

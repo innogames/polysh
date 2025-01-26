@@ -13,7 +13,7 @@ Example: The trigger FOOBAR could be split into FOO and BAR and sent as
          echo "FOO""BAR" so that the sent string does not contain FOOBAR.
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,18 +32,21 @@ import random
 from typing import Callable
 from typing import Tuple
 
-DIGITS_LETTERS = list(map(str, list(range(10)))) + \
-    list(map(chr, list(range(ord('a'), ord('z') + 1)))) + \
-    list(map(chr, list(range(ord('A'), ord('Z') + 1))))
+DIGITS_LETTERS = (
+    list(map(str, list(range(10))))
+    + list(map(chr, list(range(ord("a"), ord("z") + 1))))
+    + list(map(chr, list(range(ord("A"), ord("Z") + 1))))
+)
 
 
 def random_string(length: int) -> str:
     def random_char() -> str:
         return DIGITS_LETTERS[random.randint(0, len(DIGITS_LETTERS) - 1)]
-    return ''.join([random_char() for i in range(length)])
+
+    return "".join([random_char() for i in range(length)])
 
 
-COMMON_PREFIX = 'polysh-{}:'.format(random_string(5)).encode()
+COMMON_PREFIX = "polysh-{}:".format(random_string(5)).encode()
 NR_GENERATED_TRIGGERS = 0
 
 # {'random_string()': (function, repeat)}
@@ -51,15 +54,22 @@ CALLBACKS = {}
 
 
 def add(name: bytes, function: Callable, repeat: bool) -> Tuple[bytes, bytes]:
-    name = name.replace(b'/', b'_')
+    name = name.replace(b"/", b"_")
     global NR_GENERATED_TRIGGERS
     nr = NR_GENERATED_TRIGGERS
     NR_GENERATED_TRIGGERS += 1
-    trigger = (COMMON_PREFIX + name + b':' + random_string(5).encode() + b':' +
-               str(nr).encode() + b'/')
+    trigger = (
+        COMMON_PREFIX
+        + name
+        + b":"
+        + random_string(5).encode()
+        + b":"
+        + str(nr).encode()
+        + b"/"
+    )
     CALLBACKS[trigger] = (function, repeat)
-    trigger1 = trigger[:int(len(COMMON_PREFIX) / 2)]
-    trigger2 = trigger[len(trigger1):]
+    trigger1 = trigger[: int(len(COMMON_PREFIX) / 2)]
+    trigger2 = trigger[len(trigger1) :]
     return trigger1, trigger2
 
 
@@ -72,7 +82,7 @@ def process(line: bytes) -> bool:
     if start < 0:
         return False
 
-    end = line.find(b'/', start) + 1
+    end = line.find(b"/", start) + 1
     if end <= 0:
         return False
 

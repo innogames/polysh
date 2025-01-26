@@ -1,7 +1,7 @@
 """Polysh - Tests - Non-interactive Mode
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,8 @@ Copyright (c) 2018 InnoGames GmbH
 
 import unittest
 import pexpect
-from polysh_tests import launch_polysh
+
+from tests import launch_polysh
 
 
 class TestNonInteractive(unittest.TestCase):
@@ -59,7 +60,7 @@ class TestNonInteractive(unittest.TestCase):
     def testExitCode(self):
         def CommandCode(command, code):
             child = launch_polysh(
-                ['--command=%s' % command] + ['localhost'] * 5)
+                [f'--command={command}'] + ['localhost'] * 5)
             child.expect(pexpect.EOF)
             while child.isalive():
                 child.wait()

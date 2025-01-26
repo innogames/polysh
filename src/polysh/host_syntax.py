@@ -1,7 +1,7 @@
 """Polysh - Hostname Expansion
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,16 +28,16 @@ from typing import Tuple
 # <1,3-6> => 1, 3, 4, 5, 6
 # <1> => 1
 
-syntax_pattern = re.compile('<([0-9,-]+)>')
-interval_pattern = re.compile('([0-9]+)(-[0-9]+)?')
+syntax_pattern = re.compile("<([0-9,-]+)>")
+interval_pattern = re.compile("([0-9]+)(-[0-9]+)?")
 
 
 def _split_port(hostname: str) -> Tuple[str, str]:
-    s = hostname.split(':', 1)
+    s = hostname.split(":", 1)
     if len(s) > 1:
         return s[0], s[1]
     else:
-        return s[0], '22'
+        return s[0], "22"
 
 
 def _iter_numbers(start: str, end: str) -> Iterator[str]:
@@ -47,8 +47,9 @@ def _iter_numbers(start: str, end: str) -> Iterator[str]:
         increment = 1
     else:
         increment = -1
-    zero_pad = len(start) > 1 and start.startswith('0') or \
-        len(end) > 1 and end.startswith('0')
+    zero_pad = (
+        len(start) > 1 and start.startswith("0") or len(end) > 1 and end.startswith("0")
+    )
     if zero_pad:
         length = max(len(start), len(end))
     for i in range(int_start, int_end + increment, increment):
@@ -62,14 +63,14 @@ def expand_syntax(string: str) -> Iterator[str]:
     """Iterator over all the strings in the expansion of the argument"""
     match = syntax_pattern.search(string)
     if match:
-        prefix = string[:match.start()]
-        suffix = string[match.end():]
-        intervals = match.group(1).split(',')
+        prefix = string[: match.start()]
+        suffix = string[match.end() :]
+        intervals = match.group(1).split(",")
         for interval in intervals:
             interval_match = interval_pattern.match(interval)
             if interval_match:
                 start = interval_match.group(1)
-                end = (interval_match.group(2) or start).strip('-')
+                end = (interval_match.group(2) or start).strip("-")
                 for i in _iter_numbers(start, end):
                     for expanded in expand_syntax(prefix + i + suffix):
                         yield expanded

@@ -1,7 +1,7 @@
 """Polysh - Standard Input Routines
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ class InputBuffer(object):
 
     def __init__(self) -> None:
         self.lock = Lock()
-        self.buf = b''
+        self.buf = b""
 
     def add(self, data: bytes) -> None:
         """Add data to the buffer"""
@@ -50,9 +50,9 @@ class InputBuffer(object):
 
     def get(self) -> bytes:
         """Get the content of the buffer"""
-        data = b''
+        data = b""
         with self.lock:
-            data, self.buf = self.buf, b''
+            data, self.buf = self.buf, b""
 
         return data
 
@@ -61,32 +61,34 @@ def process_input_buffer() -> None:
     """Send the content of the input buffer to all remote processes, this must
     be called in the main thread"""
     from polysh.control_commands_helpers import handle_control_command
-    data = the_stdin_thread.input_buffer.get()
-    remote_dispatcher.log(b'> ' + data)
 
-    if data.startswith(b':'):
+    data = the_stdin_thread.input_buffer.get()
+    remote_dispatcher.log(b"> " + data)
+
+    if data.startswith(b":"):
         try:
             handle_control_command(data[1:-1].decode())
         except UnicodeDecodeError as e:
-            console_output(b'Could not decode command.')
+            console_output(b"Could not decode command.")
         return
 
-    if data.startswith(b'!'):
+    if data.startswith(b"!"):
         try:
             retcode = subprocess.call(data[1:], shell=True)
         except OSError as e:
             if e.errno == errno.EINTR:
-                console_output(b'Child was interrupted\n')
+                console_output(b"Child was interrupted\n")
                 retcode = 0
             else:
                 raise
         if retcode > 128 and retcode <= 192:
             retcode = 128 - retcode
         if retcode > 0:
-            console_output('Child returned {:d}\n'.format(retcode).encode())
+            console_output("Child returned {:d}\n".format(retcode).encode())
         elif retcode < 0:
-            console_output('Child was terminated by signal {:d}\n'.format(
-                -retcode).encode())
+            console_output(
+                "Child was terminated by signal {:d}\n".format(-retcode).encode()
+            )
         return
 
     for r in dispatchers.all_instances():
@@ -96,12 +98,14 @@ def process_input_buffer() -> None:
             raise e
         except Exception as msg:
             raise msg
-            console_output('{} for {}, disconnecting\n'.format(
-                str(msg), r.display_name).encode())
+            console_output(
+                "{} for {}, disconnecting\n".format(str(msg), r.display_name).encode()
+            )
             r.disconnect()
         else:
             if r.enabled and r.state is remote_dispatcher.STATE_IDLE:
                 r.change_state(remote_dispatcher.STATE_RUNNING)
+
 
 # The stdin thread uses a synchronous (with ACK) socket to communicate with the
 # main thread, which is most of the time waiting in the poll() loop.
@@ -115,14 +119,14 @@ def process_input_buffer() -> None:
 class SocketNotificationReader(asyncore.dispatcher):
     """The socket reader in the main thread"""
 
-    def __init__(self, the_stdin_thread: 'StdinThread') -> None:
+    def __init__(self, the_stdin_thread: "StdinThread") -> None:
         asyncore.dispatcher.__init__(self, the_stdin_thread.socket_read)
 
     def _do(self, c: bytes) -> None:
-        if c == b'd':
+        if c == b"d":
             process_input_buffer()
         else:
-            raise Exception('Unknown code: %s' % (c))
+            raise Exception("Unknown code: %s" % (c))
 
     def handle_read(self) -> None:
         """Handle all the available character commands in the socket"""
@@ -137,7 +141,7 @@ class SocketNotificationReader(asyncore.dispatcher):
             else:
                 self._do(c)
                 self.socket.setblocking(True)
-                self.send(b'A')
+                self.send(b"A")
                 self.socket.setblocking(False)
 
     def writable(self) -> bool:
@@ -165,7 +169,7 @@ def write_main_socket(c: bytes) -> None:
 # a newline
 tempfile_fd, tempfile_name = tempfile.mkstemp()
 os.remove(tempfile_name)
-os.write(tempfile_fd, b'\x03')
+os.write(tempfile_fd, b"\x03")
 
 
 def get_stdin_pid(cached_result: Optional[int] = None) -> int:
@@ -173,7 +177,7 @@ def get_stdin_pid(cached_result: Optional[int] = None) -> int:
     ID"""
     if cached_result is None:
         try:
-            tasks = os.listdir('/proc/self/task')
+            tasks = os.listdir("/proc/self/task")
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
@@ -223,7 +227,7 @@ class StdinThread(Thread):
     """The stdin thread, used to call raw_input()"""
 
     def __init__(self, interactive: bool) -> None:
-        Thread.__init__(self, name='stdin thread')
+        Thread.__init__(self, name="stdin thread")
         completion.install_completion_handler()
         self.input_buffer = InputBuffer()
 
@@ -250,9 +254,9 @@ class StdinThread(Thread):
     def want_raw_input(self) -> None:
         nr, total = dispatchers.count_awaited_processes()
         if nr:
-            prompt = 'waiting (%d/%d)> ' % (nr, total)
+            prompt = "waiting (%d/%d)> " % (nr, total)
         else:
-            prompt = 'ready (%d)> ' % total
+            prompt = "ready (%d)> " % total
         self.prompt = prompt
         set_last_status_length(len(prompt))
         self.raw_input_wanted.set()
@@ -292,5 +296,5 @@ class StdinThread(Thread):
                     completion.remove_last_history_item()
             set_echo(True)
             if cmd is not None:
-                self.input_buffer.add('{}\n'.format(cmd).encode())
-                write_main_socket(b'd')
+                self.input_buffer.add("{}\n".format(cmd).encode())
+                write_main_socket(b"d")

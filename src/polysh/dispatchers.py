@@ -1,7 +1,7 @@
 """Polysh - Dispatchers
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,20 +30,25 @@ from polysh.terminal_size import terminal_size
 
 
 def _split_port(hostname: str) -> Tuple[str, str]:
-    """ Splits a string(hostname, given by the user) into hostname and port,
-    returns a tuple """
-    s = hostname.split(':', 1)
+    """Splits a string(hostname, given by the user) into hostname and port,
+    returns a tuple"""
+    s = hostname.split(":", 1)
     if len(s) > 1:
         return s[0], s[1]
     else:
-        return s[0], '22'
+        return s[0], "22"
 
 
 def all_instances() -> List[remote_dispatcher.RemoteDispatcher]:
     """Iterator over all the remote_dispatcher instances"""
-    return sorted([i for i in asyncore.socket_map.values() if
-                   isinstance(i, remote_dispatcher.RemoteDispatcher)],
-                  key=lambda i: i.display_name or '')
+    return sorted(
+        [
+            i
+            for i in asyncore.socket_map.values()
+            if isinstance(i, remote_dispatcher.RemoteDispatcher)
+        ],
+        key=lambda i: i.display_name or "",
+    )
 
 
 def count_awaited_processes() -> Tuple[int, int]:
@@ -64,8 +69,10 @@ def all_terminated() -> bool:
     instances_found = False
     for i in all_instances():
         instances_found = True
-        if i.state not in (remote_dispatcher.STATE_TERMINATED,
-                           remote_dispatcher.STATE_DEAD):
+        if i.state not in (
+            remote_dispatcher.STATE_TERMINATED,
+            remote_dispatcher.STATE_DEAD,
+        ):
             return False
     return instances_found
 
@@ -77,8 +84,8 @@ def update_terminal_size() -> None:
     w = max(w - display_names.max_display_name_length - 2, min(w, 10))
     # python bug http://python.org/sf/1112949 on amd64
     # from ajaxterm.py
-    bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
-    packed_size = struct.pack('HHHH', h, w, 0, 0)
+    bug = struct.unpack("i", struct.pack("I", termios.TIOCSWINSZ))[0]
+    packed_size = struct.pack("HHHH", h, w, 0, 0)
     term_size = w, h
     for i in all_instances():
         if i.enabled and i.term_size != term_size:
@@ -105,17 +112,17 @@ def format_info(info_list: List[List[bytes]]) -> List[bytes]:
             # as it can get much longer in some shells than in others
             orig_str = info[str_id]
             indent = max_lengths[str_id] - len(orig_str)
-            info[str_id] = orig_str + indent * b' '
-        flattened_info_list.append(b' '.join(info) + b'\n')
+            info[str_id] = orig_str + indent * b" "
+        flattened_info_list.append(b" ".join(info) + b"\n")
 
     return flattened_info_list
 
 
 def create_remote_dispatchers(hosts: List[str]) -> None:
-    last_message = ''
+    last_message = ""
     for i, host in enumerate(hosts):
         if remote_dispatcher.options.interactive:
-            last_message = 'Started %d/%d remote processes\r' % (i, len(hosts))
+            last_message = "Started %d/%d remote processes\r" % (i, len(hosts))
             sys.stdout.write(last_message)
             sys.stdout.flush()
         try:
@@ -126,5 +133,5 @@ def create_remote_dispatchers(hosts: List[str]) -> None:
             raise
 
     if last_message:
-        sys.stdout.write(' ' * len(last_message) + '\r')
+        sys.stdout.write(" " * len(last_message) + "\r")
         sys.stdout.flush()

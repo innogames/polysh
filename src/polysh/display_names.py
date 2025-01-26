@@ -1,7 +1,7 @@
 """Polysh - Displaying Names
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@ Copyright (c) 2018 InnoGames GmbH
 
 from typing import Dict, List, Optional
 from collections import defaultdict
+
 # The prefix is the key, the value is a list of booleans. A boolean at an
 # index is True if that index is currently in use.
 PREFIXES = defaultdict(lambda: [])  # type: Dict[str, List[bool]]
@@ -43,7 +44,7 @@ def acquire_prefix_index(prefix: str) -> int:
 
 
 def release_prefix_index(prev_display_name: str) -> None:
-    split = prev_display_name.split('#', 1)
+    split = prev_display_name.split("#", 1)
     prefix = split[0]
     if len(split) == 1:
         suffix = 0
@@ -74,13 +75,14 @@ def release_prefix_index(prev_display_name: str) -> None:
 def make_unique_name(prefix: str) -> str:
     suffix = acquire_prefix_index(prefix)
     if suffix:
-        return '{}#{}'.format(prefix, suffix)
+        return "{}#{}".format(prefix, suffix)
 
     return prefix
 
 
 def update_max_display_name_length() -> None:
     from polysh.dispatchers import update_terminal_size
+
     new_max = max(NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.keys(), default=0)
     global max_display_name_length
     if new_max != max_display_name_length:
@@ -89,11 +91,10 @@ def update_max_display_name_length() -> None:
 
 
 def change(
-    prev_display_name: Optional[str],
-    new_prefix: Optional[str]
+    prev_display_name: Optional[str], new_prefix: Optional[str]
 ) -> Optional[str]:
-    if new_prefix and '#' in new_prefix:
-        raise Exception('Names cannot contain #')
+    if new_prefix and "#" in new_prefix:
+        raise Exception("Names cannot contain #")
 
     if prev_display_name is not None:
         if new_prefix is not None:

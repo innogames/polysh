@@ -1,7 +1,7 @@
 """Polysh - Console Utilities
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2018 InnoGames GmbH
+Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,11 +44,11 @@ def console_output(msg: bytes, logging_msg: Optional[bytes] = None) -> None:
     remote_dispatcher.log(logging_msg or msg)
     if remote_dispatcher.options.interactive:
         from polysh.stdin import the_stdin_thread
+
         the_stdin_thread.no_raw_input()
         global last_status_length
         if last_status_length:
-            safe_write('\r{}\r'.format(
-                last_status_length * ' ').encode())
+            safe_write("\r{}\r".format(last_status_length * " ").encode())
             last_status_length = 0
     safe_write(msg)
 
