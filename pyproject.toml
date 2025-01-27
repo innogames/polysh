@@ -1,10 +1,10 @@
 [project]
 name = "polysh"
 authors = [{ email = "it@innogames.com" }]
-version = "0.14.0"
+version = "1.0.0"
 description = "Control thousands of SSH sessions from a single prompt"
 readme = "README.rst"
-requires-python = ">=3.5,<=3.12"
+requires-python = ">=3.5,<=3.13"
 dependencies = []
 classifiers = [  # Optional
         "Intended Audience :: System Administrators",
@@ -31,6 +31,8 @@ classifiers = [  # Optional
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
 ]
 
 [project.urls]
@@ -47,9 +49,6 @@ file = "LICENSE"
 polysh = "polysh.main:main"
 
 [project.optional-dependencies]
-logging = [
-    "raven>=6.10.0",
-]
 
 [build-system]
 requires = ["hatchling"]
