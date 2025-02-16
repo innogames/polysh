@@ -1,5 +1,5 @@
 version = 1
-requires-python = ">=3.5, <=3.12"
+requires-python = ">=3.5, <=3.13"
 
 [[package]]
 name = "coverage"
@@ -63,13 +63,8 @@ wheels = [
 
 [[package]]
 name = "polysh"
-version = "0.14.0"
+version = "1.0.0"
 source = { editable = "." }
-
-[package.optional-dependencies]
-logging = [
-    { name = "raven" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -78,7 +73,6 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "raven", marker = "extra == 'logging'", specifier = ">=6.10.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -93,13 +87,4 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/20/e5/16ff212c1e452235a90aeb09066144d0c5a6a8c0834397e03f5224495c4e/ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220", size = 70762 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/22/a6/858897256d0deac81a172289110f31629fc4cee19b6f01283303e18c8db3/ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35", size = 13993 },
-]
-
-[[package]]
-name = "raven"
-version = "6.10.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/79/57/b74a86d74f96b224a477316d418389af9738ba7a63c829477e7a86dd6f47/raven-6.10.0.tar.gz", hash = "sha256:3fa6de6efa2493a7c827472e984ce9b020797d0da16f1db67197bcc23c8fae54", size = 288902 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bd/8e/62e26a88c0a1bbae677200baf0767c1022321a6555634f8129e6d55c5ddc/raven-6.10.0-py2.py3-none-any.whl", hash = "sha256:44a13f87670836e153951af9a3c80405d36b43097db869a36e92809673692ce4", size = 284314 },
 ]
