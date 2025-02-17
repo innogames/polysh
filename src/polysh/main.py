@@ -15,9 +15,9 @@ def get_args() -> argparse.Namespace:
 async def run(hosts, command):
     executors = [SSHExecutor(host) for host in hosts]
 
-    await asyncio.gather(*[executor.connect() for executor in executors])
+    await asyncio.gather(*[executor.login() for executor in executors])
     for executor in executors:
-        await executor.run_command(command)
+        await executor.run(command)
         print(executor.stdout.decode())
         print(executor.stderr.decode())
 

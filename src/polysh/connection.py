@@ -8,7 +8,7 @@ class SSHExecutor:
         self.stdout = None
         self.stderr = None
 
-    async def connect(self):
+    async def login(self):
         self.process = await asyncio.create_subprocess_exec(
             "/bin/ssh",
             *[
@@ -20,5 +20,5 @@ class SSHExecutor:
             stderr=asyncio.subprocess.PIPE
         )
 
-    async def run_command(self, command):
+    async def run(self, command):
         self.stdout, self.stderr = await self.process.communicate(input=(command + "\n").encode())
