@@ -19,6 +19,7 @@ async def run(hosts, command):
     for executor in executors:
         await executor.run_command(command)
         print(executor.stdout.decode())
+        print(executor.stderr.decode())
 
 
 def main():
