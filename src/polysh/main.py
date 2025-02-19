@@ -16,11 +16,14 @@ async def run_single_command(hosts, command):
     """Run a single command and exit"""
     executors = [SSHExecutor(host) for host in hosts]
 
-    await asyncio.gather(*[executor.login() for executor in executors])
-    await asyncio.gather(*[executor.run(command) for executor in executors])
-    await asyncio.gather(*[executor.logout() for executor in executors])
-    await asyncio.gather(*[executor.print() for executor in executors])
+    async def process(executor: SSHExecutor):
+        # Ensure ordering so we e.g. do not run a command before login.
+        await executor.login()
+        await executor.run(command)
+        await executor.logout()
+        await executor.print()
 
+    await asyncio.gather(*[process(executor) for executor in executors])
 
 def main():
     args = get_args()
