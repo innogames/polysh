@@ -1,12 +1,14 @@
 import asyncio
+import typing
 
 
 class SSHExecutor:
     def __init__(self, host: str):
-        self.host = host
-        self.process = None
-        self.stdout = None
-        self.stderr = None
+        self.host: typing.Optional[str] = host
+        self.process: typing.Optional[asyncio.subprocess.Process] = None
+        self.stdin: typing.Optional[asyncio.streams.StreamWriter] = None
+        self.stdout: typing.Optional[asyncio.streams.StreamReader] = None
+        self.stderr: typing.Optional[asyncio.streams.StreamReader] = None
 
     async def login(self):
         self.process = await asyncio.create_subprocess_exec(
@@ -21,10 +23,12 @@ class SSHExecutor:
             stderr=asyncio.subprocess.PIPE
         )
 
+        # For convenience
+        self.stdin = self.process.stdin
         self.stdout = self.process.stdout
         self.stderr = self.process.stderr
 
-    async def run(self, command):
+    async def run(self, command: str):
         # Ensure newline is present otherwise the command is not submitted
         command = command if command.endswith("\n") else f"{command}\n"
 
@@ -35,8 +39,8 @@ class SSHExecutor:
         # This avoids deadlocks due to streams pausing reading or writing and blocking the child process.
         #
         # Source: https://docs.python.org/3/library/asyncio-subprocess.html
-        self.process.stdin.write(command.encode())
-        await self.process.stdin.drain()
+        self.stdin.write(command.encode())
+        await self.stdin.drain()
 
     async def logout(self):
         await self.run("exit $?")
