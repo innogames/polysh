@@ -19,10 +19,7 @@ async def run_single_command(hosts, command):
     await asyncio.gather(*[executor.login() for executor in executors])
     await asyncio.gather(*[executor.run(command) for executor in executors])
     await asyncio.gather(*[executor.logout() for executor in executors])
-
-    for executor in executors:
-        while not executor.stdout.at_eof():
-            print((await executor.stdout.readline()).decode(), end="")
+    await asyncio.gather(*[executor.print() for executor in executors])
 
 
 def main():

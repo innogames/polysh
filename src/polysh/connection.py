@@ -42,3 +42,10 @@ class SSHExecutor:
 
     async def logout(self):
         await self.run("exit $?")
+
+    async def print(self):
+        while True:
+            if self.stdout.at_eof():
+                break
+
+            print((await self.stdout.readline()).decode(), end="")
