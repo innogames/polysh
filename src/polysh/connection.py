@@ -13,7 +13,8 @@ class SSHExecutor:
             "/bin/ssh",
             *[
                 "-tt",  # Force pseudo-terminal allocation
-                self.host
+                self.host,
+                "/bin/sh", # Start Shell
             ],
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
