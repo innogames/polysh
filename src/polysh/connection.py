@@ -12,7 +12,7 @@ class SSHExecutor:
         self.process = await asyncio.create_subprocess_exec(
             "/bin/ssh",
             *[
-                "-t",  # Force pseudo-terminal allocation
+                "-tt",  # Force pseudo-terminal allocation
                 self.host
             ],
             stdin=asyncio.subprocess.PIPE,
@@ -20,5 +20,22 @@ class SSHExecutor:
             stderr=asyncio.subprocess.PIPE
         )
 
+        self.stdout = self.process.stdout
+        self.stderr = self.process.stderr
+
     async def run(self, command):
-        self.stdout, self.stderr = await self.process.communicate(input=(command + "\n").encode())
+        # Ensure newline is present otherwise the command is not submitted
+        command = command if command.endswith("\n") else f"{command}\n"
+
+        # TODO: Check if awaiting drain is sufficient to prevent deadlocks
+        #
+        # Warning Use the communicate() method rather than process.stdin.write(),
+        # await process.stdout.read() or await process.stderr.read().
+        # This avoids deadlocks due to streams pausing reading or writing and blocking the child process.
+        #
+        # Source: https://docs.python.org/3/library/asyncio-subprocess.html
+        self.process.stdin.write(command.encode())
+        await self.process.stdin.drain()
+
+    async def logout(self):
+        await self.run("exit $?")

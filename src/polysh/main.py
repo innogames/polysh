@@ -12,19 +12,24 @@ def get_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-async def run(hosts, command):
+async def run_command(hosts, command):
+    """Run a single command and exit"""
     executors = [SSHExecutor(host) for host in hosts]
 
     await asyncio.gather(*[executor.login() for executor in executors])
+    await asyncio.gather(*[executor.run(command) for executor in executors])
+    await asyncio.gather(*[executor.logout() for executor in executors])
+
     for executor in executors:
-        await executor.run(command)
-        print(executor.stdout.decode())
-        print(executor.stderr.decode())
+        while not executor.stdout.at_eof():
+            print((await executor.stdout.readline()).decode(), end="")
 
 
 def main():
     args = get_args()
-    asyncio.run(run(args.host_names, args.command))
+
+    if args.command:
+        asyncio.run(run_command(args.host_names, args.command))
 
 
 if __name__ == "__main__":
