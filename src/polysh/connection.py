@@ -8,7 +8,6 @@ class SSHExecutor:
         self.process: typing.Optional[asyncio.subprocess.Process] = None
         self.stdin: typing.Optional[asyncio.streams.StreamWriter] = None
         self.stdout: typing.Optional[asyncio.streams.StreamReader] = None
-        self.stderr: typing.Optional[asyncio.streams.StreamReader] = None
 
     async def login(self):
         self.process = await asyncio.create_subprocess_exec(
@@ -20,13 +19,12 @@ class SSHExecutor:
             ],
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.STDOUT  # Redirect stderr to stdout
         )
 
         # For convenience
         self.stdin = self.process.stdin
         self.stdout = self.process.stdout
-        self.stderr = self.process.stderr
 
     async def run(self, command: str):
         # Ensure newline is present otherwise the command is not submitted
