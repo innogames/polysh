@@ -48,4 +48,7 @@ class SSHExecutor:
             if self.stdout.at_eof():
                 break
 
-            print((await self.stdout.readline()).decode(), end="")
+            output = (await self.stdout.readline()).decode()
+            # Ensure each line we print has the hostname as prefix
+            formatted_output = "\r".join([f"{self.host} : {part}" for part in output.split("\r")])
+            print(formatted_output, end="")
