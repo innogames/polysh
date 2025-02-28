@@ -2,6 +2,9 @@ import asyncio
 import typing
 
 
+COLORS = list(range(30, 38))
+
+
 class SSHExecutor:
     def __init__(self, host: str):
         self.host: typing.Optional[str] = host
@@ -9,17 +12,20 @@ class SSHExecutor:
         self.stdin: typing.Optional[asyncio.streams.StreamWriter] = None
         self.stdout: typing.Optional[asyncio.streams.StreamReader] = None
 
+        self.color: int = COLORS.pop()
+        COLORS.insert(0, self.color)  # Rotate colors
+
     async def login(self):
         self.process = await asyncio.create_subprocess_exec(
             "/bin/ssh",
             *[
                 "-tt",  # Force pseudo-terminal allocation
                 self.host,
-                "/bin/sh", # Start Shell
+                "/bin/sh",  # Start Shell
             ],
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT  # Redirect stderr to stdout
+            stderr=asyncio.subprocess.STDOUT,  # Redirect stderr to stdout
         )
 
         # For convenience
@@ -50,5 +56,10 @@ class SSHExecutor:
 
             output = (await self.stdout.readline()).decode()
             # Ensure each line we print has the hostname as prefix
-            formatted_output = "\r".join([f"{self.host} : {part}" for part in output.split("\r")])
+            formatted_output = ""
+            for part in output.split("\r"):
+                formatted_output += f"\033[1;{self.color}m"  # Set foreground color
+                formatted_output += self.host  # Display hostname (in color)
+                formatted_output += "\033[1;m"  # Reset foreground color
+                formatted_output += f" : {part}\r"  # Print actual output
             print(formatted_output, end="")
