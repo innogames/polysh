@@ -314,18 +314,19 @@ def main():
     sentry_dsn = os.environ.get("POLYSH_SENTRY_DSN")
 
     if sentry_dsn:
-        from raven import Client
+        import sentry_sdk
 
-        client = Client(
+        sentry_sdk.init(
             dsn=sentry_dsn,
             release=".".join(map(str, VERSION)),
-            ignore_exceptions=[KeyboardInterrupt],
         )
 
         try:
             run()
+        except KeyboardInterrupt:
+            pass  # Don't report keyboard interrupts
         except Exception:
-            client.captureException()
+            sentry_sdk.capture_exception()
 
     else:
         run()
