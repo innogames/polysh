@@ -1,3 +1,6 @@
+Version 0.15
+    * Migrate from raven to sentry-sdk (fixes Python 3.11+ compatibility)
+
 Version 0.14
     * Fix remote host prompt printed twice in Bash 5.x and readline 8.x
 
