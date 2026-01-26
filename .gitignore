@@ -3,3 +3,4 @@
 polysh.egg-info
 build/
 dist/
+.devcontainer/
