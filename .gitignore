@@ -4,3 +4,5 @@ polysh.egg-info
 build/
 dist/
 .devcontainer/
+flake.lock
+result
