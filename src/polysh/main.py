@@ -28,6 +28,13 @@ import sys
 import termios
 from typing import Callable
 
+_TRACE = os.environ.get('POLYSH_TRACE')
+
+
+def _trace(msg: str) -> None:
+    if _TRACE:
+        print(f'[trace] {msg}', file=sys.stderr, flush=True)
+
 from polysh import (
     VERSION,
     control_commands,
@@ -204,6 +211,7 @@ def loop(interactive: bool) -> None:
                 control_commands.do_send_ctrl(ctrl)
                 console_output(b'')
                 stdin.the_stdin_thread.prepend_text = None
+            _trace(f'loop top: awaited={dispatchers.count_awaited_processes()}')
             while dispatchers.count_awaited_processes()[
                 0
             ] and remote_dispatcher.main_loop_iteration(timeout=0.2):
@@ -215,7 +223,9 @@ def loop(interactive: bool) -> None:
             if current_status != last_status:
                 console_output(b'')
             if remote_dispatcher.options.interactive:
+                _trace(f'calling want_raw_input, status={current_status}')
                 stdin.the_stdin_thread.want_raw_input()
+                _trace('want_raw_input returned')
             last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
@@ -223,7 +233,9 @@ def loop(interactive: bool) -> None:
                 raise ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
                 # possible race here with the signal handler
+                _trace('blocking main_loop_iteration (waiting for input or remote data)')
                 remote_dispatcher.main_loop_iteration()
+                _trace('main_loop_iteration returned')
         except KeyboardInterrupt:
             if interactive:
                 next_signal = signal.SIGINT
@@ -271,6 +283,10 @@ def run() -> None:
         not args.command and sys.stdin.isatty() and sys.stdout.isatty()
     )
     if args.interactive:
+        # Set up pty-based stdin interposition BEFORE saving tty settings,
+        # so restore_tty_on_exit saves the pty slave's settings (which is
+        # now fd 0).  The real terminal is restored by _restore_real_stdin.
+        stdin._setup_stdin_pty()
         restore_tty_on_exit()
 
     remote_dispatcher.options = args
@@ -298,10 +314,11 @@ def run() -> None:
 
     dispatchers.create_remote_dispatchers(hosts)
 
-    signal.signal(
-        signal.SIGWINCH,
-        lambda signum, frame: dispatchers.update_terminal_size(),
-    )
+    def _handle_sigwinch(signum, frame):
+        stdin.propagate_terminal_size()
+        dispatchers.update_terminal_size()
+
+    signal.signal(signal.SIGWINCH, _handle_sigwinch)
 
     stdin.the_stdin_thread = stdin.StdinThread(args.interactive)
 

@@ -25,6 +25,13 @@ import sys
 import termios
 from typing import List, Optional
 
+_TRACE = os.environ.get('POLYSH_TRACE')
+
+
+def _trace(msg: str) -> None:
+    if _TRACE:
+        print(f'[trace] {msg}', file=sys.stderr, flush=True)
+
 from polysh import callbacks, display_names, event_loop
 from polysh.buffered_dispatcher import BufferedDispatcher
 from polysh.console import console_output
@@ -123,6 +130,7 @@ class RemoteDispatcher(BufferedDispatcher):
     def change_state(self, state: int) -> None:
         """Change the state of the remote process, logging the change"""
         if state is not self.state:
+            _trace(f'{self.hostname}: state {STATE_NAMES[self.state]} -> {STATE_NAMES[state]}')
             if self.debug:
                 self.print_debug(b'state => ' + STATE_NAMES[state].encode())
             if self.state is STATE_NOT_STARTED:
@@ -159,6 +167,7 @@ class RemoteDispatcher(BufferedDispatcher):
         return b'unsetopt zle 2> /dev/null;stty -echo -onlcr -ctlecho; bind "set enable-bracketed-paste off" 2> /dev/null;'
 
     def seen_prompt_cb(self, unused: str) -> None:
+        _trace(f'{self.hostname}: seen_prompt_cb, interactive={options.interactive}')
         if options.interactive:
             self.change_state(STATE_IDLE)
         elif self.command:
@@ -265,6 +274,7 @@ class RemoteDispatcher(BufferedDispatcher):
             return
         global nr_handle_read
         nr_handle_read += 1
+        _trace(f'{self.hostname}: handle_read state={STATE_NAMES[self.state]}')
         new_data = self._handle_read_chunk()
         if self.debug:
             self.print_debug(b'==> ' + new_data)
