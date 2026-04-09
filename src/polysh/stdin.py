@@ -397,7 +397,9 @@ class StdinThread(Thread):
             prompt = 'waiting (%d/%d)> ' % (nr, total)
         else:
             prompt = 'ready (%d)> ' % total
-        self.prompt = prompt
+        # Reset ANSI color before prompt so host colors don't bleed into it
+        # \001/\002 = readline markers for non-printing chars (RL_PROMPT_START/END_IGNORE)
+        self.prompt = '\001\033[0m\002' + prompt
         set_last_status_length(len(prompt))
         _trace(f'want_raw_input: setting raw_input_wanted, prompt={prompt!r}')
         self.raw_input_wanted.set()
