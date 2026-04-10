@@ -1,10 +1,10 @@
 [project]
 name = "polysh"
 authors = [{ email = "it@innogames.com" }]
-version = "1.0.0"
+version = "1.0.1"
 description = "Control thousands of SSH sessions from a single prompt"
 readme = "README.rst"
-requires-python = ">=3.5,<=3.12"
+requires-python = ">=3.6"
 dependencies = []
 classifiers = [  # Optional
         "Intended Audience :: System Administrators",
@@ -24,13 +24,14 @@ classifiers = [  # Optional
         # This does not influence pip when choosing what to install. It is used
         # for the package list on the pypi website.
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
 ]
 
 [project.urls]
