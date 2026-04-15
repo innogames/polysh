@@ -16,13 +16,16 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncore
 import errno
+import fcntl
+import os
 
+from polysh import dispatcher_registry
 from polysh.console import console_output
+from polysh.exceptions import ExitNow
 
 
-class BufferedDispatcher(asyncore.file_dispatcher):
+class BufferedDispatcher:
     """A dispatcher with a write buffer to allow asynchronous writers, and a
     read buffer to permit line oriented manipulations"""
 
@@ -30,17 +33,39 @@ class BufferedDispatcher(asyncore.file_dispatcher):
     MAX_BUFFER_SIZE = 1 * 1024 * 1024
 
     def __init__(self, fd: int) -> None:
-        asyncore.file_dispatcher.__init__(self, fd)
         self.fd = fd
-        self.read_buffer = b""
-        self.write_buffer = b""
+        self.read_buffer = b''
+        self.write_buffer = b''
+
+        # Set non-blocking mode
+        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+        # Register with the dispatcher registry
+        dispatcher_registry.register(fd, self)
+
+    def recv(self, buffer_size: int) -> bytes:
+        """Read from the file descriptor."""
+        return os.read(self.fd, buffer_size)
+
+    def send(self, data: bytes) -> int:
+        """Write to the file descriptor."""
+        return os.write(self.fd, data)
+
+    def close(self) -> None:
+        """Unregister and close the file descriptor."""
+        dispatcher_registry.unregister(self.fd)
+        try:
+            os.close(self.fd)
+        except OSError:
+            pass
 
     def handle_read(self) -> None:
         self._handle_read_chunk()
 
     def _handle_read_chunk(self) -> bytes:
         """Some data can be read"""
-        new_data = b""
+        new_data = b''
         buffer_length = len(self.read_buffer)
         try:
             while buffer_length < self.MAX_BUFFER_SIZE:
@@ -50,12 +75,11 @@ class BufferedDispatcher(asyncore.file_dispatcher):
                     if e.errno == errno.EAGAIN:
                         # End of the available data
                         break
-                    elif e.errno == errno.EIO and new_data:
+                    if e.errno == errno.EIO and new_data:
                         # Hopefully we could read an error message before the
                         # actual termination
                         break
-                    else:
-                        raise
+                    raise
 
                 if not piece:
                     # A closed connection is indicated by signaling a read
@@ -66,7 +90,7 @@ class BufferedDispatcher(asyncore.file_dispatcher):
                 buffer_length += len(piece)
 
         finally:
-            new_data = new_data.replace(b"\r", b"\n")
+            new_data = new_data.replace(b'\r', b'\n')
             self.read_buffer += new_data
         return new_data
 
@@ -76,16 +100,14 @@ class BufferedDispatcher(asyncore.file_dispatcher):
 
     def writable(self) -> bool:
         """Do we have something to write?"""
-        return self.write_buffer != b""
+        return self.write_buffer != b''
 
     def dispatch_write(self, buf: bytes) -> bool:
         """Augment the buffer with stuff to write when possible"""
         self.write_buffer += buf
         if len(self.write_buffer) > self.MAX_BUFFER_SIZE:
             console_output(
-                "Buffer too big ({:d}) for {}\n".format(
-                    len(self.write_buffer), str(self)
-                ).encode()
+                f'Buffer too big ({len(self.write_buffer):d}) for {str(self)}\n'.encode()
             )
-            raise asyncore.ExitNow(1)
+            raise ExitNow(1)
         return True
