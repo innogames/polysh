@@ -84,6 +84,12 @@ class BufferedDispatcher:
                 if not piece:
                     # A closed connection is indicated by signaling a read
                     # condition, and having recv() return 0.
+                    # On macOS, pty master reads return 0 (EOF) after child
+                    # exit, whereas Linux raises EIO.  If we already have
+                    # partial data, return it first; the next call will see
+                    # EOF again and raise to trigger handle_close().
+                    if not new_data:
+                        raise OSError(errno.EIO, 'Connection closed (EOF)')
                     break
 
                 new_data += piece
