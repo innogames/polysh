@@ -20,9 +20,17 @@ Copyright (c) 2024 InnoGames GmbH
 
 import os
 import shlex
+import sys
 from typing import List
 
 from polysh import dispatchers, remote_dispatcher, stdin
+
+_TRACE = os.environ.get('POLYSH_TRACE')
+
+
+def _trace(msg: str) -> None:
+    if _TRACE:
+        print(f'[trace] {msg}', file=sys.stderr, flush=True)
 from polysh.completion import add_to_history, complete_local_path
 from polysh.console import console_output
 from polysh.control_commands_helpers import (
@@ -45,6 +53,7 @@ def do_list(command: str) -> None:
 
 
 def do_quit(command: str) -> None:
+    _trace('do_quit: raising ExitNow(0)')
     raise ExitNow(0)
 
 

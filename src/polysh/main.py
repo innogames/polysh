@@ -49,8 +49,10 @@ from polysh.host_syntax import expand_syntax
 
 def kill_all() -> None:
     """When polysh quits, we kill all the remote shells we started"""
+    _trace(f'kill_all: killing {len(dispatchers.all_instances())} dispatchers')
     for i in dispatchers.all_instances():
         try:
+            _trace(f'kill_all: killing pid={i.pid} ({i.hostname})')
             os.kill(-i.pid, signal.SIGKILL)
         except OSError:
             # The process was already dead, no problem
@@ -260,6 +262,7 @@ def loop(interactive: bool) -> None:
             last_status = current_status
             if dispatchers.all_terminated():
                 # Clear the prompt
+                _trace(f'all_terminated=True, raising ExitNow({remote_dispatcher.options.exit_code})')
                 console_output(b'')
                 raise ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
@@ -278,8 +281,10 @@ def loop(interactive: bool) -> None:
                 kill_all()
                 os.kill(0, signal.SIGINT)
         except ExitNow as e:
+            _trace(f'ExitNow caught in loop, exit_code={e.args[0]}')
             console_output(b'')
             save_history(histfile)
+            _trace('calling sys.exit()')
             sys.exit(e.args[0])
 
 
