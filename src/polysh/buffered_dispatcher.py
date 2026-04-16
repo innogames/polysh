@@ -19,10 +19,18 @@ Copyright (c) 2024 InnoGames GmbH
 import errno
 import fcntl
 import os
+import sys
 
 from polysh import dispatcher_registry
 from polysh.console import console_output
 from polysh.exceptions import ExitNow
+
+_TRACE = os.environ.get('POLYSH_TRACE')
+
+
+def _trace(msg: str) -> None:
+    if _TRACE:
+        print(f'[trace] {msg}', file=sys.stderr, flush=True)
 
 
 class BufferedDispatcher:
@@ -74,16 +82,27 @@ class BufferedDispatcher:
                 except OSError as e:
                     if e.errno == errno.EAGAIN:
                         # End of the available data
+                        _trace(f'  _handle_read_chunk fd={self.fd}: EAGAIN after {len(new_data)}B')
                         break
                     if e.errno == errno.EIO and new_data:
                         # Hopefully we could read an error message before the
                         # actual termination
+                        _trace(f'  _handle_read_chunk fd={self.fd}: EIO with {len(new_data)}B partial data')
                         break
+                    _trace(f'  _handle_read_chunk fd={self.fd}: OSError errno={e.errno} raising')
                     raise
 
                 if not piece:
                     # A closed connection is indicated by signaling a read
                     # condition, and having recv() return 0.
+                    # On macOS, pty master reads return 0 (EOF) after child
+                    # exit, whereas Linux raises EIO.  If we already have
+                    # partial data, return it first; the next call will see
+                    # EOF again and raise to trigger handle_close().
+                    if not new_data:
+                        _trace(f'  _handle_read_chunk fd={self.fd}: EOF (0 bytes), raising synthetic EIO')
+                        raise OSError(errno.EIO, 'Connection closed (EOF)')
+                    _trace(f'  _handle_read_chunk fd={self.fd}: EOF after {len(new_data)}B partial, deferring close')
                     break
 
                 new_data += piece
@@ -92,6 +111,7 @@ class BufferedDispatcher:
         finally:
             new_data = new_data.replace(b'\r', b'\n')
             self.read_buffer += new_data
+        _trace(f'  _handle_read_chunk fd={self.fd}: returning {len(new_data)}B, buf now {len(self.read_buffer)}B')
         return new_data
 
     def readable(self) -> bool:

@@ -19,10 +19,20 @@ Copyright (c) 2024 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import errno
+import os
 import selectors
+import sys
 from typing import Optional
 
 from polysh import dispatcher_registry
+from polysh.exceptions import ExitNow
+
+_TRACE = os.environ.get('POLYSH_TRACE')
+
+
+def _trace(msg: str) -> None:
+    if _TRACE:
+        print(f'[trace] {msg}', file=sys.stderr, flush=True)
 
 
 def loop_iteration(timeout: Optional[float] = None) -> None:
@@ -51,29 +61,48 @@ def loop_iteration(timeout: Optional[float] = None) -> None:
     except OSError as e:
         if e.errno == errno.EINTR:
             # Interrupted by signal handler, just return
+            _trace('loop_iteration: select interrupted by EINTR')
             return
         raise
+
+    if not ready:
+        _trace(f'loop_iteration: select returned 0 events (timeout={timeout})')
 
     # Dispatch events
     for key, events in ready:
         dispatcher = key.data
+        event_names = []
+        if events & selectors.EVENT_READ:
+            event_names.append('READ')
+        if events & selectors.EVENT_WRITE:
+            event_names.append('WRITE')
+        disp_name = getattr(dispatcher, 'hostname', type(dispatcher).__name__)
+        _trace(f'loop_iteration: fd={key.fd} {disp_name} events={"|".join(event_names)}')
 
         # Check if dispatcher is still valid
         if dispatcher_registry.get_dispatcher(key.fd) is None:
+            _trace(f'loop_iteration: fd={key.fd} dispatcher gone before handle_read')
             continue
 
         if events & selectors.EVENT_READ:
             try:
                 dispatcher.handle_read()
-            except Exception:
+            except ExitNow:
+                raise
+            except Exception as exc:
+                _trace(f'loop_iteration: fd={key.fd} {disp_name} handle_read raised {type(exc).__name__}: {exc}')
                 dispatcher.handle_close()
 
         # Re-check dispatcher is still valid after handle_read
         if dispatcher_registry.get_dispatcher(key.fd) is None:
+            _trace(f'loop_iteration: fd={key.fd} dispatcher gone after handle_read')
             continue
 
         if events & selectors.EVENT_WRITE:
             try:
                 dispatcher.handle_write()
-            except Exception:
+            except ExitNow:
+                raise
+            except Exception as exc:
+                _trace(f'loop_iteration: fd={key.fd} {disp_name} handle_write raised {type(exc).__name__}: {exc}')
                 dispatcher.handle_close()

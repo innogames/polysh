@@ -328,9 +328,21 @@ def interrupt_stdin_thread() -> None:
     if _pty_master_fd is None:
         _trace('interrupt_stdin_thread: no pty, cannot interrupt')
         return
-    assert not the_stdin_thread.interrupt_asked
+    if the_stdin_thread.interrupt_asked:
+        # Previous interrupt was not completed (e.g. KeyboardInterrupt during
+        # the wait below).  Wait for the stdin thread to acknowledge it before
+        # starting a new interrupt cycle.
+        _trace('interrupt_stdin_thread: previous interrupt still pending, waiting')
+        if not the_stdin_thread.out_of_raw_input.wait(timeout=3.0):
+            _trace('interrupt_stdin_thread: pending interrupt not acknowledged, giving up')
+            the_stdin_thread.interrupt_asked = False
+            return
+        the_stdin_thread.interrupt_asked = False
     the_stdin_thread.interrupt_asked = True
-    os.write(_pty_master_fd, b'\n')
+    # Use \r (carriage return) — what real terminals send for Enter.
+    # GNU readline accepts both \r and \n, but libedit (macOS) only
+    # responds to \r when the pty is in raw mode.
+    os.write(_pty_master_fd, b'\r')
 
     if not the_stdin_thread.out_of_raw_input.wait(timeout=3.0):
         _trace('interrupt_stdin_thread: FAILED - stdin thread did not respond within 3s')

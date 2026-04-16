@@ -49,12 +49,43 @@ from polysh.host_syntax import expand_syntax
 
 def kill_all() -> None:
     """When polysh quits, we kill all the remote shells we started"""
+    _trace(f'kill_all: killing {len(dispatchers.all_instances())} dispatchers')
     for i in dispatchers.all_instances():
         try:
+            _trace(f'kill_all: killing pid={i.pid} ({i.hostname})')
             os.kill(-i.pid, signal.SIGKILL)
         except OSError:
             # The process was already dead, no problem
             pass
+
+
+def _reap_dead_dispatchers() -> None:
+    """Detect SSH children that have exited without triggering pty EOF.
+
+    On macOS, kqueue may not reliably report pty master EOF when the
+    child process exits.  As a safety net, periodically try to reap
+    children with waitpid(WNOHANG) and disconnect their dispatchers.
+    """
+    for r in dispatchers.all_instances():
+        if r.state in (
+            remote_dispatcher.STATE_TERMINATED,
+            remote_dispatcher.STATE_DEAD,
+        ):
+            continue
+        try:
+            pid, status = os.waitpid(r.pid, os.WNOHANG)
+        except ChildProcessError:
+            # Already reaped by someone else
+            pid = r.pid
+            status = 0
+        if pid != 0:
+            # Child exited but pty EOF was not detected by the event loop
+            _trace(f'_reap_dead_dispatchers: {r.hostname} child {pid} exited')
+            exit_code = os.WEXITSTATUS(status) if os.WIFEXITED(status) else 1
+            remote_dispatcher.options.exit_code = max(
+                remote_dispatcher.options.exit_code, exit_code
+            )
+            r.disconnect()
 
 
 def parse_cmdline() -> argparse.Namespace:
@@ -212,29 +243,40 @@ def loop(interactive: bool) -> None:
                 console_output(b'')
                 stdin.the_stdin_thread.prepend_text = None
             _trace(f'loop top: awaited={dispatchers.count_awaited_processes()}')
-            while dispatchers.count_awaited_processes()[
-                0
-            ] and remote_dispatcher.main_loop_iteration(timeout=0.2):
-                pass
+            while dispatchers.count_awaited_processes()[0]:
+                if not remote_dispatcher.main_loop_iteration(timeout=0.2):
+                    # No events within timeout — check for dead children
+                    # that the selector missed (macOS kqueue pty quirk)
+                    _reap_dead_dispatchers()
+                    break
             # Now it's quiet
             for r in dispatchers.all_instances():
                 r.print_unfinished_line()
             current_status = dispatchers.count_awaited_processes()
             if current_status != last_status:
                 console_output(b'')
+            last_status = current_status
+            # Check all_terminated BEFORE want_raw_input so we don't
+            # put the stdin thread into input() when we're about to
+            # exit.  On macOS, libedit can enter a state after EOF
+            # (Ctrl-D) where it no longer responds to pty interrupts,
+            # causing a 6-second hang during exit.
+            if dispatchers.all_terminated():
+                _trace(f'all_terminated=True, raising ExitNow({remote_dispatcher.options.exit_code})')
+                console_output(b'')
+                raise ExitNow(remote_dispatcher.options.exit_code)
             if remote_dispatcher.options.interactive:
                 _trace(f'calling want_raw_input, status={current_status}')
                 stdin.the_stdin_thread.want_raw_input()
                 _trace('want_raw_input returned')
-            last_status = current_status
-            if dispatchers.all_terminated():
-                # Clear the prompt
-                console_output(b'')
-                raise ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
                 # possible race here with the signal handler
                 _trace('blocking main_loop_iteration (waiting for input or remote data)')
-                remote_dispatcher.main_loop_iteration()
+                # Use a timeout so we can periodically check for dead
+                # children.  On macOS, kqueue may not report pty master
+                # EOF, so the selector would block forever.
+                remote_dispatcher.main_loop_iteration(timeout=1.0)
+                _reap_dead_dispatchers()
                 _trace('main_loop_iteration returned')
         except KeyboardInterrupt:
             if interactive:
@@ -243,8 +285,10 @@ def loop(interactive: bool) -> None:
                 kill_all()
                 os.kill(0, signal.SIGINT)
         except ExitNow as e:
+            _trace(f'ExitNow caught in loop, exit_code={e.args[0]}')
             console_output(b'')
             save_history(histfile)
+            _trace('calling sys.exit()')
             sys.exit(e.args[0])
 
 

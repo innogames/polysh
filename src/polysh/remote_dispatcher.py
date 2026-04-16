@@ -58,7 +58,9 @@ def main_loop_iteration(timeout: Optional[float] = None) -> int:
     iteration"""
     prev_nr_read = nr_handle_read
     event_loop.loop_iteration(timeout=timeout)
-    return nr_handle_read - prev_nr_read
+    reads = nr_handle_read - prev_nr_read
+    _trace(f'main_loop_iteration: timeout={timeout} reads={reads}')
+    return reads
 
 
 def log(msg: bytes) -> None:
@@ -139,11 +141,12 @@ class RemoteDispatcher(BufferedDispatcher):
 
     def disconnect(self) -> None:
         """We are no more interested in this remote process"""
+        _trace(f'{self.hostname}: disconnect() called, current state={STATE_NAMES[self.state]}, pid={self.pid}')
         try:
             os.kill(-self.pid, signal.SIGKILL)
-        except OSError:
+        except OSError as e:
             # The process was already dead, no problem
-            pass
+            _trace(f'{self.hostname}: kill(-{self.pid}) failed: {e}')
         self.read_buffer = b''
         self.write_buffer = b''
         self.set_enabled(False)
@@ -205,12 +208,16 @@ class RemoteDispatcher(BufferedDispatcher):
         self.handle_close()
 
     def handle_close(self) -> None:
+        _trace(f'{self.hostname}: handle_close() called, state={STATE_NAMES[self.state]}, fd={self.fd}')
         if self.state is STATE_DEAD:
             # This connection has already been killed.
+            _trace(f'{self.hostname}: handle_close() skipped, already DEAD')
             return
 
+        _trace(f'{self.hostname}: calling waitpid({self.pid}, 0)')
         pid, status = os.waitpid(self.pid, 0)
-        exit_code = os.WEXITSTATUS(status)
+        exit_code = os.WEXITSTATUS(status) if os.WIFEXITED(status) else 1
+        _trace(f'{self.hostname}: waitpid returned pid={pid} status={status} exit_code={exit_code}')
         options.exit_code = max(options.exit_code, exit_code)
         if exit_code and options.interactive:
             console_output(f'Error talking to {self.display_name}\n'.encode())

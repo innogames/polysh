@@ -17,6 +17,7 @@ Copyright (c) 2024 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fcntl
+import os
 import struct
 import sys
 import termios
@@ -24,6 +25,13 @@ from typing import List, Tuple
 
 from polysh import dispatcher_registry, display_names, remote_dispatcher
 from polysh.terminal_size import terminal_size
+
+_TRACE = os.environ.get('POLYSH_TRACE')
+
+
+def _trace(msg: str) -> None:
+    if _TRACE:
+        print(f'[trace] {msg}', file=sys.stderr, flush=True)
 
 
 def _split_port(hostname: str) -> Tuple[str, str]:
@@ -65,11 +73,14 @@ def all_terminated() -> bool:
     instances_found = False
     for i in all_instances():
         instances_found = True
+        state_name = remote_dispatcher.STATE_NAMES[i.state]
         if i.state not in (
             remote_dispatcher.STATE_TERMINATED,
             remote_dispatcher.STATE_DEAD,
         ):
+            _trace(f'all_terminated: {i.hostname} still in state {state_name}, enabled={i.enabled}')
             return False
+    _trace(f'all_terminated: result={instances_found} (all dead/terminated)')
     return instances_found
 
 
