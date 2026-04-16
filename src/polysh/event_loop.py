@@ -25,6 +25,7 @@ import sys
 from typing import Optional
 
 from polysh import dispatcher_registry
+from polysh.exceptions import ExitNow
 
 _TRACE = os.environ.get('POLYSH_TRACE')
 
@@ -86,6 +87,8 @@ def loop_iteration(timeout: Optional[float] = None) -> None:
         if events & selectors.EVENT_READ:
             try:
                 dispatcher.handle_read()
+            except ExitNow:
+                raise
             except Exception as exc:
                 _trace(f'loop_iteration: fd={key.fd} {disp_name} handle_read raised {type(exc).__name__}: {exc}')
                 dispatcher.handle_close()
@@ -98,6 +101,8 @@ def loop_iteration(timeout: Optional[float] = None) -> None:
         if events & selectors.EVENT_WRITE:
             try:
                 dispatcher.handle_write()
+            except ExitNow:
+                raise
             except Exception as exc:
                 _trace(f'loop_iteration: fd={key.fd} {disp_name} handle_write raised {type(exc).__name__}: {exc}')
                 dispatcher.handle_close()

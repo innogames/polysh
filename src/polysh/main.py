@@ -255,16 +255,20 @@ def loop(interactive: bool) -> None:
             current_status = dispatchers.count_awaited_processes()
             if current_status != last_status:
                 console_output(b'')
+            last_status = current_status
+            # Check all_terminated BEFORE want_raw_input so we don't
+            # put the stdin thread into input() when we're about to
+            # exit.  On macOS, libedit can enter a state after EOF
+            # (Ctrl-D) where it no longer responds to pty interrupts,
+            # causing a 6-second hang during exit.
+            if dispatchers.all_terminated():
+                _trace(f'all_terminated=True, raising ExitNow({remote_dispatcher.options.exit_code})')
+                console_output(b'')
+                raise ExitNow(remote_dispatcher.options.exit_code)
             if remote_dispatcher.options.interactive:
                 _trace(f'calling want_raw_input, status={current_status}')
                 stdin.the_stdin_thread.want_raw_input()
                 _trace('want_raw_input returned')
-            last_status = current_status
-            if dispatchers.all_terminated():
-                # Clear the prompt
-                _trace(f'all_terminated=True, raising ExitNow({remote_dispatcher.options.exit_code})')
-                console_output(b'')
-                raise ExitNow(remote_dispatcher.options.exit_code)
             if not next_signal:
                 # possible race here with the signal handler
                 _trace('blocking main_loop_iteration (waiting for input or remote data)')
