@@ -1,3 +1,27 @@
+Version 1.0.3
+    * Handle libedit Enter key on Mac via an alternative exit route
+    * Add additional tracing endpoints
+    * Add timing fixes and stop relying on remote sessions
+    * Advertise Python 3.14 support
+    * Whitelist files for builds instead of blacklist (.gitignore)
+
+Version 1.0.2
+    * Handle libedit Enter key on Mac
+    * Update minimum required Python version
+
+Version 1.0.1
+    * Drop Python 3.5 support, require Python 3.6+
+    * Do not leak the color of the last connection into the prompt
+
+Version 1.0.0
+    * Add tracing and switch readline to use a PTY
+    * Bump version to 1.0 to reflect the asyncio rewrite
+
+Version 0.16
+    * Migrate internals to asyncio
+    * Add benchmark (excluded from pytest) and new unit tests
+    * Add Nix flake for easier development
+
 Version 0.15
     * Migrate from raven to sentry-sdk (fixes Python 3.11+ compatibility)
 
