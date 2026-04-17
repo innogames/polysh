@@ -7,3 +7,4 @@ dist/
 flake.lock
 result
 .downloads/
+.python-version
