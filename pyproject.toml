@@ -1,7 +1,7 @@
 [project]
 name = "polysh"
 authors = [{ email = "it@innogames.com" }]
-version = "1.0.3"
+version = "1.0.4"
 description = "Control thousands of SSH sessions from a single prompt"
 readme = "README.rst"
 requires-python = ">=3.6"
