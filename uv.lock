@@ -89,7 +89,6 @@ wheels = [
 
 [[package]]
 name = "polysh"
-version = "1.0.4"
 source = { editable = "." }
 
 [package.optional-dependencies]

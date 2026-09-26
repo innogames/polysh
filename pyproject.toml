@@ -1,7 +1,7 @@
 [project]
 name = "polysh"
 authors = [{ email = "it@innogames.com" }]
-version = "1.0.5"
+dynamic = ["version"]
 description = "Control thousands of SSH sessions from a single prompt"
 readme = "README.rst"
 requires-python = ">=3.6"
@@ -56,6 +56,9 @@ logging = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/polysh/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include=[

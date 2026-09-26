@@ -19,6 +19,7 @@ Copyright (c) 2024 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import shlex
 import sys
 from typing import List
@@ -72,9 +73,9 @@ def complete_send_ctrl(line: str, text: str) -> List[str]:
     if len(line[:-1].split()) >= 2:
         # Control letter already given in command line
         return complete_shells(line, text, lambda i: i.enabled)
-    if text in ('c', 'd', 'z'):
+    if text in ('c', 'd', 'z', '\\'):
         return [text + ' ']
-    return ['c ', 'd ', 'z ']
+    return ['c ', 'd ', 'z ', '\\ ']
 
 
 def do_send_ctrl(command: str) -> None:
@@ -86,10 +87,49 @@ def do_send_ctrl(command: str) -> None:
     if len(letter) != 1:
         console_output(f'Expected a single letter, got: {letter}\n'.encode())
         return
-    control_letter = chr(ord(letter.lower()) - ord('a') + 1)
+    # A control character is its key with the 0x40 bit cleared, which
+    # covers the letters and also @ [ \ ] ^ _, so Ctrl-\ can be sent too
+    code = ord(letter.upper()) - 0x40
+    if not 0 <= code <= 0x1F:
+        console_output(
+            f'Expected a letter or one of @[\\]^_, got: {letter}\n'.encode()
+        )
+        return
+    control_letter = chr(code)
     for i in selected_shells(' '.join(split[1:])):
         if i.enabled:
             i.dispatch_write(control_letter.encode())
+
+
+def do_prompt(command: str) -> None:
+    """Change the prompt matching done by --prompt, on the fly.
+
+    An empty argument gives the remote shells back to polysh, which sets PS1
+    on them as usual."""
+    pattern = command.strip()
+    if pattern in ('""', "''"):
+        # Spelling the empty argument out is allowed
+        pattern = ''
+    if pattern:
+        try:
+            remote_dispatcher.compile_prompt_regexp(pattern)
+        except re.error as e:
+            console_output(
+                f'Invalid prompt regex {pattern}: {e}\n'.encode()
+            )
+            return
+
+    remote_dispatcher.options.prompt = pattern or None
+    for i in dispatchers.all_instances():
+        i.apply_prompt_mode()
+
+    if pattern:
+        console_output(
+            f'Waiting for a prompt matching {pattern} '
+            f'instead of setting PS1\n'.encode()
+        )
+    else:
+        console_output(b'Setting PS1 on the remote shells again\n')
 
 
 def complete_reset_prompt(line: str, text: str) -> List[str]:

@@ -112,6 +112,10 @@ Options
     Note that control commands relying on shell features, such as
     `:reset_prompt` and `:rename`, are of no use with these remotes.
 
+    The same matching can be turned on and off during a session with the
+    `:prompt` control command, which is handy when the remote is a normal
+    shell that only later drops into something else.
+
 `--user=USER`
     Remote user to log in as
 
@@ -206,6 +210,18 @@ directed at `polysh` itself instead of the remote shells.  These commands are:
     `<hostname> <enabled?> <state>: <last printed line>`.  The special
     characters `*`, `?`, and `[]` work as expected.
 
+`:prompt [REGEX]`
+    Change the prompt `polysh` waits for, on the fly
+
+    Same matching as the `--prompt` option, but applied to the running
+    session.  This is what to reach for when a normal remote shell drops into
+    something else mid-session, for example after typing `racadm`: `polysh`
+    is then stuck in `waiting`, and `:prompt racadm>>` gets it back to
+    `ready`.  With no argument, or with an empty one, `polysh` goes back to
+    setting `PS1` on the remote shells itself and re-sends its own shell
+    initialization.  An invalid regex is reported and leaves the current
+    setting alone.
+
 `:purge [SHELLS...]`
     Delete disabled remote shells
 
@@ -235,8 +251,11 @@ directed at `polysh` itself instead of the remote shells.  These commands are:
 `:send_ctrl LETTER [SHELLS...]`
     Send a control character to remote shells
 
-    The first argument is the control character to send `c` or `d`.  Note that
-    these control characters can also be sent simply by typing them.
+    The first argument is the control character to send, either a letter or
+    one of ``@ [ \ ] ^ _``, so `:send_ctrl c` sends Ctrl-C and
+    `:send_ctrl \` sends Ctrl-\.  Note that Ctrl-C and Ctrl-\ can also be
+    sent simply by typing them.  Ctrl-Z is not forwarded, it suspends
+    `polysh` itself.
     The remaining optional arguments are the destination shells.  The special
     characters `*`, `?`, and `[]` work as expected.
 

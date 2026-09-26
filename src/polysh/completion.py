@@ -126,5 +126,11 @@ def remove_last_history_item() -> None:
 
 def install_completion_handler() -> None:
     readline.set_completer(complete)
-    readline.parse_and_bind("tab: complete")
+    if "libedit" in (readline.__doc__ or ""):
+        # libedit, used by some CPython builds instead of GNU readline, does
+        # not understand the GNU syntax and would silently leave Tab inserting
+        # a literal tab character
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
     readline.set_completer_delims(" \t\n")

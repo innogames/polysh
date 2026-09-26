@@ -44,7 +44,7 @@ from polysh import (
     stdin,
 )
 from polysh.console import console_output
-from polysh.exceptions import ExitNow
+from polysh.exceptions import ExitNow, QuitAsked
 from polysh.host_syntax import expand_syntax
 
 
@@ -209,7 +209,7 @@ def parse_cmdline() -> argparse.Namespace:
 
     if args.prompt is not None:
         try:
-            re.compile(args.prompt)
+            remote_dispatcher.compile_prompt_regexp(args.prompt)
         except re.error as e:
             parser.error(f'invalid --prompt regex {args.prompt!r}: {e}')
 
@@ -263,7 +263,10 @@ def loop(interactive: bool) -> None:
             if next_signal:
                 current_signal = next_signal
                 next_signal = None
-                sig2chr = {signal.SIGINT: 'C', signal.SIGTSTP: 'Z'}
+                sig2chr = {
+                    signal.SIGINT: 'C',
+                    signal.SIGQUIT: '\\',
+                }
                 ctrl = sig2chr[current_signal]
                 remote_dispatcher.log(f'> ^{ctrl}\n'.encode())
                 control_commands.do_send_ctrl(ctrl)
@@ -311,6 +314,10 @@ def loop(interactive: bool) -> None:
             else:
                 kill_all()
                 os.kill(0, signal.SIGINT)
+        except QuitAsked:
+            # Ctrl-\ on our terminal, forward it to the remote shells like
+            # Ctrl-C.  Only installed in interactive mode, see run().
+            next_signal = signal.SIGQUIT
         except ExitNow as e:
             _trace(f'ExitNow caught in loop, exit_code={e.args[0]}')
             console_output(b'')
@@ -384,6 +391,15 @@ def run() -> None:
         sys.exit(1)
 
     dispatchers.create_remote_dispatchers(hosts)
+
+    if args.interactive:
+        # The real terminal keeps ISIG, so Ctrl-\ reaches us as SIGQUIT,
+        # whose default action would dump core.  Turn it into something the
+        # main loop can forward to the remote shells.
+        def _handle_sigquit(signum, frame):
+            raise QuitAsked
+
+        signal.signal(signal.SIGQUIT, _handle_sigquit)
 
     def _handle_sigwinch(signum, frame):
         stdin.propagate_terminal_size()

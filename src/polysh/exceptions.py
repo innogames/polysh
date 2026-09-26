@@ -20,3 +20,13 @@ Copyright (c) 2024 InnoGames GmbH
 class ExitNow(Exception):
     """Exception to signal clean exit. First argument is exit code."""
     pass
+
+
+class QuitAsked(BaseException):
+    """Raised in the main thread when the user pressed Ctrl-\\, letting
+    it kill the process so that the user has a way to quit polysh.
+
+    SIGINT arrives as KeyboardInterrupt for free (and it's passed through
+    to the remote shell), SIGQUIT does not, so the handler raises this to reach
+    the same place in the main loop."""
+    pass

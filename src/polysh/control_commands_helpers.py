@@ -21,6 +21,7 @@ from fnmatch import fnmatch
 import readline
 from typing import Iterator, List, Set, Callable
 
+from polysh.exceptions import ExitNow
 from polysh.host_syntax import expand_syntax
 from polysh.console import console_output
 from polysh import dispatchers
@@ -129,4 +130,16 @@ def handle_control_command(line: str) -> None:
         console_output("Unknown control command: {}\n".format(cmd_name).encode())
     else:
         parameters = line[len(cmd_name) + 1 :]
-        cmd_func(parameters)
+        try:
+            cmd_func(parameters)
+        except ExitNow:
+            raise
+        except Exception as e:
+            # A failing control command must not take the session down with
+            # it: the caller is a dispatcher whose handle_read() would then
+            # be closed, leaving polysh unable to read its own input
+            console_output(
+                "Error in control command {}: {}: {}\n".format(
+                    cmd_name, type(e).__name__, e
+                ).encode()
+            )
