@@ -1,7 +1,7 @@
 """Polysh - Remote Shell Dispatcher
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2024 InnoGames GmbH
+Copyright (c) 2026 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -162,9 +162,17 @@ class RemoteDispatcher(BufferedDispatcher):
         self.init_string_sent = False
         # Whether the remote has said anything yet, see apply_prompt_mode()
         self.remote_spoke = False
-        self.custom_prompt_exit_sent = False
+        # Non-interactive mode: the command lines still to send, one per
+        # prompt, see real_prompt_cb()
+        command = options.command.encode() if options.command else b''
+        if command and not command.endswith(b'\n'):
+            command += b'\n'
+        self.command_lines = [
+            line + b'\n' for line in command.split(b'\n')[:-1]
+        ]
+        self.real_prompt_installed = False
+        self.exit_sent = False
         self.read_in_state_not_started = b''
-        self.command = options.command
         self.last_printed_line = b''
         self.color_code = None
         if sys.stdout.isatty() and not options.disable_color:
@@ -244,22 +252,47 @@ class RemoteDispatcher(BufferedDispatcher):
             # Send a single line per prompt, so that the next prompt is again
             # the last thing in the read buffer, where handle_custom_prompt()
             # looks for it.
-            if self.command:
-                self.dispatch_command(self.command.encode() + b'\n')
-                self.command = None
-            elif not self.custom_prompt_exit_sent:
+            if self.command_lines:
+                self.dispatch_command(b''.join(self.command_lines))
+                self.command_lines = []
+            elif not self.exit_sent:
                 self.dispatch_command(b'exit\n')
-                self.custom_prompt_exit_sent = True
+                self.exit_sent = True
             else:
                 # The remote did not leave on exit, don't wait forever for it
                 _trace(f'{self.hostname}: exit ignored, disconnecting')
                 self.disconnect()
-        elif self.command:
-            p1, p2 = callbacks.add(b'real prompt ends', lambda d: None, True)
-            self.dispatch_command(b'PS1="' + p1 + b'""' + p2 + b'\n"\n')
-            self.dispatch_command(self.command.encode() + b'\n')
+        elif not self.real_prompt_installed:
+            # Only replace the prompt for now, real_prompt_cb() feeds the
+            # command one line at a time.  Queueing the command and the
+            # final exit all at once does not work: the shell reads a
+            # single line, and anything the command reads from the tty
+            # (sudo with use_pty, a password prompt, read, ...) swallows
+            # the lines queued behind it, including the exit, and we would
+            # wait forever.  PS2 gets the same trigger so that a multi-line
+            # construct (if/fi, heredoc, trailing backslash) asks for its
+            # next line the same way.
+            self.real_prompt_installed = True
+            p1, p2 = callbacks.add(
+                b'real prompt ends', self.real_prompt_cb, True
+            )
+            self.dispatch_command(
+                b'PS1="' + p1 + b'""' + p2 + b'\n";PS2="$PS1"\n'
+            )
+
+    def real_prompt_cb(self, unused: bytes) -> None:
+        """Non-interactive mode without --prompt: the remote shell is ready
+        for one more line, send the next command line or leave."""
+        if self.command_lines:
+            self.dispatch_command(self.command_lines.pop(0))
+        elif not self.exit_sent:
+            # No argument so that the exit code is the one of the command
             self.dispatch_command(b'exit 2>/dev/null\n')
-            self.command = None
+            self.exit_sent = True
+        else:
+            # The remote did not leave on exit, don't wait forever for it
+            _trace(f'{self.hostname}: exit ignored, disconnecting')
+            self.disconnect()
 
     def set_prompt(self) -> bytes:
         """The prompt is important because we detect the readyness of a process

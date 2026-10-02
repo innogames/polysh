@@ -33,6 +33,28 @@ def test_command_interrupted(polysh):
     child.expect(pexpect.EOF)
 
 
+def test_command_reading_tty(polysh):
+    # The command must not swallow the exit polysh sends afterwards, as
+    # sudo with use_pty or a password prompt does
+    child = polysh(
+        ['--command=read -t 2 x; echo "got:[$x]"; echo done', 'localhost']
+    )
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;mgot:\\[\\]')
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;mdone')
+    child.expect(pexpect.EOF)
+
+
+def test_command_relaying_tty(polysh):
+    # script(1) relays the tty to a new pty like sudo use_pty does
+    child = polysh(
+        ['--command=script -qec "echo relayed" /dev/null; echo done',
+         'localhost']
+    )
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;mrelayed')
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;mdone')
+    child.expect(pexpect.EOF)
+
+
 def test_single_command_from_stdin(polysh):
     child = polysh(['localhost'], input_data='echo line')
     child.expect('localhost : line')
@@ -48,6 +70,25 @@ def test_multiple_commands_from_stdin(polysh):
     child = polysh(['localhost'], input_data=commands)
     child.expect('localhost : first')
     child.expect('localhost : next')
+    child.expect('localhost : last')
+    child.expect(pexpect.EOF)
+
+
+def test_multi_line_construct_from_stdin(polysh):
+    # Lines are fed one per prompt, continuation lines through PS2
+    commands = '\n'.join([
+        'if true; then',
+        '    echo multi',
+        'fi',
+        'cat <<EOF',
+        'heredoc',
+        'EOF',
+        'echo last',
+        '',
+    ])
+    child = polysh(['localhost'], input_data=commands)
+    child.expect('localhost : multi')
+    child.expect('localhost : heredoc')
     child.expect('localhost : last')
     child.expect(pexpect.EOF)
 
