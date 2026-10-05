@@ -46,7 +46,8 @@ class TestPasswordFile(unittest.TestCase):
         return child
 
     def endTestPassword(self):
-        self.assertFalse('sikr3t' in open('/tmp/polysh_test.log').read())
+        with open('/tmp/polysh_test.log') as log:
+            self.assertFalse('sikr3t' in log.read())
         os.unlink('/tmp/polysh_test.log')
 
     def testGoodPassword(self):
@@ -69,7 +70,8 @@ class TestPasswordFile(unittest.TestCase):
         self.endTestPassword()
 
     def testBadPasswordFile(self):
-        print('noidea', file=open('/tmp/polysh_test.pwd', 'w'))
+        with open('/tmp/polysh_test.pwd', 'w') as pwd_file:
+            print('noidea', file=pwd_file)
         child = self.startTestPassword('/tmp/polysh_test.pwd')
         child.expect(pexpect.EOF)
         while child.isalive():
@@ -79,7 +81,8 @@ class TestPasswordFile(unittest.TestCase):
         self.endTestPassword()
 
     def testGoodPasswordFile(self):
-        print('sikr3t', file=open('/tmp/polysh_test.pwd', 'w'))
+        with open('/tmp/polysh_test.pwd', 'w') as pwd_file:
+            print('sikr3t', file=pwd_file)
         child = self.startTestPassword('/tmp/polysh_test.pwd')
         child.expect('ready \(2\)> ')
         os.unlink('/tmp/polysh_test.pwd')
