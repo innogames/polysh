@@ -277,6 +277,29 @@ directed at `polysh` itself instead of the remote shells.  These commands are:
 
     The special characters `*`, `?`, and `[]` work as expected.
 
+Running the tests
+-----------------
+
+The test suite drives polysh with pexpect, install the development
+dependencies once with ``uv sync --group dev``.  By default the remote
+shells are local login shells started through ``tests/fake_ssh.sh``, so
+nothing has to be set up::
+
+    uv run python -m unittest discover -v tests
+
+To run the same suite through a real ssh transport, ``tests/with_sshd.sh``
+starts a private sshd as the current user on a free port and points the
+tests at it.  It only needs the openssh-server package, no root and no
+configuration::
+
+    tests/with_sshd.sh
+    tests/with_sshd.sh uv run python -m unittest -v tests.test_basic
+
+Any other ssh command can be used by setting ``POLYSH_TEST_SSH`` to a
+``--ssh`` template, for example
+``POLYSH_TEST_SSH='exec ssh -t %(host)s'`` for an sshd already running
+on localhost.
+
 History
 -------
 

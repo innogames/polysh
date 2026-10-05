@@ -1,0 +1,39 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.13', '3.14']
+        # local: polysh talks to a local shell through tests/fake_ssh.sh
+        # sshd: through ssh to a private sshd, see tests/with_sshd.sh
+        transport: [local, sshd]
+    name: ${{ matrix.transport }} / python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Install sshd
+        if: matrix.transport == 'sshd'
+        run: sudo apt-get update && sudo apt-get install -y openssh-server
+
+      - name: Run the tests against a local shell
+        if: matrix.transport == 'local'
+        run: uv run python -m unittest discover -v tests
+
+      - name: Run the tests through ssh
+        if: matrix.transport == 'sshd'
+        run: tests/with_sshd.sh
