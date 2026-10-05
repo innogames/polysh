@@ -4,6 +4,7 @@ Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 Copyright (c) 2024 InnoGames GmbH
 """
 import os
+import sys
 
 import pexpect
 from pexpect.popen_spawn import PopenSpawn
@@ -36,9 +37,21 @@ SSH = os.environ.get('POLYSH_TEST_SSH') or (
     'exec ' + os.path.join(TESTS_DIR, 'fake_ssh.sh') + ' %(host)s'
 )
 
+# The polysh of the environment running the tests, spawned directly.  Not
+# through "uv run": uv stays alive as the parent and relays the terminal's
+# signals to its child, so polysh would get a Ctrl-C or Ctrl-\ twice and
+# the second one could hit while the first is being handled.
+POLYSH = os.path.join(os.path.dirname(sys.executable), 'polysh')
+if os.path.exists(POLYSH):
+    POLYSH_ARGS = [POLYSH]
+else:
+    POLYSH_ARGS = [
+        sys.executable, '-c', 'from polysh.main import main; main()'
+    ]
+
 
 def launch_polysh(args, input_data=None):
-    args = ['uv', 'run', 'polysh', '--ssh=' + SSH] + args
+    args = POLYSH_ARGS + ['--ssh=' + SSH] + args
 
     if input_data is None:
         child = pexpect.spawn(args[0], args=args[1:], encoding='utf-8')
