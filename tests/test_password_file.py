@@ -54,7 +54,7 @@ class TestPasswordFile(unittest.TestCase):
         child = self.startTestPassword('-')
         child.expect('Password:')
         child.sendline('sikr3t')
-        child.expect('ready \(2\)> ')
+        child.expect(r'ready \(2\)> ')
         child.sendline(':quit')
         child.expect(pexpect.EOF)
         self.endTestPassword()
@@ -84,7 +84,7 @@ class TestPasswordFile(unittest.TestCase):
         with open('/tmp/polysh_test.pwd', 'w') as pwd_file:
             print('sikr3t', file=pwd_file)
         child = self.startTestPassword('/tmp/polysh_test.pwd')
-        child.expect('ready \(2\)> ')
+        child.expect(r'ready \(2\)> ')
         os.unlink('/tmp/polysh_test.pwd')
         child.sendline(':quit')
         child.expect(pexpect.EOF)

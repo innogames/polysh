@@ -25,15 +25,15 @@ from tests import launch_polysh
 class TestDisplayNames(unittest.TestCase):
     def testHole(self):
         child = launch_polysh(['--ssh=sh;:'] + ['a'] * 100)
-        child.expect('ready \(100\)> ')
+        child.expect(r'ready \(100\)> ')
         child.sendline(':disable *1*')
-        child.expect('ready \(81\)> ')
+        child.expect(r'ready \(81\)> ')
         child.sendline('exit')
-        child.expect('ready \(0\)> ')
+        child.expect(r'ready \(0\)> ')
         child.sendline(':enable')
-        child.expect('ready \(19\)> ')
+        child.expect(r'ready \(19\)> ')
         child.sendline(':purge')
-        child.expect('ready \(19\)> ')
+        child.expect(r'ready \(19\)> ')
         for i in range(20, 101):
             child.sendline(':add a')
             child.expect(f'ready \\({int(i)}\\)> ')

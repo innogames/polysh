@@ -25,12 +25,12 @@ from tests import launch_polysh
 class TestNonInteractive(unittest.TestCase):
     def testCommandNormal(self):
         child = launch_polysh(['--command=echo text', 'localhost'])
-        child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
+        child.expect('\033\\[1;36mlocalhost : \033\\[1;mtext')
         child.expect(pexpect.EOF)
 
     def testCommandIntr(self):
         child = launch_polysh(['--command=echo text; cat', 'localhost'])
-        child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
+        child.expect('\033\\[1;36mlocalhost : \033\\[1;mtext')
         child.sendintr()
         child.expect(pexpect.EOF)
 
@@ -71,5 +71,5 @@ class TestNonInteractive(unittest.TestCase):
     def testInvalidCharacters(self):
         child = launch_polysh(
             ["--command=printf '%b' '\xacfoo\u2018bar\n'", 'localhost'])
-        child.expect('\033\[1;36mlocalhost : \033\[1;m\xacfoo\u2018bar')
+        child.expect('\033\\[1;36mlocalhost : \033\\[1;m\xacfoo\u2018bar')
         child.expect(pexpect.EOF)

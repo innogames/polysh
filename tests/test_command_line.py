@@ -32,7 +32,7 @@ class TestCommandLine(unittest.TestCase):
         print('127.0.0.1', file=tmp)
         tmp.close()
         child = launch_polysh([f'--hosts-file={tmp_name}'])
-        child.expect('ready \(2\)> ')
+        child.expect(r'ready \(2\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
         os.remove(tmp_name)
@@ -53,7 +53,7 @@ class TestCommandLine(unittest.TestCase):
     def testProfile(self):
         child = launch_polysh(['--profile', 'localhost'])
         child.expect('Profiling using ')
-        child.expect('ready \(1\)> ')
+        child.expect(r'ready \(1\)> ')
         child.sendline(':quit')
         # '798 function calls (777 primitive calls) in 0.054 seconds'
         child.expect(r' function calls (\(\d+ primitive calls\) )?in ')

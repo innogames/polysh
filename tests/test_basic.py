@@ -30,7 +30,7 @@ class TestBasic(unittest.TestCase):
 
         def start_child():
             child = launch_polysh(args)
-            child.expect(f'ready \({nr_localhost}\)> ')
+            child.expect(rf'ready \({nr_localhost}\)> ')
             child.sendeof()
             return child
 
@@ -60,21 +60,21 @@ class TestBasic(unittest.TestCase):
 
     def testPrependPrompt(self):
         child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
+        child.expect(r'ready \(1\)> ')
         child.sendline('sleep 1')
-        child.expect('waiting \(1/1\)> ')
+        child.expect(r'waiting \(1/1\)> ')
         sleep(1)
         child.send('echo begin-')
-        child.expect('ready \(1\)> ')
+        child.expect(r'ready \(1\)> ')
         child.sendline('end')
         child.expect('begin-end')
-        child.expect('ready \(1\)> ')
+        child.expect(r'ready \(1\)> ')
         child.sendeof()
         child.expect(pexpect.EOF)
 
     def testError(self):
         child = launch_polysh(['localhost', 'localhost'])
-        child.expect('ready \(2\)> ')
+        child.expect(r'ready \(2\)> ')
         child.sendline('kill -9 $$')
         child.expect('Error talking to localhost')
         child.expect('Error talking to localhost')
@@ -82,7 +82,7 @@ class TestBasic(unittest.TestCase):
 
     def testCleanExit(self):
         child = launch_polysh(['localhost', 'localhost'])
-        child.expect('ready \(2\)> ')
+        child.expect(r'ready \(2\)> ')
         child.sendeof()
 
         # We test for logout as this is the expected response of sending EOF to
