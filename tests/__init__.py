@@ -25,6 +25,22 @@ from pexpect.popen_spawn import PopenSpawn
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
+class _PopenSpawn(PopenSpawn):
+    """PopenSpawn raises EOF once the output is drained but neither waits
+    for the process nor closes the pipe, so Popen warns at garbage
+    collection about a still running subprocess and an unclosed file.
+    Do both as soon as EOF is seen."""
+
+    def read_nonblocking(self, size=1, timeout=-1):
+        try:
+            return super().read_nonblocking(size, timeout)
+        except pexpect.EOF:
+            self.wait()
+            self.proc.stdout.close()
+            raise
+
+
 # How polysh reaches 'localhost' in the tests: a local login shell through
 # fake_ssh.sh by default, so that no sshd has to be set up, or the ssh
 # command template given in POLYSH_TEST_SSH, see with_sshd.sh.  Tests that
@@ -56,7 +72,7 @@ def launch_polysh(args, input_data=None):
     if input_data is None:
         child = pexpect.spawn(args[0], args=args[1:], encoding='utf-8')
     else:
-        child = PopenSpawn(args)
+        child = _PopenSpawn(args)
         child.send(input_data)
         child.sendeof()
     return child
