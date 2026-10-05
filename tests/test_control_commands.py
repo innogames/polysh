@@ -18,6 +18,7 @@ Copyright (c) 2024 InnoGames GmbH
 
 import os
 import unittest
+from time import sleep
 import pexpect
 
 from tests import launch_polysh
@@ -50,11 +51,24 @@ class TestControlCommands(unittest.TestCase):
         child.expect(r'waiting \(1/1\)> ')
         child.sendline(':send_ctrl d')
         child.expect(r'ready \(1\)> ')
-        child.sendline('sleep 1h')
+        # A control key typed right after Enter reaches the remote shell
+        # within a millisecond of the command line, before the command has
+        # started or even been read.  Wait for the command to say it owns
+        # the terminal before sending it one.
+        # The output line makes polysh redraw its prompt by interrupting
+        # readline, and a key typed during that is lost too.  The redraw
+        # settles once the remote has been quiet for 0.2s, wait that out.
+        # The marker is split in the command so that the echo of the typed
+        # line cannot match it, only the output can.
+        child.sendline('( echo start""ed; exec sleep 1h )')
+        child.expect('started')
+        sleep(0.5)
         child.expect(r'waiting \(1/1\)> ')
         child.sendcontrol('c')
         child.expect(r'ready \(1\)> ')
-        child.sendline('cat')
+        child.sendline('( echo start""ed; exec cat )')
+        child.expect('started')
+        sleep(0.5)
         child.expect(r'waiting \(1/1\)> ')
         child.sendcontrol('d')
         child.expect(r'ready \(1\)> ')
