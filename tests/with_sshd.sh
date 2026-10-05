@@ -52,9 +52,12 @@ CONF
 sshd_pid=$!
 
 # LogLevel ERROR rather than polysh's default Quiet, so that a refused key
-# or a dying session shows up in the test output
+# or a dying session shows up in the test output.  ConnectTimeout: some
+# tests list hosts that are not meant to be reachable, they must fail fast
+# as they do with tests/fake_ssh.sh instead of sitting in connect()
 ssh_options="-p $port -i $dir/user_key -o StrictHostKeyChecking=no \
--o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o LogLevel=ERROR"
+-o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o LogLevel=ERROR \
+-o ConnectTimeout=3"
 tries=0
 # -n: with ForceCommand the probe runs that bash, which leaves on EOF
 # shellcheck disable=SC2086
