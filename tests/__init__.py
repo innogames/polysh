@@ -3,6 +3,8 @@
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 Copyright (c) 2024 InnoGames GmbH
 """
+import os
+
 import pexpect
 from pexpect.popen_spawn import PopenSpawn
 
@@ -20,8 +22,23 @@ from pexpect.popen_spawn import PopenSpawn
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# How polysh reaches 'localhost' in the tests: a local login shell through
+# fake_ssh.sh by default, so that no sshd has to be set up, or the ssh
+# command template given in POLYSH_TEST_SSH, see with_sshd.sh.  Tests that
+# pass their own --ssh override it, argparse keeps the last one.
+#
+# exec, as in the default ssh template, makes the shell polysh's direct
+# child: nothing in between prints "Killed" when a test kills it, and
+# polysh sees the exit the way it would see ssh leaving.
+SSH = os.environ.get('POLYSH_TEST_SSH') or (
+    'exec ' + os.path.join(TESTS_DIR, 'fake_ssh.sh') + ' %(host)s'
+)
+
+
 def launch_polysh(args, input_data=None):
-    args = ['uv', 'run', 'polysh'] + args
+    args = ['uv', 'run', 'polysh', '--ssh=' + SSH] + args
 
     if input_data is None:
         child = pexpect.spawn(args[0], args=args[1:], encoding='utf-8')

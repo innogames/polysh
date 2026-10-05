@@ -55,7 +55,8 @@ class TestCommandLine(unittest.TestCase):
         child.expect('Profiling using ')
         child.expect('ready \(1\)> ')
         child.sendline(':quit')
-        child.expect(' function calls in ')
+        # '798 function calls (777 primitive calls) in 0.054 seconds'
+        child.expect(r' function calls (\(\d+ primitive calls\) )?in ')
         child.expect('Ordered by')
         child.expect(pexpect.EOF)
 
