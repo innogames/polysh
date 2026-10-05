@@ -86,6 +86,10 @@ def _reap_dead_dispatchers() -> None:
             remote_dispatcher.options.exit_code = max(
                 remote_dispatcher.options.exit_code, exit_code
             )
+            # Same report as RemoteDispatcher.handle_close(), which this
+            # path replaces when it wins the race against the pty EOF
+            if exit_code and remote_dispatcher.options.interactive:
+                console_output(f'Error talking to {r.display_name}\n'.encode())
             r.disconnect()
 
 

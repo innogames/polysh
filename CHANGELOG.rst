@@ -1,4 +1,7 @@
 Version 1.0.6
+    * Report "Error talking to" for a remote shell that died while its exit
+      was noticed by the periodic child check instead of the pty EOF, the
+      message was lost on that path
     * Add the :prompt control command, to turn --prompt matching on and off
       during a session
     * Forward a locally typed Ctrl-\\ to the remote shells, as is already
