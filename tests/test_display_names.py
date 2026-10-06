@@ -17,8 +17,10 @@ Copyright (c) 2024 InnoGames GmbH
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pexpect
+import pytest
 
 
+@pytest.mark.slow
 def test_hole(polysh):
     """Names freed by :purge are reused by :add, filling the holes in the
     numbering first"""
