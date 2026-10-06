@@ -280,12 +280,14 @@ directed at `polysh` itself instead of the remote shells.  These commands are:
 Running the tests
 -----------------
 
-The test suite drives polysh with pexpect, install the development
-dependencies once with ``uv sync --group dev``.  By default the remote
-shells are local login shells started through ``tests/fake_ssh.sh``, so
-nothing has to be set up::
+The test suite drives polysh with pexpect under pytest, install the
+development dependencies once with ``uv sync --group dev``.  By default
+the remote shells are local login shells started through
+``tests/fake_ssh.sh``, so nothing has to be set up::
 
-    uv run python -m unittest discover -v tests
+    uv run pytest
+    uv run pytest -n auto          # in parallel, a few seconds
+    uv run pytest -m 'not slow'    # without the test starting 100 shells
 
 To run the same suite through a real ssh transport, ``tests/with_sshd.sh``
 starts a private sshd as the current user on a free port and points the
@@ -293,12 +295,19 @@ tests at it.  It only needs the openssh-server package, no root and no
 configuration::
 
     tests/with_sshd.sh
-    tests/with_sshd.sh uv run python -m unittest -v tests.test_basic
+    tests/with_sshd.sh uv run pytest tests/test_basic.py
 
 Any other ssh command can be used by setting ``POLYSH_TEST_SSH`` to a
 ``--ssh`` template, for example
 ``POLYSH_TEST_SSH='exec ssh -t %(host)s'`` for an sshd already running
 on localhost.
+
+Most of polysh runs in the processes the tests spawn, so coverage is
+collected from those and merged afterwards::
+
+    uv run coverage run -m pytest -n auto
+    uv run coverage combine
+    uv run coverage report
 
 History
 -------

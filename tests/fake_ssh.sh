@@ -1,5 +1,5 @@
 #!/bin/sh
-# Stand-in for ssh in the test suite, see tests/__init__.py.
+# Stand-in for ssh in the test suite, see tests/conftest.py.
 #
 # The local host, by any of its names, gets a local login shell: a login
 # shell prints "logout" on exit, as the one ssh would start does and as the

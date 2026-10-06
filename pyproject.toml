@@ -107,3 +107,7 @@ timeout = 120
 markers = [
     "slow: takes several seconds, deselect with -m 'not slow'",
 ]
+filterwarnings = [
+    # pexpect forks a pty from an xdist worker, which has threads of its own
+    "ignore:This process .* is multi-threaded, use of forkpty:DeprecationWarning",
+]

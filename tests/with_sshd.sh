@@ -1,12 +1,13 @@
 #!/bin/sh
 # Run the test suite through a real ssh transport: start a private sshd as
 # the current user on a free port of 127.0.0.1, point the tests at it with
-# POLYSH_TEST_SSH (see tests/__init__.py) and run the command given as
+# POLYSH_TEST_SSH (see tests/conftest.py) and run the command given as
 # arguments, by default the whole suite.  Needs the openssh-server package,
 # nothing else configured, no root.
 #
 #     tests/with_sshd.sh
-#     tests/with_sshd.sh uv run python -m unittest -v tests.test_basic
+#     tests/with_sshd.sh uv run pytest -n auto
+#     tests/with_sshd.sh uv run pytest tests/test_basic.py
 set -eu
 
 sshd=$(command -v sshd || echo /usr/sbin/sshd)
@@ -43,6 +44,10 @@ StrictModes no
 PidFile none
 PrintMotd no
 PrintLastLog no
+# Tests running in parallel open many sessions at once, more than the
+# default of 10 unauthenticated connections sshd accepts
+MaxStartups 100
+MaxSessions 100
 # The same bare login bash as tests/fake_ssh.sh, whatever the login shell
 # and profile files of the user running the tests
 ForceCommand bash --noprofile --norc -l
@@ -74,6 +79,6 @@ done
 POLYSH_TEST_SSH="exec ssh $ssh_options -t %(host)s"
 export POLYSH_TEST_SSH
 if [ $# -eq 0 ]; then
-    set -- uv run python -m unittest discover -v tests
+    set -- uv run pytest
 fi
 "$@"

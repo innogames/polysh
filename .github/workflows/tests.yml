@@ -32,8 +32,8 @@ jobs:
 
       - name: Run the tests against a local shell
         if: matrix.transport == 'local'
-        run: uv run python -m unittest discover -v tests
+        run: uv run pytest -n auto
 
       - name: Run the tests through ssh
         if: matrix.transport == 'sshd'
-        run: tests/with_sshd.sh
+        run: tests/with_sshd.sh uv run pytest -n auto
