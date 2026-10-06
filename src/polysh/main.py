@@ -82,6 +82,15 @@ def _reap_dead_dispatchers() -> None:
         if pid != 0:
             # Child exited but pty EOF was not detected by the event loop
             _trace(f'_reap_dead_dispatchers: {r.hostname} child {pid} exited')
+            # What it printed last may still sit unread in the pty, as when
+            # it left between the select() timing out and this waitpid():
+            # read it now, disconnect() drops the buffer.  EIO is the pty
+            # telling us there is nothing more to read
+            try:
+                r.handle_read()
+                r.print_unfinished_line()
+            except OSError:
+                pass
             exit_code = os.WEXITSTATUS(status) if os.WIFEXITED(status) else 1
             remote_dispatcher.options.exit_code = max(
                 remote_dispatcher.options.exit_code, exit_code
