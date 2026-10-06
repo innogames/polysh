@@ -8,3 +8,8 @@ flake.lock
 result
 .downloads/
 .python-version
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+polysh.prof

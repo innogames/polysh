@@ -76,5 +76,23 @@ packages = ["src/polysh"]
 [dependency-groups]
 dev = [
     "pexpect>=4.9.0",
-    "coverage>=5.5",
+    "coverage>=7.10",
+    "pytest>=8",
+    "pytest-timeout>=2.3",
+    "pytest-xdist>=3.5",
+]
+
+[tool.uv.dependency-groups]
+# pytest 8 needs Python 3.8, coverage 7.10 Python 3.9; polysh itself still
+# declares 3.6, so the tools only have to resolve for the versions CI tests
+dev = { requires-python = ">=3.9" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+# Safety net for a hung test: pexpect's own 30s expect() timeout fires first
+# in an ordinary failure
+timeout = 120
+markers = [
+    "slow: takes several seconds, deselect with -m 'not slow'",
 ]
