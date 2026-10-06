@@ -16,77 +16,87 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
 import pexpect
-import os
-
-from tests import launch_polysh
+import pytest
 
 
-class TestCommandLine(unittest.TestCase):
-    def testGoodHostsFilename(self):
-        tmp_name = f'/tmp/polysh_tests.{int(os.getpid())}'
-        tmp = open(tmp_name, 'w', 0o600)
-        print('localhost # Comment', file=tmp)
-        print('# Ignore me', file=tmp)
-        print('127.0.0.1', file=tmp)
-        tmp.close()
-        child = launch_polysh([f'--hosts-file={tmp_name}'])
-        child.expect(r'ready \(2\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
-        os.remove(tmp_name)
+def test_good_hosts_file(polysh, tmp_path):
+    hosts_file = tmp_path / 'hosts'
+    hosts_file.write_text('localhost # Comment\n# Ignore me\n127.0.0.1\n')
+    child = polysh([f'--hosts-file={hosts_file}'])
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-    def testBadHostsFilename(self):
-        child = launch_polysh(['--hosts-file=do not exist/at all'])
-        child.expect('error')
-        child.expect(pexpect.EOF)
 
-    def testNoHosts(self):
-        child = launch_polysh([])
-        child.expect('error: no hosts given')
-        child.expect(pexpect.EOF)
-        child = launch_polysh(['--hosts-file=/dev/null'])
-        child.expect('error: no hosts given')
-        child.expect(pexpect.EOF)
+def test_bad_hosts_file(polysh):
+    child = polysh(['--hosts-file=do not exist/at all'])
+    child.expect('error')
+    child.expect(pexpect.EOF)
 
-    def testProfile(self):
-        child = launch_polysh(['--profile', 'localhost'])
-        child.expect('Profiling using ')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        # '798 function calls (777 primitive calls) in 0.054 seconds'
-        child.expect(r' function calls (\(\d+ primitive calls\) )?in ')
-        child.expect('Ordered by')
-        child.expect(pexpect.EOF)
 
-    def testInitError(self):
-        child = launch_polysh(['--ssh=echo message', 'localhost'])
-        child.expect('message localhost')
-        child.expect(pexpect.EOF)
-        child = launch_polysh(['--ssh=echo The authenticity of host', 'l'])
-        child.expect('Closing connection')
-        child.expect('Consider manually connecting or using ssh-keyscan')
-        child.expect(pexpect.EOF)
-        child = launch_polysh(['--ssh=echo REMOTE HOST IDENTIFICATION '
-                               'HAS CHANGED', 'l'])
-        child.expect('Remote host identification has changed')
-        child.expect('Consider manually connecting or using ssh-keyscan')
-        child.expect(pexpect.EOF)
+@pytest.mark.parametrize('args', [[], ['--hosts-file=/dev/null']])
+def test_no_hosts(polysh, args):
+    child = polysh(args)
+    child.expect('error: no hosts given')
+    child.expect(pexpect.EOF)
 
-    def testAbortError(self):
-        child = launch_polysh(['localhost', 'unknown_host'])
-        child.expect('Error talking to unknown_host')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
-        child = launch_polysh(['--abort-errors', 'localhost', 'unknown_host'])
-        child.expect('Error talking to unknown_host')
-        child.expect(pexpect.EOF)
 
-    def testUser(self):
-        child = launch_polysh(['--ssh=echo', 'machine'])
-        child.expect('[^@]machine')
-        child.expect(pexpect.EOF)
-        child = launch_polysh(['--ssh=echo', '--user=login', 'machine'])
-        child.expect('login@machine')
-        child.expect(pexpect.EOF)
+def test_profile(polysh):
+    child = polysh(['--profile', 'localhost'])
+    child.expect('Profiling using ')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    # '798 function calls (777 primitive calls) in 0.054 seconds'
+    child.expect(r' function calls (\(\d+ primitive calls\) )?in ')
+    child.expect('Ordered by')
+    child.expect(pexpect.EOF)
+
+
+@pytest.mark.parametrize(('ssh', 'host', 'expected'), [
+    ('echo message', 'localhost', ['message localhost']),
+    (
+        'echo The authenticity of host',
+        'l',
+        [
+            'Closing connection',
+            'Consider manually connecting or using ssh-keyscan',
+        ],
+    ),
+    (
+        'echo REMOTE HOST IDENTIFICATION HAS CHANGED',
+        'l',
+        [
+            'Remote host identification has changed',
+            'Consider manually connecting or using ssh-keyscan',
+        ],
+    ),
+])
+def test_init_error(polysh, ssh, host, expected):
+    child = polysh([f'--ssh={ssh}', host])
+    for line in expected:
+        child.expect(line)
+    child.expect(pexpect.EOF)
+
+
+def test_unknown_host_is_reported(polysh):
+    child = polysh(['localhost', 'unknown_host'])
+    child.expect('Error talking to unknown_host')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
+
+
+def test_abort_errors(polysh):
+    child = polysh(['--abort-errors', 'localhost', 'unknown_host'])
+    child.expect('Error talking to unknown_host')
+    child.expect(pexpect.EOF)
+
+
+@pytest.mark.parametrize(('args', 'expected'), [
+    ([], '[^@]machine'),
+    (['--user=login'], 'login@machine'),
+])
+def test_user(polysh, args, expected):
+    child = polysh(['--ssh=echo', *args, 'machine'])
+    child.expect(expected)
+    child.expect(pexpect.EOF)

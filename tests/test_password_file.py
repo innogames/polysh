@@ -1,4 +1,4 @@
-"""Polysh - Tests - Password File Support
+"""Polysh - Tests - Password File
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 Copyright (c) 2024 InnoGames GmbH
@@ -16,12 +16,11 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import unittest
+from pathlib import Path
+
 import pexpect
 
-from tests import launch_polysh
-
+# A remote asking for a password before starting its shell
 SSH_ARG = """--ssh=bash -c '
 read -p password: -s PASSWD;
 if [ "$PASSWD" = sikr3t ]; then
@@ -33,62 +32,61 @@ fi; #
 """.strip()
 
 
-class TestPasswordFile(unittest.TestCase):
-    def startTestPassword(self, password_file):
-        try:
-            os.unlink('/tmp/polysh_test.log')
-        except OSError:
-            # File not found
-            pass
-        passwd = '--password-file=' + password_file
-        child = launch_polysh([SSH_ARG, passwd, '--debug',
-                               '--log-file=/tmp/polysh_test.log', '1', '2'])
-        return child
+def start(polysh, log_file, password_file):
+    return polysh([
+        SSH_ARG,
+        f'--password-file={password_file}',
+        '--debug',
+        f'--log-file={log_file}',
+        '1',
+        '2',
+    ])
 
-    def endTestPassword(self):
-        with open('/tmp/polysh_test.log') as log:
-            self.assertFalse('sikr3t' in log.read())
-        os.unlink('/tmp/polysh_test.log')
 
-    def testGoodPassword(self):
-        child = self.startTestPassword('-')
-        child.expect('Password:')
-        child.sendline('sikr3t')
-        child.expect(r'ready \(2\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
-        self.endTestPassword()
+def assert_password_not_logged(log_file):
+    assert 'sikr3t' not in Path(log_file).read_text()
 
-    def testBadPassword(self):
-        child = self.startTestPassword('-')
-        child.expect('Password:')
-        child.sendline('dontknow')
-        child.expect(pexpect.EOF)
-        while child.isalive():
-            child.wait()
-        self.assertEqual(child.exitstatus, 13)
-        self.endTestPassword()
 
-    def testBadPasswordFile(self):
-        with open('/tmp/polysh_test.pwd', 'w') as pwd_file:
-            print('noidea', file=pwd_file)
-        child = self.startTestPassword('/tmp/polysh_test.pwd')
-        child.expect(pexpect.EOF)
-        while child.isalive():
-            child.wait()
-        os.unlink('/tmp/polysh_test.pwd')
-        self.assertEqual(child.exitstatus, 13)
-        self.endTestPassword()
+def test_good_password(polysh, log_file):
+    child = start(polysh, log_file, '-')
+    child.expect('Password:')
+    child.sendline('sikr3t')
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
+    assert_password_not_logged(log_file)
 
-    def testGoodPasswordFile(self):
-        with open('/tmp/polysh_test.pwd', 'w') as pwd_file:
-            print('sikr3t', file=pwd_file)
-        child = self.startTestPassword('/tmp/polysh_test.pwd')
-        child.expect(r'ready \(2\)> ')
-        os.unlink('/tmp/polysh_test.pwd')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
-        while child.isalive():
-            child.wait()
-        self.assertEqual(child.exitstatus, 0)
-        self.endTestPassword()
+
+def test_bad_password(polysh, log_file):
+    child = start(polysh, log_file, '-')
+    child.expect('Password:')
+    child.sendline('dontknow')
+    child.expect(pexpect.EOF)
+    while child.isalive():
+        child.wait()
+    assert child.exitstatus == 13
+    assert_password_not_logged(log_file)
+
+
+def test_bad_password_file(polysh, log_file, tmp_path):
+    password_file = tmp_path / 'passwd'
+    password_file.write_text('noidea\n')
+    child = start(polysh, log_file, password_file)
+    child.expect(pexpect.EOF)
+    while child.isalive():
+        child.wait()
+    assert child.exitstatus == 13
+    assert_password_not_logged(log_file)
+
+
+def test_good_password_file(polysh, log_file, tmp_path):
+    password_file = tmp_path / 'passwd'
+    password_file.write_text('sikr3t\n')
+    child = start(polysh, log_file, password_file)
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
+    while child.isalive():
+        child.wait()
+    assert child.exitstatus == 0
+    assert_password_not_logged(log_file)
