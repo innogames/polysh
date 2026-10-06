@@ -205,14 +205,20 @@ def test_local_command(polysh):
     child.expect(pexpect.EOF)
 
 
-def test_local_abs_path_completion(polysh):
+def test_local_abs_path_completion(polysh, tmp_path):
+    """Paths are completed on the local machine, a directory gets its
+    trailing slash.  The paths are private to the test: a system path such
+    as /sbin may have neighbours like /sbin.usr-is-merged, leaving only a
+    common prefix to complete to."""
+    (tmp_path / 'some_file').write_text('')
+    (tmp_path / 'some_dir').mkdir()
     child = polysh(['localhost'])
     child.expect(r'ready \(1\)> ')
-    child.sendline('echo /dev/nul\t')
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;m/dev/null')
+    child.sendline(f'echo {tmp_path}/some_fi\t')
+    child.expect(f'\033\\[1;36mlocalhost : \033\\[1;m{tmp_path}/some_file')
     child.expect(r'ready \(1\)> ')
-    child.sendline('echo /sbi\t')
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;m/sbin/')
+    child.sendline(f'echo {tmp_path}/some_di\t')
+    child.expect(f'\033\\[1;36mlocalhost : \033\\[1;m{tmp_path}/some_dir/')
     child.expect(r'ready \(1\)> ')
     child.sendeof()
     child.expect(pexpect.EOF)
