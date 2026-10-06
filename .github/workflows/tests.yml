@@ -1,8 +1,17 @@
 name: tests
 
 on:
+  # A branch with a pull request would otherwise run the matrix twice per
+  # push, once for each event.  master is tested on push, everything else
+  # through its pull request, forks included.
   push:
+    branches: [master]
   pull_request:
+
+# A new push to the same branch supersedes the run still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   tests:
