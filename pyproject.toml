@@ -87,6 +87,17 @@ dev = [
 # declares 3.6, so the tools only have to resolve for the versions CI tests
 dev = { requires-python = ">=3.9" }
 
+[tool.coverage.run]
+source = ["polysh"]
+# The tests measure the polysh processes they spawn, not themselves: each
+# process writes its own data file, "coverage combine" merges them.  The
+# subprocess patch makes those processes record coverage, _exit saves the
+# data of a process that leaves through os._exit()
+parallel = true
+patch = ["subprocess", "_exit"]
+# The pytest process itself imports little of polysh, only the children do
+disable_warnings = ["no-data-collected"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
