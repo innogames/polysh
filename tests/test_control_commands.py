@@ -20,19 +20,43 @@ from pathlib import Path
 from time import sleep
 
 import pexpect
+import pytest
 
 
-def test_control(polysh):
+def test_empty_control_command(polysh):
     child = polysh(['localhost'])
     child.expect(r'ready \(1\)> ')
     child.sendline(':')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_blank_output_lines_are_dropped(polysh):
+    child = polysh(['localhost'])
     child.expect(r'ready \(1\)> ')
     child.sendline('echo a; echo; echo; echo; echo; echo; echo; echo b')
     child.expect('a')
     child.expect('b')
     child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_unknown_control_command(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
     child.sendline(':unknown')
     child.expect('Unknown control command: unknown')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_send_ctrl(polysh):
+    """Completion of the letter, the argument errors, and Ctrl-Z then
+    Ctrl-D sent to a running cat"""
+    child = polysh(['localhost'])
     child.expect(r'ready \(1\)> ')
     child.sendline('cat')
     child.expect(r'waiting \(1/1\)> ')
@@ -48,6 +72,11 @@ def test_control(polysh):
     child.expect(r'waiting \(1/1\)> ')
     child.sendline(':send_ctrl d')
     child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_local_ctrl_c_and_ctrl_d_are_forwarded(polysh):
     # A control key typed right after Enter reaches the remote shell
     # within a millisecond of the command line, before the command has
     # started or even been read.  Wait for the command to say it owns
@@ -57,6 +86,8 @@ def test_control(polysh):
     # settles once the remote has been quiet for 0.2s, wait that out.
     # The marker is split in the command so that the echo of the typed
     # line cannot match it, only the output can.
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
     child.sendline('( echo start""ed; exec sleep 1h )')
     child.expect('started')
     sleep(0.5)
@@ -68,6 +99,13 @@ def test_control(polysh):
     sleep(0.5)
     child.expect(r'waiting \(1/1\)> ')
     child.sendcontrol('d')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_enable_disable_and_list(polysh):
+    child = polysh(['localhost'])
     child.expect(r'ready \(1\)> ')
     child.sendline('cat')
     child.expect(r'waiting \(1/1\)> ')
@@ -178,19 +216,25 @@ def test_local_abs_path_completion(polysh):
     child.expect(pexpect.EOF)
 
 
-def test_log_output(polysh, log_file):
-    child = polysh(['--log-file=/', 'localhost'])
-    child.expect(r"\[Errno 21\].*'/'")
+@pytest.mark.parametrize(('path', 'error'), [
+    ('/', r"\[Errno 21\].*'/'"),
+    ('/cannot_write', r"\[Errno 13\].*'/cannot_write'"),
+])
+def test_unusable_log_file(polysh, path, error):
+    child = polysh([f'--log-file={path}', 'localhost'])
+    child.expect(error)
     child.expect(pexpect.EOF)
-    child = polysh(['--log-file=/cannot_write', 'localhost'])
-    child.expect(r"\[Errno 13\].*'/cannot_write'")
-    child.expect(pexpect.EOF)
+
+
+def test_log_write_error(polysh):
     child = polysh(['--log-file=/dev/full', 'localhost'])
     child.sendline('echo something')
     child.expect('Exception while writing log: /dev/full')
     child.expect(r'\[Errno 28\]')
     child.expect(pexpect.EOF)
 
+
+def test_set_log(polysh, log_file):
     child = polysh(['localhost'])
 
     def echo(msg):
