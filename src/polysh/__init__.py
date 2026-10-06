@@ -16,7 +16,7 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 # For backwards compatibility - used in some classes.
 VERSION = tuple(int(p) if p.isdigit() else p for p in __version__.split("."))
