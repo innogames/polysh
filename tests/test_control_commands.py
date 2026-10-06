@@ -22,6 +22,8 @@ from time import sleep
 import pexpect
 import pytest
 
+from tests.helpers import expect_each
+
 
 def test_empty_control_command(polysh):
     child = polysh(['localhost'])
@@ -366,8 +368,10 @@ def test_export_vars(polysh):
     child.sendline(':export_vars')
     child.expect(r'ready \(2\)> ')
     child.sendline('echo $POLYSH_RANK/$POLYSH_NR_SHELLS/$POLYSH_DISPLAY_NAME')
-    child.expect(r'localhost\s+: 0/2/localhost\r')
-    child.expect(r'localhost#1 : 1/2/localhost#1\r')
+    expect_each(
+        child,
+        [r'localhost\s+: 0/2/localhost\r', r'localhost#1 : 1/2/localhost#1\r'],
+    )
     child.expect(r'ready \(2\)> ')
     child.sendeof()
     child.expect(pexpect.EOF)

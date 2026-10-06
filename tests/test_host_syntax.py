@@ -20,6 +20,7 @@ import pexpect
 import pytest
 
 from polysh.host_syntax import expand_syntax
+from tests.helpers import expect_each
 
 
 @pytest.mark.parametrize(('pattern', 'expanded'), [
@@ -51,9 +52,9 @@ def test_expanded_hosts_are_listed(polysh):
     child = polysh(['0.0.0.<1,3-5>', 'localhost'])
     child.expect(r'ready \(1\)> ')
     child.sendline(':list')
-    hosts = [r'0\.0\.0\.1 ', r'0\.0\.0\.3 ', r'0\.0\.0\.4 ', r'0\.0\.0\.5 ']
-    for _ in range(len(hosts)):
-        del hosts[child.expect(hosts)]
+    expect_each(
+        child, [r'0\.0\.0\.1 ', r'0\.0\.0\.3 ', r'0\.0\.0\.4 ', r'0\.0\.0\.5 ']
+    )
     child.expect(r'ready \(1\)> ')
     child.sendeof()
     child.expect(pexpect.EOF)

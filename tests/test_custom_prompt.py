@@ -18,6 +18,7 @@ Copyright (c) 2024 InnoGames GmbH
 import pexpect
 
 from tests.fake_shells import FAKE_SHELL, FAKE_SHELL_NO_EXIT
+from tests.helpers import expect_each
 
 
 def test_interactive(polysh, fake_shell):
@@ -30,8 +31,9 @@ def test_interactive(polysh, fake_shell):
     ])
     child.expect(r'ready \(2\)> ')
     child.sendline('getsysinfo')
-    child.expect(r'host1 : out\[getsysinfo\]')
-    child.expect(r'host2 : out\[getsysinfo\]')
+    expect_each(
+        child, [r'host1 : out\[getsysinfo\]', r'host2 : out\[getsysinfo\]']
+    )
     child.expect(r'ready \(2\)> ')
     child.sendline('exit')
     child.expect(pexpect.EOF)
