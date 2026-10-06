@@ -358,3 +358,16 @@ def test_print_read_buffer(polysh):
     child.expect(r'waiting \(3/3\)> ')
     child.sendintr()
     child.expect(pexpect.EOF)
+
+
+def test_export_vars(polysh):
+    child = polysh(['--no-color', 'localhost', 'localhost'])
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':export_vars')
+    child.expect(r'ready \(2\)> ')
+    child.sendline('echo $POLYSH_RANK/$POLYSH_NR_SHELLS/$POLYSH_DISPLAY_NAME')
+    child.expect(r'localhost\s+: 0/2/localhost\r')
+    child.expect(r'localhost#1 : 1/2/localhost#1\r')
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)

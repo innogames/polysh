@@ -131,3 +131,13 @@ def test_completion(polysh, shell):
     child.expect(r'ready \(1\)> ')
     child.sendline(':quit')
     child.expect(pexpect.EOF)
+
+
+def test_reset_prompt_is_refused_with_a_custom_prompt(polysh, shell):
+    """The remote prompt is not polysh's to reset when --prompt matches it"""
+    child = launch(polysh, shell, ['--prompt=racadm>>'])
+    child.sendline(':reset_prompt')
+    child.expect('Not resetting the prompt of host1: it is matched with')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)

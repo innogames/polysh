@@ -19,6 +19,8 @@ Copyright (c) 2024 InnoGames GmbH
 import pexpect
 import pytest
 
+from polysh import display_names
+
 
 @pytest.mark.slow
 def test_hole(polysh):
@@ -39,3 +41,80 @@ def test_hole(polysh):
         child.expect(rf'ready \({i}\)> ')
     child.sendline(':quit')
     child.expect(pexpect.EOF)
+
+
+@pytest.fixture
+def names(monkeypatch):
+    """The display_names module with its state reset, and without the
+    terminal size update that changing a name triggers"""
+    monkeypatch.setattr('polysh.dispatchers.update_terminal_size', lambda: None)
+    display_names.PREFIXES.clear()
+    display_names.NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.clear()
+    display_names.max_display_name_length = 0
+    yield display_names
+    display_names.PREFIXES.clear()
+    display_names.NR_ENABLED_DISPLAY_NAMES_BY_LENGTH.clear()
+    display_names.max_display_name_length = 0
+
+
+def test_unique_names_are_numbered(names):
+    assert names.make_unique_name('a') == 'a'
+    assert names.make_unique_name('a') == 'a#1'
+    assert names.make_unique_name('a') == 'a#2'
+    assert names.make_unique_name('b') == 'b'
+
+
+def test_released_number_is_reused(names):
+    for _ in range(3):
+        names.make_unique_name('a')
+    names.release_prefix_index('a#1')
+    assert names.make_unique_name('a') == 'a#1'
+    assert names.make_unique_name('a') == 'a#3'
+
+
+def test_releasing_the_highest_number_trims_the_holes(names):
+    for _ in range(3):
+        names.make_unique_name('a')
+    names.release_prefix_index('a#1')
+    names.release_prefix_index('a#2')
+    assert names.PREFIXES['a'] == [True]
+    assert names.make_unique_name('a') == 'a#1'
+
+
+def test_releasing_the_last_name_forgets_the_prefix(names):
+    names.make_unique_name('a')
+    names.release_prefix_index('a')
+    assert 'a' not in names.PREFIXES
+
+
+def test_change_tracks_the_longest_enabled_name(names):
+    assert names.change(None, 'a') == 'a'
+    assert names.max_display_name_length == 1
+    assert names.change(None, 'long') == 'long'
+    assert names.max_display_name_length == 4
+    assert names.change('long', 'ab') == 'ab'
+    assert names.max_display_name_length == 2
+    assert names.NR_ENABLED_DISPLAY_NAMES_BY_LENGTH == {1: 1, 2: 1}
+    # Giving a name up, as RemoteDispatcher.close() does once disconnect()
+    # has disabled the shell
+    names.set_enabled('ab', False)
+    names.set_enabled('a', False)
+    assert names.NR_ENABLED_DISPLAY_NAMES_BY_LENGTH == {}
+    assert names.max_display_name_length == 0
+    assert names.change('ab', None) is None
+    assert names.change('a', None) is None
+    assert dict(names.PREFIXES) == {}
+
+
+def test_disabled_names_do_not_count(names):
+    names.change(None, 'a')
+    names.change(None, 'long')
+    names.set_enabled('long', False)
+    assert names.max_display_name_length == 1
+    names.set_enabled('long', True)
+    assert names.max_display_name_length == 4
+
+
+def test_names_cannot_contain_a_hash(names):
+    with pytest.raises(Exception, match='cannot contain #'):
+        names.change(None, 'a#1')
