@@ -409,7 +409,8 @@ class StdinThread(Thread):
             prompt = 'waiting (%d/%d)> ' % (nr, total)
         else:
             prompt = 'ready (%d)> ' % total
-        # Reset ANSI color before prompt so host colors don't bleed into it
+        # Reset ANSI attributes before prompt so unterminated escape codes in
+        # remote output (e.g. an interrupted `ls --color`) don't bleed into it
         # \001/\002 = readline markers for non-printing chars (RL_PROMPT_START/END_IGNORE)
         self.prompt = '\001\033[0m\002' + prompt
         set_last_status_length(len(prompt))

@@ -22,13 +22,13 @@ import pytest
 
 def test_command(polysh):
     child = polysh(['--command=echo text', 'localhost'])
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;mtext')
+    child.expect('\033\\[1;36mlocalhost : \033\\[0mtext')
     child.expect(pexpect.EOF)
 
 
 def test_command_interrupted(polysh):
     child = polysh(['--command=echo text; cat', 'localhost'])
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;mtext')
+    child.expect('\033\\[1;36mlocalhost : \033\\[0mtext')
     child.sendintr()
     child.expect(pexpect.EOF)
 
@@ -39,8 +39,8 @@ def test_command_reading_tty(polysh):
     child = polysh(
         ['--command=read -t 2 x; echo "got:[$x]"; echo done', 'localhost']
     )
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;mgot:\\[\\]')
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;mdone')
+    child.expect('\033\\[1;36mlocalhost : \033\\[0mgot:\\[\\]')
+    child.expect('\033\\[1;36mlocalhost : \033\\[0mdone')
     child.expect(pexpect.EOF)
 
 
@@ -50,8 +50,8 @@ def test_command_relaying_tty(polysh):
         ['--command=script -qec "echo relayed" /dev/null; echo done',
          'localhost']
     )
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;mrelayed')
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;mdone')
+    child.expect('\033\\[1;36mlocalhost : \033\\[0mrelayed')
+    child.expect('\033\\[1;36mlocalhost : \033\\[0mdone')
     child.expect(pexpect.EOF)
 
 
@@ -112,5 +112,5 @@ def test_invalid_characters(polysh):
     child = polysh(
         ["--command=printf '%b' '\xacfoo‘bar\n'", 'localhost']
     )
-    child.expect('\033\\[1;36mlocalhost : \033\\[1;m\xacfoo‘bar')
+    child.expect('\033\\[1;36mlocalhost : \033\\[0m\xacfoo‘bar')
     child.expect(pexpect.EOF)
