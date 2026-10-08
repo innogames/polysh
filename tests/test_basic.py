@@ -16,77 +16,64 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
 from time import sleep
 
 import pexpect
+import pytest
 
-from tests import launch_polysh
+
+def start_localhosts(polysh, nr_localhost):
+    child = polysh(nr_localhost * ['localhost'])
+    child.expect(rf'ready \({nr_localhost}\)> ')
+    return child
 
 
-class TestBasic(unittest.TestCase):
-    def localhost(self, nr_localhost):
-        args = nr_localhost * ['localhost']
+@pytest.mark.parametrize('nr_localhost', [1, 2, 3])
+def test_eof_quits(polysh, nr_localhost):
+    child = start_localhosts(polysh, nr_localhost)
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-        def start_child():
-            child = launch_polysh(args)
-            child.expect(f'ready \({nr_localhost}\)> ')
-            child.sendeof()
-            return child
 
-        def test_eof():
-            child = start_child()
-            child.sendeof()
-            child.expect(pexpect.EOF)
-
-        def test_exit():
-            child = start_child()
-            child.sendline('exit')
-            for i in range(nr_localhost):
-                child.expect('logout')
-            child.expect(pexpect.EOF)
-
-        test_eof()
-        test_exit()
-
-    def testLocalhost(self):
-        self.localhost(1)
-
-    def testLocalhostLocalhost(self):
-        self.localhost(2)
-
-    def testLocalhostLocalhostLocalhost(self):
-        self.localhost(3)
-
-    def testPrependPrompt(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline('sleep 1')
-        child.expect('waiting \(1/1\)> ')
-        sleep(1)
-        child.send('echo begin-')
-        child.expect('ready \(1\)> ')
-        child.sendline('end')
-        child.expect('begin-end')
-        child.expect('ready \(1\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
-
-    def testError(self):
-        child = launch_polysh(['localhost', 'localhost'])
-        child.expect('ready \(2\)> ')
-        child.sendline('kill -9 $$')
-        child.expect('Error talking to localhost')
-        child.expect('Error talking to localhost')
-        child.expect(pexpect.EOF)
-
-    def testCleanExit(self):
-        child = launch_polysh(['localhost', 'localhost'])
-        child.expect('ready \(2\)> ')
-        child.sendeof()
-
-        # We test for logout as this is the expected response of sending EOF to
-        # a non login shell
+@pytest.mark.parametrize('nr_localhost', [1, 2, 3])
+def test_exit_quits(polysh, nr_localhost):
+    child = start_localhosts(polysh, nr_localhost)
+    child.sendline('exit')
+    for _ in range(nr_localhost):
         child.expect('logout')
-        child.expect('logout')
-        child.expect(pexpect.EOF)
+    child.expect(pexpect.EOF)
+
+
+def test_prepend_prompt(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('sleep 1')
+    child.expect(r'waiting \(1/1\)> ')
+    sleep(1)
+    child.send('echo begin-')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('end')
+    child.expect('begin-end')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_error(polysh):
+    child = polysh(['localhost', 'localhost'])
+    child.expect(r'ready \(2\)> ')
+    child.sendline('kill -9 $$')
+    child.expect('Error talking to localhost')
+    child.expect('Error talking to localhost')
+    child.expect(pexpect.EOF)
+
+
+def test_clean_exit(polysh):
+    child = polysh(['localhost', 'localhost'])
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    # We test for logout as this is the expected response of sending EOF to
+    # a login shell
+    child.expect('logout')
+    child.expect('logout')
+    child.expect(pexpect.EOF)

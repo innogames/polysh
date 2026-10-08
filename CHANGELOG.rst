@@ -1,3 +1,17 @@
+Version 1.0.7 (unreleased)
+    * Require Python 3.11, the older versions have reached end of life
+    * Report "Error talking to" for a remote shell that died while its exit
+      was noticed by the periodic child check instead of the pty EOF, the
+      message was lost on that path
+    * Print what a remote shell wrote last before its exit is noticed by
+      the periodic child check, the "logout" of a shell told to exit could
+      be lost on a slow machine
+    * Let Tab complete the arguments of control commands without a
+      completer of their own, such as :add, instead of raising a TypeError
+      that readline swallowed
+    * Run the test suite with pytest, in parallel with pytest-xdist, and
+      measure the coverage of the spawned polysh processes
+
 Version 1.0.6
     * Add the :prompt control command, to turn --prompt matching on and off
       during a session

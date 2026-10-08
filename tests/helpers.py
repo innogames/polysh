@@ -1,6 +1,5 @@
-"""Polysh - Library Entry Point
+"""Polysh - Tests - Helpers
 
-Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 Copyright (c) 2024 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +15,13 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "1.0.7"
 
-# For backwards compatibility - used in some classes.
-VERSION = tuple(int(p) if p.isdigit() else p for p in __version__.split("."))
+def expect_each(child, patterns):
+    """Expect every pattern once, in whatever order they show up.
+
+    The remote shells answer independently of each other and polysh prints
+    their lines as they arrive, so two shells given the same command may
+    report in either order."""
+    pending = list(patterns)
+    while pending:
+        del pending[child.expect(pending)]

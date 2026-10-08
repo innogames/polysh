@@ -15,183 +15,129 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import stat
-import tempfile
-import unittest
-
 import pexpect
+import pytest
 
-from tests import launch_polysh
-
-# A remote that can be either kind of shell.  It starts racadm like, printing
-# 'racadm>>' with no trailing newline and echoing back what it is given.
-# Being told PS1="a""b<newline>" switches it to POSIX mode, where it prints
-# that marker as its prompt and stops echoing.  The 'racadm' command switches
-# it back, which is what a real session dropping into racadm(8) looks like.
-DUAL_SHELL = r'''#!/usr/bin/env python3
-import re
-import sys
-
-PS1_RE = re.compile(r'PS1="([^"]*)""(.*)$')
-
-prompt = None  # None means racadm mode
+from tests.fake_shells import DUAL_SHELL
 
 
-def write(data):
-    sys.stdout.write(data)
-    sys.stdout.flush()
+@pytest.fixture
+def shell(fake_shell):
+    return fake_shell(DUAL_SHELL)
 
 
-def show_prompt():
-    write('racadm>>' if prompt is None else prompt + '\n')
+def launch(polysh, shell, extra_args=()):
+    child = polysh(
+        [f'--ssh={shell}', '--no-color', '-l', *extra_args, 'host1']
+    )
+    child.expect(r'ready \(1\)> ')
+    return child
 
 
-show_prompt()
-for line in sys.stdin:
-    line = line.rstrip('\n')
-    match = PS1_RE.search(line)
-    if match:
-        prompt = match.group(1) + match.group(2)
-        # The closing quote of the PS1 value lands on the next input line
-        show_prompt()
-        continue
-    if line == '"':
-        continue
-    command = line.strip()
-    if command == 'exit':
-        break
-    if command == 'racadm':
-        prompt = None
-        show_prompt()
-        continue
-    if prompt is None:
-        write(command)
-    if command.startswith('echo '):
-        write('\r\n' + command[5:])
-    else:
-        write('\r\nout[%s]' % command)
-    write('\r\n')
-    show_prompt()
-'''
+def test_switch_to_custom_prompt(polysh, shell):
+    """The reason this command exists: a POSIX shell that drops into a
+    remote of another kind mid-session."""
+    child = launch(polysh, shell)
+    child.sendline('echo hello-posix')
+    child.expect('hello-posix')
+    child.expect(r'ready \(1\)> ')
+    # Now the remote prompt is one polysh knows nothing about
+    child.sendline('racadm')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':prompt racadm>>')
+    child.expect('Waiting for a prompt matching racadm>>')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('getractime')
+    child.expect(r'out\[getractime\]')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
 
 
-class TestPromptCommand(unittest.TestCase):
-    def setUp(self):
-        fd, self.shell = tempfile.mkstemp(prefix='polysh_fake_shell.')
-        os.write(fd, DUAL_SHELL.encode())
-        os.close(fd)
-        os.chmod(self.shell, os.stat(self.shell).st_mode | stat.S_IXUSR)
+@pytest.mark.parametrize('argument', ['', ' ""'])
+def test_switch_back(polysh, shell, argument):
+    """An empty argument, spelled out or not, gives the remote shells back
+    to polysh"""
+    child = launch(polysh, shell, ['--prompt=racadm>>'])
+    child.sendline(':prompt' + argument)
+    child.expect('Setting PS1 on the remote shells again')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('echo hello-posix')
+    child.expect('hello-posix')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
 
-    def tearDown(self):
-        os.remove(self.shell)
 
-    def launch(self, extra_args=()):
-        child = launch_polysh(
-            [f'--ssh={self.shell}', '--no-color', '-l', *extra_args, 'host1']
-        )
-        child.expect(r'ready \(1\)> ')
-        return child
+def test_round_trip(polysh, shell):
+    child = launch(polysh, shell, ['--prompt=racadm>>'])
+    child.sendline(':prompt ""')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':prompt racadm>>')
+    child.expect('Waiting for a prompt matching')
+    child.sendline('racadm')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('getractime')
+    child.expect(r'out\[getractime\]')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
 
-    def testSwitchToCustomPrompt(self):
-        """The reason this command exists: a POSIX shell that drops into a
-        remote of another kind mid-session."""
-        child = self.launch()
-        child.sendline('echo hello-posix')
-        child.expect('hello-posix')
-        child.expect(r'ready \(1\)> ')
-        # Now the remote prompt is one polysh knows nothing about
-        child.sendline('racadm')
-        child.expect(r'waiting \(1/1\)> ')
-        child.sendline(':prompt racadm>>')
-        child.expect('Waiting for a prompt matching racadm>>')
-        child.expect(r'ready \(1\)> ')
-        child.sendline('getractime')
-        child.expect(r'out\[getractime\]')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
 
-    def testSwitchBackWithEmptyArgument(self):
-        child = self.launch(['--prompt=racadm>>'])
-        child.sendline(':prompt ""')
-        child.expect('Setting PS1 on the remote shells again')
-        child.expect(r'ready \(1\)> ')
-        child.sendline('echo hello-posix')
-        child.expect('hello-posix')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
+def test_recover_from_wrong_prompt_before_start(polysh, shell):
+    """A --prompt that never matches leaves the shell not_started, with
+    the remote silent at its own prompt.  :prompt must still reach it."""
+    child = polysh([
+        f'--ssh={shell}',
+        '--no-color',
+        '-l',
+        '--prompt=wrong>>',
+        'host1',
+    ])
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':prompt ""')
+    child.expect('Setting PS1 on the remote shells again')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('echo hello-posix')
+    child.expect('hello-posix')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
 
-    def testSwitchBackWithNoArgument(self):
-        child = self.launch(['--prompt=racadm>>'])
-        child.sendline(':prompt')
-        child.expect('Setting PS1 on the remote shells again')
-        child.expect(r'ready \(1\)> ')
-        child.sendline('echo hello-posix')
-        child.expect('hello-posix')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
 
-    def testRoundTrip(self):
-        child = self.launch(['--prompt=racadm>>'])
-        child.sendline(':prompt ""')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':prompt racadm>>')
-        child.expect('Waiting for a prompt matching')
-        child.sendline('racadm')
-        child.expect(r'ready \(1\)> ')
-        child.sendline('getractime')
-        child.expect(r'out\[getractime\]')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
+def test_invalid_regex_is_rejected(polysh, shell):
+    child = launch(polysh, shell, ['--prompt=racadm>>'])
+    child.sendline(':prompt racadm(>>')
+    child.expect('Invalid prompt regex')
+    # Valid as a str regex, but not against the bytes of remote output
+    child.sendline(':prompt (?u)racadm>>')
+    child.expect('Invalid prompt regex')
+    # Valid alone, but not inside the group it is wrapped in
+    child.sendline(':prompt (?i)racadm>>')
+    child.expect('Invalid prompt regex')
+    # The previous prompt still works, the bad one was not applied
+    child.sendline('getractime')
+    child.expect(r'out\[getractime\]')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
 
-    def testRecoverFromWrongPromptBeforeStart(self):
-        """A --prompt that never matches leaves the shell not_started, with
-        the remote silent at its own prompt.  :prompt must still reach it."""
-        child = launch_polysh(
-            [
-                f'--ssh={self.shell}',
-                '--no-color',
-                '-l',
-                '--prompt=wrong>>',
-                'host1',
-            ]
-        )
-        child.expect(r'waiting \(1/1\)> ')
-        child.sendline(':prompt ""')
-        child.expect('Setting PS1 on the remote shells again')
-        child.expect(r'ready \(1\)> ')
-        child.sendline('echo hello-posix')
-        child.expect('hello-posix')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
 
-    def testInvalidRegexIsRejected(self):
-        child = self.launch(['--prompt=racadm>>'])
-        child.sendline(':prompt racadm(>>')
-        child.expect('Invalid prompt regex')
-        # Valid as a str regex, but not against the bytes of remote output
-        child.sendline(':prompt (?u)racadm>>')
-        child.expect('Invalid prompt regex')
-        # Valid alone, but not inside the group it is wrapped in
-        child.sendline(':prompt (?i)racadm>>')
-        child.expect('Invalid prompt regex')
-        # The previous prompt still works, the bad one was not applied
-        child.sendline('getractime')
-        child.expect(r'out\[getractime\]')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
+def test_completion(polysh, shell):
+    child = launch(polysh, shell)
+    child.send(':prom\t')
+    child.expect('pt')
+    child.sendline('')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
 
-    def testCompletion(self):
-        child = self.launch()
-        child.send(':prom\t')
-        child.expect('pt')
-        child.sendline('')
-        child.expect(r'ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
+
+def test_reset_prompt_is_refused_with_a_custom_prompt(polysh, shell):
+    """The remote prompt is not polysh's to reset when --prompt matches it"""
+    child = launch(polysh, shell, ['--prompt=racadm>>'])
+    child.sendline(':reset_prompt')
+    child.expect('Not resetting the prompt of host1: it is matched with')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)

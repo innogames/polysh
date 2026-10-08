@@ -4,7 +4,7 @@ authors = [{ email = "it@innogames.com" }]
 dynamic = ["version"]
 description = "Control thousands of SSH sessions from a single prompt"
 readme = "README.rst"
-requires-python = ">=3.6"
+requires-python = ">=3.11"
 dependencies = []
 classifiers = [  # Optional
         "Intended Audience :: System Administrators",
@@ -24,11 +24,6 @@ classifiers = [  # Optional
         # This does not influence pip when choosing what to install. It is used
         # for the package list on the pypi website.
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
@@ -76,5 +71,33 @@ packages = ["src/polysh"]
 [dependency-groups]
 dev = [
     "pexpect>=4.9.0",
-    "coverage>=5.5",
+    "coverage>=7.10",
+    "pytest>=8",
+    "pytest-timeout>=2.3",
+    "pytest-xdist>=3.5",
+]
+
+[tool.coverage.run]
+source = ["polysh"]
+# The tests measure the polysh processes they spawn, not themselves: each
+# process writes its own data file, "coverage combine" merges them.  The
+# subprocess patch makes those processes record coverage, _exit saves the
+# data of a process that leaves through os._exit()
+parallel = true
+patch = ["subprocess", "_exit"]
+# The pytest process itself imports little of polysh, only the children do
+disable_warnings = ["no-data-collected"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+# Safety net for a hung test: pexpect's own 30s expect() timeout fires first
+# in an ordinary failure
+timeout = 120
+markers = [
+    "slow: takes several seconds, deselect with -m 'not slow'",
+]
+filterwarnings = [
+    # pexpect forks a pty from an xdist worker, which has threads of its own
+    "ignore:This process .* is multi-threaded, use of forkpty:DeprecationWarning",
 ]

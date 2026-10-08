@@ -16,193 +16,261 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import unittest
+from pathlib import Path
+from time import sleep
+
 import pexpect
+import pytest
 
-from tests import launch_polysh
+from tests.helpers import expect_each
 
 
-class TestControlCommands(unittest.TestCase):
-    def testControl(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline(':')
-        child.expect('ready \(1\)> ')
-        child.sendline('echo a; echo; echo; echo; echo; echo; echo; echo b')
-        child.expect('a')
-        child.expect('b')
-        child.expect('ready \(1\)> ')
-        child.sendline(':unknown')
-        child.expect('Unknown control command: unknown')
-        child.expect('ready \(1\)> ')
-        child.sendline('cat')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline(':send_ctrl \tz\t\t')
-        child.expect('ready \(1\)> ')
-        child.sendline(':send_ctrl')
-        child.expect('Expected at least a letter')
-        child.expect('ready \(1\)> ')
-        child.sendline(':send_ctrl word')
-        child.expect('Expected a single letter, got: word')
-        child.expect('ready \(1\)> ')
-        child.sendline('fg')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline(':send_ctrl d')
-        child.expect('ready \(1\)> ')
-        child.sendline('sleep 1h')
-        child.expect('waiting \(1/1\)> ')
-        child.sendcontrol('c')
-        child.expect('ready \(1\)> ')
-        child.sendline('cat')
-        child.expect('waiting \(1/1\)> ')
-        child.sendcontrol('d')
-        child.expect('ready \(1\)> ')
-        child.sendline('cat')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline(':disabl\tlocal* not_found\t')
-        child.expect('not_found not found\r\n')
-        child.expect('ready \(0\)> ')
-        child.sendline(':enable local\t')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline(':list')
-        child.expect('localhost enabled running:')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline(':list local\t')
-        child.expect('localhost enabled running:')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline(':list unknown')
-        child.expect('unknown not found')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline(':send_ctrl c')
-        child.expect('ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
+def test_empty_control_command(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-    def testReconnect(self):
-        child = launch_polysh(['localhost'] * 2)
-        child.expect('ready \(2\)> ')
-        child.sendline(':disable localhost')
-        child.sendline('exit')
-        child.expect('exit\r\n')
-        child.expect('ready \(0\)>')
-        child.sendline(':reconnect l\t')
-        child.sendline(':enable')
-        child.expect('ready \(2\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
 
-    def testListManipulation(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline(':add localhost')
-        child.expect('ready \(2\)> ')
-        child.sendline(':rename $(echo newname)')
-        child.expect('ready \(2\)> ')
-        child.sendline('date')
-        child.expect('newname')
-        child.expect('newname')
-        child.expect('ready \(2\)> ')
-        child.sendline(':rename $EMPTY_VARIABLE')
-        child.expect('ready \(2\)> ')
-        child.sendline('date')
-        child.expect('localhost')
-        child.expect('localhost')
-        child.expect('ready \(2\)> ')
-        child.sendline(':rename $(echo newname)')
-        child.expect('ready \(2\)> ')
-        child.sendline('date')
-        child.expect('newname')
-        child.expect('newname')
-        child.expect('ready \(2\)> ')
-        child.sendline(':disable newname')
-        child.sendline(':purge')
-        child.sendline(':enable *')
-        child.expect('ready \(1\)> ')
-        child.sendline(':rename')
-        child.expect('ready \(1\)> ')
-        child.sendline('date')
-        child.expect('localhost :')
-        child.expect('ready \(1\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+def test_blank_output_lines_are_dropped(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('echo a; echo; echo; echo; echo; echo; echo; echo b')
+    child.expect('a')
+    child.expect('b')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-    def testLocalCommand(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline('cat')
-        child.expect('waiting \(1/1\)> ')
-        child.sendline('!ech\t te""st')
-        child.expect('test')
-        child.sendline(':send_ctrl d')
-        child.expect('ready \(1\)> ')
-        child.sendline('!exit 42')
-        child.expect('Child returned 42')
-        child.expect('ready \(1\)> ')
-        child.sendline('!python -c "import os; os.kill(os.getpid(), 9)"')
-        child.expect('Child was terminated by signal 9')
-        child.expect('ready \(1\)> ')
-        child.sendline(':chdir /does/not/exist')
-        child.expect("\[Errno 2\] .*: '/does/not/exist'")
-        child.sendline(':chdir /usr/sbi\t/does/not/exist')
-        child.expect('/usr/sbin')
-        child.expect('ready \(1\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
 
-    def testLocalAbsPathCompletion(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline('echo /dev/nul\t')
-        child.expect('\033\[1;36mlocalhost : \033\[1;m/dev/null')
-        child.expect('ready \(1\)> ')
-        child.sendline('echo /sbi\t')
-        child.expect('\033\[1;36mlocalhost : \033\[1;m/sbin/')
-        child.expect('ready \(1\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+def test_unknown_control_command(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':unknown')
+    child.expect('Unknown control command: unknown')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-    def testLogOutput(self):
-        child = launch_polysh(['--log-file=/', 'localhost'])
-        child.expect("\[Errno 21\].*'/'")
-        child.expect(pexpect.EOF)
-        child = launch_polysh(['--log-file=/cannot_write', 'localhost'])
-        child.expect("\[Errno 13\].*'/cannot_write'")
-        child.expect(pexpect.EOF)
-        child = launch_polysh(['--log-file=/dev/full', 'localhost'])
-        child.sendline('echo something')
-        child.expect('Exception while writing log: /dev/full')
-        child.expect('\[Errno 28\]')
-        child.expect(pexpect.EOF)
 
-        child = launch_polysh(['localhost'])
+def test_send_ctrl(polysh):
+    """Completion of the letter, the argument errors, and Ctrl-Z then
+    Ctrl-D sent to a running cat"""
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('cat')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':send_ctrl \tz\t\t')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':send_ctrl')
+    child.expect('Expected at least a letter')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':send_ctrl word')
+    child.expect('Expected a single letter, got: word')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('fg')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':send_ctrl d')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-        def testEcho(msg):
-            child.expect('ready \(1\)> ')
-            child.sendline(f'echo {msg}')
-            child.expect(f'\x1b\\[1;36mlocalhost : \x1b\\[1;m{msg}')
-        testEcho('not logging')
-        child.sendline(':set_log')
-        testEcho('still not logging')
-        child.sendline('!rm -f /tmp/polysh_test.log')
-        testEcho('still not logging')
-        child.sendline(':set_log /tmp/polysh_test.log')
-        testEcho('now logging')
-        testEcho('still logging')
-        child.sendline(':set_log')
-        testEcho('back to no logging')
-        child.sendline(':set_log /tmp/polysh_test.lo\t')
-        testEcho('appended to the log')
-        child.sendline(':set_log')
-        child.expect('ready \(1\)> ')
-        child.sendline(':set_log /no-permission')
-        child.expect("[Errno 13] .*: '/no-permission'")
-        child.expect('Logging disabled')
-        child.expect('ready \(1\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
 
-        EXPECTED_LOG = """
+def test_local_ctrl_c_and_ctrl_d_are_forwarded(polysh):
+    # A control key typed right after Enter reaches the remote shell
+    # within a millisecond of the command line, before the command has
+    # started or even been read.  Wait for the command to say it owns
+    # the terminal before sending it one.
+    # The output line makes polysh redraw its prompt by interrupting
+    # readline, and a key typed during that is lost too.  The redraw
+    # settles once the remote has been quiet for 0.2s, wait that out.
+    # The marker is split in the command so that the echo of the typed
+    # line cannot match it, only the output can.
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('( echo start""ed; exec sleep 1h )')
+    child.expect('started')
+    sleep(0.5)
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendcontrol('c')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('( echo start""ed; exec cat )')
+    child.expect('started')
+    sleep(0.5)
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendcontrol('d')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_enable_disable_and_list(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('cat')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':disabl\tlocal* not_found\t')
+    child.expect('not_found not found\r\n')
+    child.expect(r'ready \(0\)> ')
+    child.sendline(':enable local\t')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':list')
+    child.expect('localhost enabled running:')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':list local\t')
+    child.expect('localhost enabled running:')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':list unknown')
+    child.expect('unknown not found')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline(':send_ctrl c')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
+
+
+def test_reconnect(polysh):
+    child = polysh(['localhost'] * 2)
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':disable localhost')
+    child.sendline('exit')
+    child.expect('exit\r\n')
+    child.expect(r'ready \(0\)>')
+    child.sendline(':reconnect l\t')
+    child.sendline(':enable')
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_list_manipulation(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':add localhost')
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':rename $(echo newname)')
+    child.expect(r'ready \(2\)> ')
+    child.sendline('date')
+    child.expect('newname')
+    child.expect('newname')
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':rename $EMPTY_VARIABLE')
+    child.expect(r'ready \(2\)> ')
+    child.sendline('date')
+    child.expect('localhost')
+    child.expect('localhost')
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':rename $(echo newname)')
+    child.expect(r'ready \(2\)> ')
+    child.sendline('date')
+    child.expect('newname')
+    child.expect('newname')
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':disable newname')
+    child.sendline(':purge')
+    child.sendline(':enable *')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':rename')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('date')
+    child.expect('localhost :')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_local_command(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('cat')
+    child.expect(r'waiting \(1/1\)> ')
+    child.sendline('!ech\t te""st')
+    child.expect('test')
+    child.sendline(':send_ctrl d')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('!exit 42')
+    child.expect('Child returned 42')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('!python -c "import os; os.kill(os.getpid(), 9)"')
+    child.expect('Child was terminated by signal 9')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':chdir /does/not/exist')
+    child.expect(r"\[Errno 2\] .*: '/does/not/exist'")
+    child.sendline(':chdir /usr/sbi\t/does/not/exist')
+    child.expect('/usr/sbin')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_local_abs_path_completion(polysh, tmp_path):
+    """Paths are completed on the local machine, a directory gets its
+    trailing slash.  The paths are private to the test: a system path such
+    as /sbin may have neighbours like /sbin.usr-is-merged, leaving only a
+    common prefix to complete to."""
+    (tmp_path / 'some_file').write_text('')
+    (tmp_path / 'some_dir').mkdir()
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline(f'echo {tmp_path}/some_fi\t')
+    child.expect(f'\033\\[1;36mlocalhost : \033\\[1;m{tmp_path}/some_file')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(f'echo {tmp_path}/some_di\t')
+    child.expect(f'\033\\[1;36mlocalhost : \033\\[1;m{tmp_path}/some_dir/')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+@pytest.mark.parametrize(('path', 'error'), [
+    ('/', r"\[Errno 21\].*'/'"),
+    ('/cannot_write', r"\[Errno 13\].*'/cannot_write'"),
+])
+def test_unusable_log_file(polysh, path, error):
+    child = polysh([f'--log-file={path}', 'localhost'])
+    child.expect(error)
+    child.expect(pexpect.EOF)
+
+
+def test_log_write_error(polysh):
+    child = polysh(['--log-file=/dev/full', 'localhost'])
+    child.sendline('echo something')
+    child.expect('Exception while writing log: /dev/full')
+    child.expect(r'\[Errno 28\]')
+    child.expect(pexpect.EOF)
+
+
+def test_set_log(polysh, log_file):
+    child = polysh(['localhost'])
+
+    def echo(msg):
+        child.expect(r'ready \(1\)> ')
+        child.sendline(f'echo {msg}')
+        child.expect(f'\x1b\\[1;36mlocalhost : \x1b\\[1;m{msg}')
+
+    echo('not logging')
+    child.sendline(':set_log')
+    echo('still not logging')
+    child.sendline(f':set_log {log_file}')
+    echo('now logging')
+    echo('still logging')
+    child.sendline(':set_log')
+    echo('back to no logging')
+    # Completed from the path minus its last character
+    child.sendline(f':set_log {log_file[:-1]}\t')
+    echo('appended to the log')
+    child.sendline(':set_log')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':set_log /no-permission')
+    child.expect(r"\[Errno 13\] .*: '/no-permission'")
+    child.expect('Logging disabled')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+    expected_log = """
 > echo now logging
 localhost : now logging
 > echo still logging
@@ -212,83 +280,104 @@ localhost : still logging
 localhost : appended to the log
 > :set_log
 """.strip()
-        log = open('/tmp/polysh_test.log')
-        log_lines = [l for l in log.readlines() if not l.startswith('[dbg] ')]
-        actual_log = ''.join(log_lines).strip()
-        self.assertEqual(actual_log, EXPECTED_LOG)
-        os.remove('/tmp/polysh_test.log')
+    log_lines = [
+        line
+        for line in Path(log_file).read_text().splitlines(keepends=True)
+        if not line.startswith('[dbg] ')
+    ]
+    assert ''.join(log_lines).strip() == expected_log
 
-    def testSetDebug(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline(':set_debug')
-        child.expect('Expected at least a letter')
-        child.sendline(':set_debug word')
-        child.expect("Expected 'y' or 'n', got: word")
-        child.sendline(':set_debug \ty\t\t')
-        child.expect('ready \(1\)> ')
-        child.sendline('echo "te""st"')
-        child.expect('\[dbg\] localhost\[idle\]: state => running')
-        child.expect('\[dbg\] localhost\[running\]: <== echo "te""st"')
-        child.expect('\[dbg\] localhost\[running\]: ==> test')
-        child.expect('\033\[1;36mlocalhost : \033\[1;mtest')
-        child.expect('\[dbg\] localhost\[running\]: state => idle')
-        child.expect('ready \(1\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
 
-    def testHidePassword(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline('# passwordnotprotected')
-        child.expect('ready \(1\)> ')
-        child.sendline(':set_debug y')
-        child.sendline(':set_log /dev/nul\t')
-        child.sendline(':hide_password')
-        child.expect('Debugging disabled')
-        child.expect('Logging disabled')
-        child.expect('ready \(1\)> ')
-        child.sendline('# passwordprotected')
-        child.expect('ready \(1\)> ')
-        child.sendline('echo password\t')
-        child.expect('passwordnotprotected')
-        child.expect('ready \(1\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+def test_set_debug(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':set_debug')
+    child.expect('Expected at least a letter')
+    child.sendline(':set_debug word')
+    child.expect("Expected 'y' or 'n', got: word")
+    child.sendline(':set_debug \ty\t\t')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('echo "te""st"')
+    child.expect(r'\[dbg\] localhost\[idle\]: state => running')
+    child.expect(r'\[dbg\] localhost\[running\]: <== echo "te""st"')
+    child.expect(r'\[dbg\] localhost\[running\]: ==> test')
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;mtest')
+    child.expect(r'\[dbg\] localhost\[running\]: state => idle')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-    def testResetPrompt(self):
-        child = launch_polysh(['localhost'])
-        child.expect('ready \(1\)> ')
-        child.sendline('bash')
-        child.sendline(':reset_prompt l\t')
-        child.expect('ready \(1\)> ')
-        child.sendline(':quit')
-        child.expect(pexpect.EOF)
 
-    def testPurge(self):
-        child = launch_polysh(['localhost'] * 3)
-        child.expect('ready \(3\)> ')
-        child.sendline(':disable localhost#*')
-        child.expect('ready \(1\)> ')
-        child.sendline('kill -9 $$')
-        child.expect('ready \(0\)> ')
-        child.sendline(':enable')
-        child.expect('ready \(2\)> ')
-        child.sendline(':pur\t\t')
-        child.expect('ready \(2\)> ')
-        child.sendline(':list')
-        child.expect('localhost#1 enabled idle:')
-        child.expect('localhost#2 enabled idle:')
-        child.expect('ready \(2\)> ')
-        child.sendeof()
-        child.expect(pexpect.EOF)
+def test_hide_password(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('# passwordnotprotected')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':set_debug y')
+    child.sendline(':set_log /dev/nul\t')
+    child.sendline(':hide_password')
+    child.expect('Debugging disabled')
+    child.expect('Logging disabled')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('# passwordprotected')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('echo password\t')
+    child.expect('passwordnotprotected')
+    child.expect(r'ready \(1\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
 
-    def testPrintReadBuffer(self):
-        child = launch_polysh(['--ssh=echo message; sleep'] + ['2h'] * 3)
-        child.expect('waiting \(3/3\)> ')
-        child.sendline(':show_read_buffer \t*')
-        for i in range(3):
-            child.expect('\033\[1;[0-9]+m2h[ #][ 12] : \033\[1;mmessage')
-        child.expect('waiting \(3/3\)> ')
-        child.sendintr()
-        child.expect(pexpect.EOF)
+
+def test_reset_prompt(polysh):
+    child = polysh(['localhost'])
+    child.expect(r'ready \(1\)> ')
+    child.sendline('bash')
+    child.sendline(':reset_prompt l\t')
+    child.expect(r'ready \(1\)> ')
+    child.sendline(':quit')
+    child.expect(pexpect.EOF)
+
+
+def test_purge(polysh):
+    child = polysh(['localhost'] * 3)
+    child.expect(r'ready \(3\)> ')
+    child.sendline(':disable localhost#*')
+    child.expect(r'ready \(1\)> ')
+    child.sendline('kill -9 $$')
+    child.expect(r'ready \(0\)> ')
+    child.sendline(':enable')
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':pur\t\t')
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':list')
+    child.expect('localhost#1 enabled idle:')
+    child.expect('localhost#2 enabled idle:')
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_print_read_buffer(polysh):
+    child = polysh(['--ssh=echo message; sleep'] + ['2h'] * 3)
+    child.expect(r'waiting \(3/3\)> ')
+    child.sendline(':show_read_buffer \t*')
+    for _ in range(3):
+        child.expect('\033\\[1;[0-9]+m2h[ #][ 12] : \033\\[1;mmessage')
+    child.expect(r'waiting \(3/3\)> ')
+    child.sendintr()
+    child.expect(pexpect.EOF)
+
+
+def test_export_vars(polysh):
+    child = polysh(['--no-color', 'localhost', 'localhost'])
+    child.expect(r'ready \(2\)> ')
+    child.sendline(':export_vars')
+    child.expect(r'ready \(2\)> ')
+    child.sendline('echo $POLYSH_RANK/$POLYSH_NR_SHELLS/$POLYSH_DISPLAY_NAME')
+    expect_each(
+        child,
+        [r'localhost\s+: 0/2/localhost\r', r'localhost#1 : 1/2/localhost#1\r'],
+    )
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)

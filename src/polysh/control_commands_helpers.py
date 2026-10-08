@@ -112,7 +112,7 @@ def complete_control_command(line: str, text: str) -> List[str]:
         # Completing control command parameters
         cmd = line.split()[0][1:]
 
-        def def_compl(line: str) -> List:
+        def def_compl(line: str, text: str) -> List[str]:
             return []
 
         compl_func = getattr(control_commands, "complete_" + cmd, def_compl)

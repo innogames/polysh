@@ -15,103 +15,46 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import stat
-import tempfile
-import unittest
-
 import pexpect
 
-from tests import launch_polysh
-
-# A racadm(8) like shell that echoes back the command it was given, in
-# fragments slow enough for polysh to see an unfinished line.  This is what
-# real iDRACs do, as no stty -echo can be sent to them.
-FRAGMENTING_SHELL = '''#!/usr/bin/env python3
-import sys
-import time
-
-sys.stdout.write('racadm>>')
-sys.stdout.flush()
-for line in sys.stdin:
-    command = line.strip()
-    if command == 'exit':
-        break
-    for piece in (command[:2], command[2:]):
-        sys.stdout.write(piece)
-        sys.stdout.flush()
-        time.sleep(0.4)
-    sys.stdout.write('\\r\\nWed Sep 23 19:03:18 2026\\r\\nracadm>>')
-    sys.stdout.flush()
-'''
-
-# Its last line of output lacks a trailing newline, and then it goes away
-UNTERMINATED_SHELL = '''#!/usr/bin/env python3
-import sys
-
-sys.stdout.write('racadm>>')
-sys.stdout.flush()
-for line in sys.stdin:
-    if line.strip() == 'exit':
-        sys.stdout.write('\\r\\nno newline here')
-        sys.stdout.flush()
-        break
-    sys.stdout.write('\\r\\nracadm>>')
-    sys.stdout.flush()
-'''
+from tests.fake_shells import FRAGMENTING_SHELL, UNTERMINATED_SHELL
 
 
-class TestLineBuffering(unittest.TestCase):
-    def setUp(self):
-        self.shells = []
+def run_polysh(polysh, shell, extra_args):
+    child = polysh([
+        f'--ssh={shell}',
+        '--prompt=racadm>>',
+        '--no-color',
+        '--command=getractime',
+        *extra_args,
+        'host1',
+    ])
+    child.expect(pexpect.EOF)
+    return child.before
 
-    def tearDown(self):
-        for shell in self.shells:
-            os.remove(shell)
 
-    def fake_shell(self, source):
-        fd, path = tempfile.mkstemp(prefix='polysh_fake_shell.')
-        self.shells.append(path)
-        os.write(fd, source.encode())
-        os.close(fd)
-        os.chmod(path, os.stat(path).st_mode | stat.S_IXUSR)
-        return path
+def test_fragmented_without_line_buffering(polysh, fake_shell):
+    output = run_polysh(polysh, fake_shell(FRAGMENTING_SHELL), [])
+    # By default an unfinished line is printed as soon as the remote goes
+    # quiet, so the echoed command is split over two prefixed lines
+    assert 'host1 : ge' in output
+    assert 'host1 : getractime' not in output
 
-    def run_polysh(self, shell, extra_args):
-        child = launch_polysh(
-            [
-                f'--ssh={shell}',
-                '--prompt=racadm>>',
-                '--no-color',
-                '--command=getractime',
-                *extra_args,
-                'host1',
-            ]
-        )
-        child.expect(pexpect.EOF)
-        return child.before
 
-    def testFragmentedWithoutLineBuffering(self):
-        shell = self.fake_shell(FRAGMENTING_SHELL)
-        output = self.run_polysh(shell, [])
-        # By default an unfinished line is printed as soon as the remote goes
-        # quiet, so the echoed command is split over two prefixed lines
-        self.assertIn('host1 : ge', output)
-        self.assertNotIn('host1 : getractime', output)
+def test_fragmented_with_line_buffering(polysh, fake_shell):
+    output = run_polysh(
+        polysh, fake_shell(FRAGMENTING_SHELL), ['--line-buffering']
+    )
+    assert 'host1 : getractime' in output
+    assert 'host1 : Wed Sep 23 19:03:18 2026' in output
 
-    def testFragmentedWithLineBuffering(self):
-        shell = self.fake_shell(FRAGMENTING_SHELL)
-        output = self.run_polysh(shell, ['--line-buffering'])
-        self.assertIn('host1 : getractime', output)
-        self.assertIn('host1 : Wed Sep 23 19:03:18 2026', output)
 
-    def testShortOption(self):
-        shell = self.fake_shell(FRAGMENTING_SHELL)
-        output = self.run_polysh(shell, ['-l'])
-        self.assertIn('host1 : getractime', output)
+def test_short_option(polysh, fake_shell):
+    output = run_polysh(polysh, fake_shell(FRAGMENTING_SHELL), ['-l'])
+    assert 'host1 : getractime' in output
 
-    def testLastLineWithoutNewline(self):
-        shell = self.fake_shell(UNTERMINATED_SHELL)
-        output = self.run_polysh(shell, ['-l'])
-        # Held back by line buffering, but flushed when the remote goes away
-        self.assertIn('host1 : no newline here', output)
+
+def test_last_line_without_newline(polysh, fake_shell):
+    output = run_polysh(polysh, fake_shell(UNTERMINATED_SHELL), ['-l'])
+    # Held back by line buffering, but flushed when the remote goes away
+    assert 'host1 : no newline here' in output

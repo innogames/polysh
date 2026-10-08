@@ -1,4 +1,4 @@
-"""Polysh - Tests - Non-interactive Mode
+"""Polysh - Tests - Non Interactive
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
 Copyright (c) 2024 InnoGames GmbH
@@ -16,60 +16,60 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
 import pexpect
+import pytest
 
-from tests import launch_polysh
+
+def test_command(polysh):
+    child = polysh(['--command=echo text', 'localhost'])
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;mtext')
+    child.expect(pexpect.EOF)
 
 
-class TestNonInteractive(unittest.TestCase):
-    def testCommandNormal(self):
-        child = launch_polysh(['--command=echo text', 'localhost'])
-        child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
-        child.expect(pexpect.EOF)
+def test_command_interrupted(polysh):
+    child = polysh(['--command=echo text; cat', 'localhost'])
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;mtext')
+    child.sendintr()
+    child.expect(pexpect.EOF)
 
-    def testCommandIntr(self):
-        child = launch_polysh(['--command=echo text; cat', 'localhost'])
-        child.expect('\033\[1;36mlocalhost : \033\[1;mtext')
-        child.sendintr()
-        child.expect(pexpect.EOF)
 
-    def testSimpleCommandStdin(self):
-        child = launch_polysh(['localhost'], input_data='echo line')
-        child.expect('localhost : line')
-        child.expect(pexpect.EOF)
+def test_single_command_from_stdin(polysh):
+    child = polysh(['localhost'], input_data='echo line')
+    child.expect('localhost : line')
+    child.expect(pexpect.EOF)
 
-    def testMultipleCommandStdin(self):
-        commands = """
-        echo first
-        echo next
-        echo last
-        """
-        child = launch_polysh(['localhost'], input_data=commands)
-        child.expect('localhost : first')
-        child.expect('localhost : next')
-        child.expect('localhost : last')
-        child.expect(pexpect.EOF)
 
-    def testInvalidCommandStdin(self):
-        child = launch_polysh(
-            ['localhost', '--command=date'], input_data='uptime')
-        child.expect('--command and reading from stdin are incompatible')
-        child.expect(pexpect.EOF)
+def test_multiple_commands_from_stdin(polysh):
+    commands = """
+    echo first
+    echo next
+    echo last
+    """
+    child = polysh(['localhost'], input_data=commands)
+    child.expect('localhost : first')
+    child.expect('localhost : next')
+    child.expect('localhost : last')
+    child.expect(pexpect.EOF)
 
-    def testExitCode(self):
-        def CommandCode(command, code):
-            child = launch_polysh(
-                [f'--command={command}'] + ['localhost'] * 5)
-            child.expect(pexpect.EOF)
-            while child.isalive():
-                child.wait()
-            self.assertEqual(child.exitstatus, code)
-        CommandCode('true', 0)
-        CommandCode('false', 1)
 
-    def testInvalidCharacters(self):
-        child = launch_polysh(
-            ["--command=printf '%b' '\xacfoo\u2018bar\n'", 'localhost'])
-        child.expect('\033\[1;36mlocalhost : \033\[1;m\xacfoo\u2018bar')
-        child.expect(pexpect.EOF)
+def test_command_and_stdin_are_incompatible(polysh):
+    child = polysh(['localhost', '--command=date'], input_data='uptime')
+    child.expect('--command and reading from stdin are incompatible')
+    child.expect(pexpect.EOF)
+
+
+@pytest.mark.parametrize(('command', 'code'), [('true', 0), ('false', 1)])
+def test_exit_code(polysh, command, code):
+    child = polysh([f'--command={command}'] + ['localhost'] * 5)
+    child.expect(pexpect.EOF)
+    while child.isalive():
+        child.wait()
+    assert child.exitstatus == code
+
+
+def test_invalid_characters(polysh):
+    child = polysh(
+        ["--command=printf '%b' '\xacfoo‘bar\n'", 'localhost']
+    )
+    child.expect('\033\\[1;36mlocalhost : \033\\[1;m\xacfoo‘bar')
+    child.expect(pexpect.EOF)
