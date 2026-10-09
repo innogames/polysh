@@ -1,4 +1,4 @@
-Version 1.0.7 (unreleased)
+Version 1.0.7
     * Require Python 3.11, the older versions have reached end of life
     * Report "Error talking to" for a remote shell that died while its exit
       was noticed by the periodic child check instead of the pty EOF, the
