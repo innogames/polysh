@@ -11,6 +11,10 @@ Version 1.0.7 (unreleased)
       that readline swallowed
     * Run the test suite with pytest, in parallel with pytest-xdist, and
       measure the coverage of the spawned polysh processes
+    * Fix --command and stdin mode hanging forever when the command reads
+      the tty, typically sudo (use_pty or a password prompt): the exit
+      queued behind the command was swallowed by it.  Command lines are now
+      sent one per prompt and exit only once the shell is back
 
 Version 1.0.6
     * Add the :prompt control command, to turn --prompt matching on and off
