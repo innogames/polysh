@@ -392,7 +392,7 @@ class RemoteDispatcher(BufferedDispatcher):
                 + str(self.color_code).encode()
                 + b'm'
                 + log_prefix
-                + b'\033[1;m'
+                + b'\033[0m'
             )
         console_data = (
             console_prefix
