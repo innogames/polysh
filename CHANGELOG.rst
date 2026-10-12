@@ -1,3 +1,9 @@
+Version 1.0.8
+    * Reset the color after the hostname prefix with a plain SGR reset,
+      "\033[0m", instead of "\033[1;m": Terminal.app treats the latter as a
+      reset but iTerm2 treats it as bold only, so the output of a remote
+      took the color of its hostname on iTerm2
+
 Version 1.0.7
     * Require Python 3.11, the older versions have reached end of life
     * Report "Error talking to" for a remote shell that died while its exit
