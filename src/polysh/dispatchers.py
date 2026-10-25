@@ -89,15 +89,12 @@ def update_terminal_size() -> None:
     place taken by the longest name"""
     w, h = terminal_size()
     w = max(w - display_names.max_display_name_length - 2, min(w, 10))
-    # python bug http://python.org/sf/1112949 on amd64
-    # from ajaxterm.py
-    bug = struct.unpack('i', struct.pack('I', termios.TIOCSWINSZ))[0]
     packed_size = struct.pack('HHHH', h, w, 0, 0)
     term_size = w, h
     for i in all_instances():
         if i.enabled and i.term_size != term_size:
             i.term_size = term_size
-            fcntl.ioctl(i.fd, bug, packed_size)
+            fcntl.ioctl(i.fd, termios.TIOCSWINSZ, packed_size)
 
 
 def format_info(info_list: List[List[bytes]]) -> List[bytes]:
