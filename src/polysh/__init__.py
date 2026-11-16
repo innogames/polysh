@@ -1,7 +1,7 @@
 """Polysh - Library Entry Point
 
 Copyright (c) 2006 Guillaume Chazarain <guichaz@gmail.com>
-Copyright (c) 2024 InnoGames GmbH
+Copyright (c) 2026 InnoGames GmbH
 """
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = "1.0.8"
+__version__ = "1.0.9"
 
 # For backwards compatibility - used in some classes.
 VERSION = tuple(int(p) if p.isdigit() else p for p in __version__.split("."))

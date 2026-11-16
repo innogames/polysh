@@ -1,3 +1,9 @@
+Version 1.0.9
+    * Fix the crash on macOS with "OSError: [Errno 25] Inappropriate ioctl
+      for device" while connecting to the first remote: TIOCSWINSZ was
+      converted to a negative number, which Python 3.14 no longer truncates
+      back to the 32 bit request
+
 Version 1.0.8
     * Reset the color after the hostname prefix with a plain SGR reset,
       "\033[0m", instead of "\033[1;m": Terminal.app treats the latter as a
