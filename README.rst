@@ -50,13 +50,23 @@ Options
     the command line, but they can also be read from files.  The format is
     one hostname per line, `#` comments and blank lines are skipped.
 
+    `-` reads the hostnames from the standard input.  This is also what
+    happens when no hostname is given at all and the standard input is not
+    a terminal, so that a list of hosts can be piped in::
+
+        cat hosts | polysh
+
+    `polysh` then reads the commands from the terminal as usual, or runs
+    the one given with `--command`.
+
 `--command=CMD`
     Command to execute on the remote shells
 
     This starts `polysh` in
     non-interactive mode.  It will start the remote shells, send the command,
     print the output and exit when the command is completed on all remote
-    shells.  This is the same as piping a command on the standard input.
+    shells.  This is the same as piping a command on the standard input,
+    with the hostnames given on the command line.
     Exit codes from the remote shells will be aggregated (taking the max)
     to form `polysh`'s exit code.
 

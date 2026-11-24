@@ -16,6 +16,8 @@ Copyright (c) 2024 InnoGames GmbH
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 import pexpect
 import pytest
 
@@ -39,6 +41,51 @@ def test_bad_hosts_file(polysh):
 def test_no_hosts(polysh, args):
     child = polysh(args)
     child.expect('error: no hosts given')
+    child.expect(pexpect.EOF)
+
+
+HOSTS = 'localhost # Comment\n# Ignore me\n127.0.0.1\n'
+
+
+@pytest.mark.parametrize(('args', 'count'), [
+    ([], 2),
+    (['--hosts-file=-'], 2),
+    (['--hosts-file=-', '--hosts-file=-', 'localhost'], 3),
+])
+def test_hosts_from_stdin(polysh, args, count):
+    child = polysh(args, piped_stdin=HOSTS)
+    child.expect(rf'ready \({count}\)> ')
+    # The commands are read from the terminal
+    child.sendline('echo a$((6 * 7))b')
+    for _ in range(count):
+        child.expect('a42b')
+    child.expect(rf'ready \({count}\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_hosts_from_stdin_with_command(polysh):
+    child = polysh(['--command=echo a$((6 * 7))b'], piped_stdin=HOSTS)
+    child.expect('a42b')
+    child.expect('a42b')
+    child.expect(pexpect.EOF)
+
+
+def test_stdin_is_the_command_when_hosts_are_given(polysh):
+    child = polysh(['localhost'], piped_stdin='echo a$((6 * 7))b\n')
+    child.expect('localhost : .*a42b')
+    child.expect(pexpect.EOF)
+
+
+def test_no_hosts_from_stdin(polysh):
+    child = polysh([], piped_stdin='# Nothing\n')
+    child.expect('error: no hosts given')
+    child.expect(pexpect.EOF)
+
+
+def test_hosts_from_stdin_without_terminal(polysh):
+    child = polysh([], input_data=HOSTS, preexec_fn=os.setsid)
+    child.expect('there is no terminal for interactive mode')
     child.expect(pexpect.EOF)
 
 
