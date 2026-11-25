@@ -20,7 +20,7 @@
         {
           polysh = pkgs.python3Packages.buildPythonApplication {
             pname = "polysh";
-            version = "1.0.8";
+            version = "1.1.0";
 
             pyproject = true;
 

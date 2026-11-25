@@ -1,3 +1,11 @@
+Version 1.1.0
+    * Read the host list from the standard input with --hosts-file=-, or
+      when no hostname is given at all and the standard input is not a
+      terminal, which used to be an error: "cat hosts | polysh".  The
+      commands are then read from the terminal as usual, or taken from
+      --command.  A piped standard input is still the command when
+      hostnames are given
+
 Version 1.0.9
     * Fix the crash on macOS with "OSError: [Errno 25] Inappropriate ioctl
       for device" while connecting to the first remote: TIOCSWINSZ was
