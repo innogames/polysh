@@ -77,6 +77,43 @@ def test_stdin_is_the_command_when_hosts_are_given(polysh):
     child.expect(pexpect.EOF)
 
 
+def test_whitespace_separated_hosts_from_stdin(polysh):
+    child = polysh([], piped_stdin='localhost\t127.0.0.1  # Comment\n')
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+def test_whitespace_separated_hosts_file(polysh, tmp_path):
+    hosts_file = tmp_path / 'hosts'
+    hosts_file.write_text('localhost 127.0.0.1\n')
+    child = polysh([f'--hosts-file={hosts_file}'])
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
+@pytest.mark.parametrize('piped_stdin', [
+    'echo test > out\n',
+    'x$(touch out)\n',
+    'x`touch out`\n',
+    'x | touch out\n',
+    'x & touch out\n',
+])
+def test_commands_from_stdin_are_not_hosts(polysh, tmp_path, piped_stdin):
+    child = polysh([], piped_stdin=piped_stdin)
+    child.expect('read from stdin is not a hostname')
+    child.expect(pexpect.EOF)
+    assert not (tmp_path / 'out').exists()
+
+
+def test_host_range_from_stdin(polysh):
+    child = polysh([], piped_stdin='127.0.0.<1,1>\n')
+    child.expect(r'ready \(2\)> ')
+    child.sendeof()
+    child.expect(pexpect.EOF)
+
+
 def test_no_hosts_from_stdin(polysh):
     child = polysh([], piped_stdin='# Nothing\n')
     child.expect('error: no hosts given')

@@ -77,7 +77,7 @@ from polysh import (
 )
 from polysh.console import console_output
 from polysh.exceptions import ExitNow, QuitAsked
-from polysh.host_syntax import expand_syntax
+from polysh.host_syntax import expand_syntax, syntax_pattern
 
 
 def kill_all() -> None:
@@ -134,15 +134,36 @@ def _reap_dead_dispatchers() -> None:
             r.disconnect()
 
 
+# A host is formatted into the --ssh template which runs through sh -c, so
+# these would be interpreted by the local shell before ssh even starts
+_UNSAFE_HOST_CHARS = frozenset('$`;&|<>()\'"\\*?')
+
+
 def _parse_hosts(lines: Iterable[str]) -> List[str]:
-    """One host per line, # comments and blank lines are skipped"""
+    """Whitespace separated hosts, # comments and blank lines are skipped"""
     hosts = []  # type: List[str]
     for line in lines:
         if '#' in line:
             line = line[: line.index('#')]
-        line = line.strip()
-        if line:
-            hosts.append(line)
+        hosts.extend(line.split())
+    return hosts
+
+
+def _parse_stdin_hosts(parser: argparse.ArgumentParser) -> List[str]:
+    """Hosts from stdin, refusing anything looking like shell commands.
+
+    A piped stdin is taken as the hosts when no host is given, so an empty
+    host list in a script piping commands would otherwise launch these
+    commands through the local sh -c of the --ssh template."""
+    hosts = _parse_hosts(sys.stdin)
+    for host in hosts:
+        # <N-M> ranges are expanded by expand_syntax() before any launch
+        bare = syntax_pattern.sub('', host)
+        if _UNSAFE_HOST_CHARS.intersection(bare):
+            parser.error(
+                f'{host!r} read from stdin is not a hostname; give the hosts '
+                'on the command line to pipe commands'
+            )
     return hosts
 
 
@@ -169,7 +190,7 @@ def parse_cmdline() -> argparse.Namespace:
         dest='hosts_filenames',
         metavar='FILE',
         default=[],
-        help='read hostnames from given file, one per line. - is stdin.',
+        help='read hostnames from FILE, whitespace separated. - is stdin.',
     )
     parser.add_argument(
         '--command',
@@ -259,7 +280,7 @@ def parse_cmdline() -> argparse.Namespace:
         if filename == '-':
             # Reading it twice would only see the end of file
             if not hosts_from_stdin:
-                args.host_names.extend(_parse_hosts(sys.stdin))
+                args.host_names.extend(_parse_stdin_hosts(parser))
                 hosts_from_stdin = True
             continue
         try:
@@ -272,7 +293,7 @@ def parse_cmdline() -> argparse.Namespace:
     if not args.host_names and piped_stdin:
         # Without any host, a piped stdin is the list of hosts rather than
         # the command to run
-        args.host_names.extend(_parse_hosts(sys.stdin))
+        args.host_names.extend(_parse_stdin_hosts(parser))
         hosts_from_stdin = True
 
     if args.log_file:
