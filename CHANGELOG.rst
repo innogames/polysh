@@ -4,7 +4,11 @@ Version 1.1.0
       terminal, which used to be an error: "cat hosts | polysh".  The
       commands are then read from the terminal as usual, or taken from
       --command.  A piped standard input is still the command when
-      hostnames are given
+      hostnames are given.  Hostnames read from the standard input
+      containing shell syntax are refused, so that piped commands with an
+      empty host list are not run by the local shell
+    * Hostnames in --hosts-file files can be separated by any whitespace,
+      not only newlines
 
 Version 1.0.9
     * Fix the crash on macOS with "OSError: [Errno 25] Inappropriate ioctl
