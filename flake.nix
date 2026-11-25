@@ -11,6 +11,9 @@
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+      # Get the version from the correct source of truth
+      version = builtins.head (builtins.match ".*__version__ = \"([^\"]+)\".*"
+        (builtins.readFile ./src/polysh/__init__.py));
     in
     {
       packages = forAllSystems (system:
@@ -20,7 +23,7 @@
         {
           polysh = pkgs.python3Packages.buildPythonApplication {
             pname = "polysh";
-            version = "1.0.8";
+            inherit version;
 
             pyproject = true;
 
