@@ -22,12 +22,44 @@ import getpass
 import locale
 import os
 import re
-import readline
 import resource
 import signal
 import sys
 import termios
-from typing import Callable
+from types import ModuleType
+from typing import Callable, Iterable, List
+
+
+def _import_readline() -> ModuleType:
+    """Import readline with the controlling terminal as stdin.
+
+    libedit, the readline of some Python builds, checks at import whether
+    stdin is a terminal and never shows a prompt otherwise.  That would be
+    too early when stdin is a pipe giving the hosts, which is replaced by
+    the terminal only once it is read, see _reattach_stdin_to_tty().  This
+    has to run before the other polysh modules import readline."""
+    tty_fd = -1
+    if not os.isatty(0):
+        try:
+            tty_fd = os.open(os.ctermid(), os.O_RDWR)
+        except OSError:
+            pass
+    if tty_fd == -1:
+        import readline
+
+        return readline
+    piped_fd = os.dup(0)
+    os.dup2(tty_fd, 0)
+    os.close(tty_fd)
+    try:
+        import readline
+    finally:
+        os.dup2(piped_fd, 0)
+        os.close(piped_fd)
+    return readline
+
+
+readline = _import_readline()
 
 _TRACE = os.environ.get('POLYSH_TRACE')
 
@@ -45,7 +77,7 @@ from polysh import (
 )
 from polysh.console import console_output
 from polysh.exceptions import ExitNow, QuitAsked
-from polysh.host_syntax import expand_syntax
+from polysh.host_syntax import expand_syntax, syntax_pattern
 
 
 def kill_all() -> None:
@@ -102,6 +134,52 @@ def _reap_dead_dispatchers() -> None:
             r.disconnect()
 
 
+# A host is formatted into the --ssh template which runs through sh -c, so
+# these would be interpreted by the local shell before ssh even starts
+_UNSAFE_HOST_CHARS = frozenset('$`;&|<>()\'"\\*?')
+
+
+def _parse_hosts(lines: Iterable[str]) -> List[str]:
+    """Whitespace separated hosts, # comments and blank lines are skipped"""
+    hosts = []  # type: List[str]
+    for line in lines:
+        if '#' in line:
+            line = line[: line.index('#')]
+        hosts.extend(line.split())
+    return hosts
+
+
+def _parse_stdin_hosts(parser: argparse.ArgumentParser) -> List[str]:
+    """Hosts from stdin, refusing anything looking like shell commands.
+
+    A piped stdin is taken as the hosts when no host is given, so an empty
+    host list in a script piping commands would otherwise launch these
+    commands through the local sh -c of the --ssh template."""
+    hosts = _parse_hosts(sys.stdin)
+    for host in hosts:
+        # <N-M> ranges are expanded by expand_syntax() before any launch
+        bare = syntax_pattern.sub('', host)
+        if _UNSAFE_HOST_CHARS.intersection(bare):
+            parser.error(
+                f'{host!r} read from stdin is not a hostname; give the hosts '
+                'on the command line to pipe commands'
+            )
+    return hosts
+
+
+def _reattach_stdin_to_tty() -> bool:
+    """Once the hosts were read from a piped stdin, make the controlling
+    terminal our stdin so that the commands can be read from it. Return
+    whether there was such a terminal."""
+    try:
+        fd = os.open(os.ctermid(), os.O_RDWR)
+    except OSError:
+        return False
+    os.dup2(fd, 0)
+    os.close(fd)
+    return True
+
+
 def parse_cmdline() -> argparse.Namespace:
     description = 'Control commands are prefixed by ":".'
     parser = argparse.ArgumentParser(description=description)
@@ -112,7 +190,7 @@ def parse_cmdline() -> argparse.Namespace:
         dest='hosts_filenames',
         metavar='FILE',
         default=[],
-        help='read hostnames from given file, one per line',
+        help='read hostnames from FILE, whitespace separated. - is stdin.',
     )
     parser.add_argument(
         '--command',
@@ -197,18 +275,26 @@ def parse_cmdline() -> argparse.Namespace:
     parser.add_argument('host_names', nargs='*')
     args = parser.parse_args()
 
+    hosts_from_stdin = False
     for filename in args.hosts_filenames:
+        if filename == '-':
+            # Reading it twice would only see the end of file
+            if not hosts_from_stdin:
+                args.host_names.extend(_parse_stdin_hosts(parser))
+                hosts_from_stdin = True
+            continue
         try:
-            hosts_file = open(filename)
-            for line in hosts_file.readlines():
-                if '#' in line:
-                    line = line[: line.index('#')]
-                line = line.strip()
-                if line:
-                    args.host_names.append(line)
-            hosts_file.close()
+            with open(filename) as hosts_file:
+                args.host_names.extend(_parse_hosts(hosts_file))
         except OSError as e:
             parser.error(str(e))
+
+    piped_stdin = not hosts_from_stdin and not sys.stdin.isatty()
+    if not args.host_names and piped_stdin:
+        # Without any host, a piped stdin is the list of hosts rather than
+        # the command to run
+        args.host_names.extend(_parse_stdin_hosts(parser))
+        hosts_from_stdin = True
 
     if args.log_file:
         try:
@@ -219,6 +305,13 @@ def parse_cmdline() -> argparse.Namespace:
 
     if not args.host_names:
         parser.error('no hosts given')
+
+    if hosts_from_stdin and not _reattach_stdin_to_tty():
+        if not args.command:
+            parser.error(
+                'hosts were read from stdin, but there is no terminal for '
+                'interactive mode; use --command'
+            )
 
     if args.prompt is not None:
         try:

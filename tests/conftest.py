@@ -86,6 +86,9 @@ def polysh(tmp_path):
     """Factory spawning polysh under pexpect: polysh(args) gives a child
     talking to a pty, polysh(args, input_data) one fed through a pipe, as
     a non interactive run reading its commands from stdin.
+    polysh(args, piped_stdin=text) is in between: stdin is a pipe giving
+    text, while the pty remains the controlling terminal and the output,
+    as in "cat hosts | polysh" typed in a terminal.
 
     HOME is the test's own directory: polysh reads and writes
     ~/.polysh_history, tests running in parallel must not share it, and
@@ -95,9 +98,19 @@ def polysh(tmp_path):
     children = []
     env = dict(os.environ, HOME=str(tmp_path))
 
-    def launch(args, input_data=None):
+    def launch(args, input_data=None, piped_stdin=None, **popen_kwargs):
         args = POLYSH_ARGS + ['--ssh=' + SSH] + list(args)
-        if input_data is None:
+        if piped_stdin is not None:
+            stdin_file = tmp_path / f'piped_stdin_{len(children)}'
+            stdin_file.write_text(piped_stdin)
+            child = pexpect.spawn(
+                'sh',
+                args=['-c', 'cat "$0" | "$@"', str(stdin_file), *args],
+                encoding='utf-8',
+                env=env,
+                cwd=str(tmp_path),
+            )
+        elif input_data is None:
             child = pexpect.spawn(
                 args[0],
                 args=args[1:],
@@ -106,7 +119,9 @@ def polysh(tmp_path):
                 cwd=str(tmp_path),
             )
         else:
-            child = _PopenSpawn(args, env=env, cwd=str(tmp_path))
+            child = _PopenSpawn(
+                args, env=env, cwd=str(tmp_path), **popen_kwargs
+            )
             child.send(input_data)
             child.sendeof()
         children.append(child)

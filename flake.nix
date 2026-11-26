@@ -31,6 +31,7 @@
         {
           polysh = pkgs.python3Packages.buildPythonApplication {
             pname = "polysh";
+
             inherit version;
 
             pyproject = true;
