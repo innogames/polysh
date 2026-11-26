@@ -395,7 +395,11 @@ class StdinThread(Thread):
             self.start()
             self.socket_notification = SocketNotificationReader(self)
             self.prepend_text = None  # type: Optional[str]
-            readline.set_pre_input_hook(self.prepend_previous_text)
+            # Small safety check: when readline is built on libedit,
+            # (as in uv managed Pythons): this can be missing after
+            # first prompt.
+            if hasattr(readline, 'set_pre_input_hook'):
+                readline.set_pre_input_hook(self.prepend_previous_text)
 
     def prepend_previous_text(self) -> None:
         if self.prepend_text:
